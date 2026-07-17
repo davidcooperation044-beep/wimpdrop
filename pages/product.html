@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details - Wimp-Drop</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="notification-container"></div>
+    
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <a href="../index.html" style="color: inherit; text-decoration: none;">Wimp<span>-Drop</span></a>
+            </div>
+            
+            <nav>
+                <a href="../index.html">Home</a>
+                <a href="shop.html">Shop</a>
+                <a href="about.html">About</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            
+            <div class="header-actions">
+                <button class="icon-btn" title="Wishlist">
+                    ❤️
+                    <span class="badge" data-wishlist-badge style="display: none;">0</span>
+                </button>
+                
+                <button class="icon-btn" onclick="window.location.href='cart.html'" title="Shopping Cart">
+                    🛒
+                    <span class="badge" data-cart-badge style="display: none;">0</span>
+                </button>
+                
+                <div data-auth-section></div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Breadcrumb -->
+    <div style="background: rgba(255,255,255,0.04); padding: 1rem var(--spacing-lg); border-bottom: 1px solid var(--border-color);">
+        <div class="container">
+            <a href="../index.html" style="color: #e63a2e;">Home</a>
+            <span style="color: #9fb0d6; margin: 0 0.5rem;">/</span>
+            <a href="shop.html" style="color: #e63a2e;">Shop</a>
+            <span style="color: #9fb0d6; margin: 0 0.5rem;">/</span>
+            <span id="product-breadcrumb" style="color: #dce3f5;">Product</span>
+        </div>
+    </div>
+    
+    <section class="section">
+        <div class="container">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
+                <!-- Product Images -->
+                <div>
+                    <div id="main-image" style="width: 100%; aspect-ratio: 1; background: rgba(255,255,255,0.06); border-radius: 8px; overflow: hidden; margin-bottom: 1rem; border: 1px solid var(--border-color);">
+                        <img id="product-main-image" src="" alt="Product" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    
+                    <div class="grid grid-4" id="thumbnail-gallery" style="gap: 0.75rem;">
+                        <!-- Thumbnails will be populated here -->
+                    </div>
+                </div>
+                
+                <!-- Product Details -->
+                <div>
+                    <div class="product-category" id="product-category">Electronics</div>
+                    <h1 id="product-name" style="margin-bottom: 1rem;">Product Name</h1>
+                    
+                    <!-- Rating -->
+                    <div class="product-rating" style="margin-bottom: 1.5rem;">
+                        <span class="stars" id="product-stars">★★★★★</span>
+                        <span class="rating-count" id="product-rating-count">(256 reviews)</span>
+                        <a href="#reviews" style="margin-left: auto; color: #9fb0d6; font-size: 0.875rem;">See all reviews</a>
+                    </div>
+                    
+                    <!-- Price -->
+                    <div style="margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid #e0e0e0;">
+                        <div style="display: flex; align-items: baseline; gap: 1rem; margin-bottom: 0.5rem;">
+                            <span style="font-size: 2rem; font-weight: 700; color: #e63a2e;" id="product-price">$0.00</span>
+                            <span style="font-size: 1rem; color: #9fb0d6; text-decoration: line-through;" id="product-original-price">$0.00</span>
+                            <span style="background: #e63a2e; color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;" id="product-discount">Save 30%</span>
+                        </div>
+                        <p style="color: #9fb0d6; font-size: 0.875rem;">Supplier: <strong id="product-supplier">CJ Dropshipping</strong></p>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div style="margin-bottom: 2rem;">
+                        <p id="product-description" style="color: #dce3f5; line-height: 1.8;">
+                            Product description will appear here
+                        </p>
+                    </div>
+                    
+                    <!-- Variants -->
+                    <div style="margin-bottom: 2rem;">
+                        <div id="variants-container"></div>
+                    </div>
+                    
+                    <!-- Stock Status -->
+                    <div style="margin-bottom: 2rem; padding: 1rem; background: rgba(255,255,255,0.06); border-radius: 8px; border: 1px solid var(--border-color);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="font-weight: 600;">Availability:</span>
+                            <span id="stock-status" style="color: #28a745; font-weight: 600;">In Stock</span>
+                        </div>
+                        <div style="background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden;">
+                            <div id="stock-bar" style="background: #28a745; height: 100%; width: 85%;"></div>
+                        </div>
+                        <p style="font-size: 0.875rem; color: #9fb0d6; margin-top: 0.5rem;">Only <span id="stock-count">42</span> items left - order soon!</p>
+                    </div>
+                    
+                    <!-- Add to Cart Section -->
+                    <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+                        <div class="quantity-selector" style="display: flex; align-items: center; gap: 0.5rem; border: 1px solid #e0e0e0; border-radius: 4px; width: fit-content;">
+                            <button class="quantity-btn" onclick="decreaseQuantity()">−</button>
+                            <input type="number" id="quantity" value="1" min="1" max="100" style="width: 60px; border: none; text-align: center; padding: 0;">
+                            <button class="quantity-btn" onclick="increaseQuantity()">+</button>
+                        </div>
+                        
+                        <button class="btn btn-primary btn-large" onclick="addProductToCart()" style="flex: 1;">
+                            🛒 Add to Cart
+                        </button>
+                        
+                        <button class="btn btn-outline btn-large" onclick="toggleProductWishlist()" id="wishlist-btn">
+                            ♡ Add to Wishlist
+                        </button>
+                    </div>
+                    
+                    <!-- Shipping Info -->
+                    <div style="background: rgba(45,108,223,0.16); padding: 1rem; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid var(--primary-blue);">
+                        <div style="display: flex; gap: 1rem; margin-bottom: 0.75rem;">
+                            <span style="font-size: 1.5rem;">🚚</span>
+                            <div>
+                                <p style="font-weight: 600; margin: 0;">Free shipping on orders over $50,000.00</p>
+                                <p style="font-size: 0.875rem; color: #dce3f5; margin: 0.5rem 0 0 0;">Standard delivery: 7-14 days</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Product Details Tabs -->
+                    <div style="border-top: 1px solid #e0e0e0; padding-top: 2rem;">
+                        <div style="display: flex; gap: 1rem; margin-bottom: 1rem; border-bottom: 1px solid #e0e0e0;">
+                            <button class="tab-button" onclick="switchProductTab('details', event)" style="padding: 0.75rem 1rem; border: none; background: none; cursor: pointer; border-bottom: 2px solid #e63a2e; color: #e63a2e; font-weight: 600;">Details</button>
+                            <button class="tab-button" onclick="switchProductTab('specs', event)" style="padding: 0.75rem 1rem; border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; color: #9fb0d6;">Specifications</button>
+                            <button class="tab-button" onclick="switchProductTab('shipping', event)" style="padding: 0.75rem 1rem; border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; color: #9fb0d6;">Shipping Info</button>
+                        </div>
+                        
+                        <div id="details-tab" class="product-tab">
+                            <p id="full-description" style="color: #dce3f5; line-height: 1.8; margin: 0;">Full product description and details</p>
+                        </div>
+                        
+                        <div id="specs-tab" class="product-tab" style="display: none;">
+                            <table style="width: 100%; font-size: 0.875rem;">
+                                <tbody id="specs-table">
+                                    <tr style="border-bottom: 1px solid #e0e0e0;">
+                                        <td style="padding: 0.75rem 0; font-weight: 600;">Weight:</td>
+                                        <td style="padding: 0.75rem 0;">Loading...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div id="shipping-tab" class="product-tab" style="display: none;">
+                            <p style="color: #dce3f5; margin: 0;">Shipped directly from our suppliers to your address. Tracking information will be provided.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Reviews Section -->
+    <section class="section section-light" id="reviews">
+        <div class="container">
+            <h2 style="margin-bottom: 2rem;">Customer Reviews</h2>
+            
+            <div style="display: grid; grid-template-columns: 250px 1fr; gap: 2rem;">
+                <!-- Review Summary -->
+                <div>
+                    <div style="background: rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
+                        <div style="font-size: 3rem; font-weight: 700; color: #e63a2e; margin-bottom: 0.5rem;">4.5</div>
+                        <div style="color: #ffc107; margin-bottom: 0.5rem;">★★★★☆</div>
+                        <p style="color: #9fb0d6; font-size: 0.875rem; margin: 0;">Based on 256 reviews</p>
+                        
+                        <div style="margin-top: 1.5rem; text-align: left;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-size: 0.875rem;">
+                                <span>5 ★</span>
+                                <div style="width: 60px; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden;">
+                                    <div style="width: 60%; height: 100%; background: #ffc107;"></div>
+                                </div>
+                                <span style="color: #9fb0d6;">142</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-size: 0.875rem;">
+                                <span>4 ★</span>
+                                <div style="width: 60px; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden;">
+                                    <div style="width: 35%; height: 100%; background: #ffc107;"></div>
+                                </div>
+                                <span style="color: #9fb0d6;">82</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-size: 0.875rem;">
+                                <span>3 ★</span>
+                                <div style="width: 60px; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden;">
+                                    <div style="width: 20%; height: 100%; background: #ffc107;"></div>
+                                </div>
+                                <span style="color: #9fb0d6;">24</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;">
+                                <span>1-2 ★</span>
+                                <div style="width: 60px; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden;">
+                                    <div style="width: 5%; height: 100%; background: #ffc107;"></div>
+                                </div>
+                                <span style="color: #9fb0d6;">8</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Individual Reviews -->
+                <div id="reviews-container">
+                    <div style="background: rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border-color);">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
+                            <div>
+                                <strong>Great product!</strong>
+                                <div style="color: #ffc107; font-size: 0.875rem;">★★★★★</div>
+                            </div>
+                            <span style="color: #9fb0d6; font-size: 0.875rem;">2 days ago</span>
+                        </div>
+                        <p style="color: #dce3f5; margin: 0.75rem 0;">This product exceeded my expectations. Fast shipping and great quality. Highly recommend!</p>
+                        <div style="font-size: 0.875rem; color: #9fb0d6;">By <strong>Sarah M.</strong> - Verified Purchase</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 2rem;">
+                <button class="btn btn-secondary">Load More Reviews</button>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Related Products -->
+    <section class="section">
+        <div class="container">
+            <h2 style="margin-bottom: 2rem;">Related Products</h2>
+            <div class="grid grid-4" id="related-products">
+                <!-- Related products will be loaded here -->
+            </div>
+        </div>
+    </section>
+    
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                    <li><a href="terms.html">Terms of Service</a></li>
+                    <li><a href="disclaimer.html">Disclaimer</a></li>
+                    <li><a href="security.html">Security</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Wimp-Drop. All rights reserved.</p>
+        </div>
+    </footer>
+
+    
+    <script>
+        let currentProduct = null;
+        let currentProductId = null;
+        
+        // Get product ID from URL
+        function getProductIdFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('id');
+        }
+        
+        // Load product details
+        async function loadProductDetails() {
+            const productId = getProductIdFromURL();
+            if (!productId) {
+                window.location.href = 'shop.html';
+                return;
+            }
+            
+            currentProductId = productId;
+            
+            // First, try to find in AppState products (loaded from Supabase)
+            currentProduct = AppState.products.find(p => p.id == productId);
+            
+            // If not found locally, try Supabase
+            if (!currentProduct && typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
+                const result = await supabaseService.getProduct(productId);
+                if (result.success && result.product) {
+                    currentProduct = result.product;
+                }
+            }
+
+            // Fallback to CJ Dropshipping API if product is not in Supabase
+            if (!currentProduct && typeof cjAPI !== 'undefined') {
+                try {
+                    const cjProduct = await cjAPI.getProductDetails(productId);
+                    if (cjProduct) {
+                        currentProduct = normalizeCJProduct(cjProduct);
+                    }
+                } catch (error) {
+                    console.warn('CJ product fallback failed', error);
+                }
+            }
+            
+            if (!currentProduct) {
+                showNotification('Product not found', 'error');
+                setTimeout(() => {
+                    window.location.href = 'shop.html';
+                }, 1500);
+                return;
+            }
+            
+            // Populate product details
+            populateProductPage();
+            updateWishlistButton();
+        }
+        
+        function populateProductPage() {
+            if (!currentProduct) return;
+            
+            document.getElementById('product-name').textContent = currentProduct.name;
+            document.getElementById('product-category').textContent = currentProduct.category || 'Electronics';
+            document.getElementById('product-description').textContent = currentProduct.description || '';
+            document.getElementById('product-price').textContent = formatCurrency(currentProduct.price);
+            document.getElementById('product-original-price').textContent = formatCurrency(currentProduct.original_price || currentProduct.originalPrice || 0);
+            document.getElementById('product-supplier').textContent = currentProduct.supplier || 'CJ Dropshipping';
+            
+            // Set main image
+            const mainImage = currentProduct.image || (currentProduct.images && currentProduct.images[0]) || 'https://via.placeholder.com/500';
+            document.getElementById('product-main-image').src = mainImage;
+            document.getElementById('product-breadcrumb').textContent = currentProduct.name;
+            
+            // Rating
+            const rating = currentProduct.rating || 4.5;
+            const ratingStars = '★'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating));
+            document.getElementById('product-stars').textContent = ratingStars;
+            document.getElementById('product-rating-count').textContent = `(${currentProduct.reviews_count || currentProduct.reviews || 0} reviews)`;
+            
+            // Stock
+            const stock = currentProduct.stock || 42;
+            const stockPercent = Math.min(100, (stock / 50) * 100);
+            document.getElementById('stock-bar').style.width = stockPercent + '%';
+            document.getElementById('stock-count').textContent = stock;
+            document.getElementById('stock-status').textContent = stock > 0 ? 'In Stock' : 'Out of Stock';
+            document.getElementById('stock-status').style.color = stock > 0 ? '#28a745' : '#dc3545';
+            
+            // Discount
+            const originalPrice = currentProduct.original_price || currentProduct.originalPrice || currentProduct.price;
+            const discount = Math.round(((originalPrice - currentProduct.price) / originalPrice) * 100);
+            document.getElementById('product-discount').textContent = `Save ${discount}%`;
+            
+            // Variants
+            const variantsContainer = document.getElementById('variants-container');
+            if (variantsContainer) {
+                if (Array.isArray(currentProduct.variants) && currentProduct.variants.length > 0) {
+                    variantsContainer.innerHTML = currentProduct.variants.map(variant => `
+                        <div class="form-group">
+                            <label>${variant.name || 'Option'}</label>
+                            <select class="variant-select">
+                                ${variant.options?.map(option => `<option value="${option}">${option}</option>`).join('')}
+                            </select>
+                        </div>
+                    `).join('');
+                } else {
+                    variantsContainer.innerHTML = '';
+                }
+            }
+
+            // Thumbnail gallery
+            const thumbnails = currentProduct.images || (currentProduct.image ? [currentProduct.image] : []);
+            const galleryContainer = document.getElementById('thumbnail-gallery');
+            galleryContainer.innerHTML = thumbnails.map((img, idx) => `
+                <div style="cursor: pointer; border: 2px solid transparent; border-radius: 4px; overflow: hidden;"
+                     onclick="document.getElementById('product-main-image').src='${img}'">
+                    <img src="${img}" alt="Thumbnail ${idx + 1}" style="width: 100%; aspect-ratio: 1; object-fit: cover;">
+                </div>
+            `).join('');
+        }
+        
+        function increaseQuantity() {
+            const input = document.getElementById('quantity');
+            input.value = parseInt(input.value) + 1;
+        }
+        
+        function decreaseQuantity() {
+            const input = document.getElementById('quantity');
+            if (parseInt(input.value) > 1) {
+                input.value = parseInt(input.value) - 1;
+            }
+        }
+        
+        function addProductToCart() {
+            const quantity = parseInt(document.getElementById('quantity').value);
+            addToCart(currentProductId, quantity);
+            document.getElementById('quantity').value = 1;
+        }
+        
+        function updateWishlistButton() {
+            const btn = document.getElementById('wishlist-btn');
+            if (isInWishlist(currentProductId)) {
+                btn.classList.add('active');
+                btn.innerHTML = '❤️ In Wishlist';
+            } else {
+                btn.classList.remove('active');
+                btn.innerHTML = '♡ Add to Wishlist';
+            }
+        }
+
+        function normalizeCJProduct(data) {
+            return {
+                id: data.id || data.product_id || getProductIdFromURL(),
+                name: data.name || data.productName || 'CJ Product',
+                description: data.description || data.long_description || data.short_description || '',
+                price: Number(data.price || data.retail_price || data.product_price || 0),
+                original_price: Number(data.original_price || data.market_price || data.price || data.retail_price || 0),
+                images: data.images || data.image_list || data.image ? [data.image] : ['https://via.placeholder.com/500'],
+                category: data.category || data.category_name || 'General',
+                supplier: 'CJ Dropshipping',
+                rating: Number(data.rating || 4.2),
+                reviews_count: Number(data.reviews_count || data.review_count || 0),
+                stock: Number(data.stock || data.inventory || 0),
+                variants: data.variants || []
+            };
+        }
+        
+        function toggleProductWishlist() {
+            toggleWishlist(currentProductId);
+            updateWishlistButton();
+        }
+        
+        function switchProductTab(tabName, event) {
+            document.querySelectorAll('.product-tab').forEach(tab => tab.style.display = 'none');
+            document.getElementById(tabName + '-tab').style.display = 'block';
+            
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.style.borderBottomColor = 'transparent';
+                btn.style.color = '#999';
+            });
+            if (event?.target) {
+                event.target.style.borderBottomColor = '#e63a2e';
+                event.target.style.color = '#e63a2e';
+            }
+        }
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', loadProductDetails);
+    </script>
+    <script src="../js/api/cj-dropshipping.js"></script>
+    <script src="../js/env.js"></script>
+    <script src="../js/supabase.js"></script>
+    <script src="../js/flutterwave.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+</html>

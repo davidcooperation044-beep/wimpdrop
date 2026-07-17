@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Successful - Wimp-Drop</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="notification-container"></div>
+    
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <a href="../index.html" style="color: inherit; text-decoration: none;">Wimp<span>-Drop</span></a>
+            </div>
+        </div>
+    </header>
+    
+    <section class="section" style="min-height: 60vh; display: flex; align-items: center;">
+        <div class="container" style="text-align: center; max-width: 600px;">
+            <div style="margin-bottom: 2rem;">
+                <div style="font-size: 5rem; margin-bottom: 1rem;">✓</div>
+                <h1 style="color: #155724;">Order Placed Successfully!</h1>
+            </div>
+            
+            <div style="background: rgba(212,175,55,0.14); border: 1px solid rgba(212,175,55,0.32); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+                <p style="margin: 0; color: #155724;">Thank you for your purchase. Your order has been confirmed.</p>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.06); padding: 2rem; border-radius: 8px; margin-bottom: 2rem; text-align: left; border: 1px solid var(--border-color);">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <p style="font-size: 0.875rem; color: #9fb0d6; margin: 0;">Order Number</p>
+                        <p style="font-size: 1.25rem; font-weight: 700; margin: 0.5rem 0 0 0;" id="order-number">#ORD-001234</p>
+                    </div>
+                    <div>
+                        <p style="font-size: 0.875rem; color: #9fb0d6; margin: 0;">Order Date</p>
+                        <p style="font-size: 1.25rem; font-weight: 700; margin: 0.5rem 0 0 0;" id="order-date"></p>
+                    </div>
+                </div>
+                
+                <div style="border-top: 1px solid #e0e0e0; padding-top: 1.5rem;">
+                    <p style="font-size: 0.875rem; color: #9fb0d6; margin: 0 0 0.5rem 0;">Total Amount</p>
+                    <p id="order-total" style="font-size: 2rem; font-weight: 700; color: #e63a2e; margin: 0;">$0.00</p>
+                </div>
+            </div>
+            
+            <div style="background: rgba(45,108,223,0.18); border: 1px solid rgba(45,108,223,0.34); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; text-align: left;">
+                <p style="font-weight: 600; margin: 0 0 0.75rem 0;">📧 Order Confirmation Email:</p>
+                <p style="margin: 0 0 1rem 0; color: #dce3f5;">A confirmation email has been sent to <strong id="confirmation-email"></strong> with order details. The admin team has also been notified and will begin processing your order.</p>
+                <p style="font-weight: 600; margin: 0 0 0.75rem 0;">📋 Next Steps:</p>
+                <ul style="list-style: none; margin: 0; padding: 0;">
+                    <li style="margin-bottom: 0.5rem;">• Check your email for order confirmation and tracking</li>
+                    <li style="margin-bottom: 0.5rem;">• Your order will be processed within 24 hours</li>
+                    <li style="margin-bottom: 0.5rem;">• You'll receive tracking information once shipped</li>
+                    <li>• Expected delivery: 7-14 business days</li>
+                </ul>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="account.html" class="btn btn-primary btn-large">View Order Status</a>
+                <a href="shop.html" class="btn btn-secondary btn-large">Continue Shopping</a>
+            </div>
+        </div>
+    </section>
+    
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                    <li><a href="terms.html">Terms of Service</a></li>
+                    <li><a href="disclaimer.html">Disclaimer</a></li>
+                    <li><a href="security.html">Security</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Wimp-Drop. All rights reserved.</p>
+        </div>
+    </footer>
+
+    
+    <script>
+        async function renderOrderSuccess() {
+            const orderNumber = document.getElementById('order-number');
+            const orderDate = document.getElementById('order-date');
+            const orderTotal = document.getElementById('order-total');
+            const confirmationEmail = document.getElementById('confirmation-email');
+
+            const lastOrderId = sessionStorage.getItem('lastOrderId');
+            const lastOrderTotal = sessionStorage.getItem('lastOrderTotal');
+            const lastOrderEmail = sessionStorage.getItem('lastOrderEmail');
+
+            if (confirmationEmail && lastOrderEmail) {
+                confirmationEmail.textContent = lastOrderEmail;
+            }
+
+            if (orderNumber) {
+                orderNumber.textContent = lastOrderId ? `#ORD-${lastOrderId}` : '#ORD-000000';
+            }
+
+            const dateText = new Date().toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            if (orderDate) orderDate.textContent = dateText;
+
+            if (orderTotal) {
+                if (lastOrderTotal) {
+                    orderTotal.textContent = formatCurrency(Number(lastOrderTotal));
+                } else {
+                    orderTotal.textContent = '$0.00';
+                }
+            }
+
+            if (lastOrderId && typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
+                const response = await supabaseService.getOrder(lastOrderId);
+                if (response.success && response.order) {
+                    if (orderNumber) orderNumber.textContent = `#ORD-${response.order.id}`;
+                    if (orderDate) orderDate.textContent = new Date(response.order.created_at).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    if (orderTotal) orderTotal.textContent = formatCurrency(Number(response.order.total_amount || response.order.total || 0));
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', renderOrderSuccess);
+    </script>
+    <script src="../js/env.js"></script>
+    <script src="../js/supabase.js"></script>
+    <script src="../js/flutterwave.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+</html>

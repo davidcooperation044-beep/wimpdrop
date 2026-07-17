@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Wimp-Drop</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="notification-container"></div>
+    <header>
+        <div class="header-container">
+            <div class="logo"><a href="../index.html">Wimp<span>-Drop</span></a></div>
+            <nav>
+                <a href="../index.html">Home</a>
+                <a href="shop.html">Shop</a>
+                <a href="about.html">About</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            <div class="header-actions"><div data-auth-section></div></div>
+        </div>
+    </header>
+    <section class="section">
+        <div class="container" style="max-width: 1100px;">
+            <div id="admin-login-panel" style="display: none; background: rgba(255,255,255,0.06); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                <h1>Admin Login</h1>
+                <p style="color: #dce3f5; margin-bottom: 1.5rem;">Enter your admin credentials to access the dashboard.</p>
+                <form id="admin-login-form">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="email" placeholder="wimpycooperation@gmail.com" value="wimpycooperation@gmail.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" name="password" placeholder="••••••••" value="trexsrexs456$" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Sign In as Admin</button>
+                </form>
+            </div>
+
+            <div id="admin-dashboard" style="display: none;">
+                <h1>Admin Dashboard</h1>
+                <p style="color: #dce3f5; margin-bottom: 1.5rem;">Manage products, orders, and promotions from your admin panel.</p>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div style="padding: 1.5rem; background: #fff; border-radius: 12px; border: 1px solid #e0e0e0;">
+                        <h3>Products</h3>
+                        <p>View and sync product catalog from CJ Dropshipping.</p>
+                        <button class="btn btn-primary btn-small">Sync Products</button>
+                    </div>
+                    <div style="padding: 1.5rem; background: #fff; border-radius: 12px; border: 1px solid #e0e0e0;">
+                        <h3>Orders</h3>
+                        <p>Review recent orders and update fulfillment status.</p>
+                        <button class="btn btn-primary btn-small">Review Orders</button>
+                    </div>
+                    <div style="padding: 1.5rem; background: #fff; border-radius: 12px; border: 1px solid #e0e0e0;">
+                        <h3>Promotions</h3>
+                        <p>Create promo codes and newsletter campaigns.</p>
+                        <button class="btn btn-primary btn-small">Create Promo</button>
+                    </div>
+                </div>
+                <div style="background: rgba(255,255,255,0.06); border-radius: 12px; padding: 1.5rem; border: 1px solid var(--border-color);">
+                    <h2>Admin Notes</h2>
+                    <ul style="list-style: disc inside; color: #555;">
+                        <li>Only authorized personnel should access this page.</li>
+                        <li>Use Supabase for managing orders, wishlists, and products.</li>
+                        <li>Ensure Internet access for backend API calls.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script>
+        async function initAdminPage() {
+            const loginPanel = document.getElementById('admin-login-panel');
+            const dashboard = document.getElementById('admin-dashboard');
+            const form = document.getElementById('admin-login-form');
+            
+            if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
+                await supabaseService.restoreSession();
+            }
+
+            const user = supabaseService?.currentUser || null;
+            if (user) {
+                const adminCheck = await supabaseService.isUserAdmin(user.id);
+                if (adminCheck.success && adminCheck.isAdmin) {
+                    loginPanel.style.display = 'none';
+                    dashboard.style.display = 'block';
+                    updateUserUI();
+                    return;
+                }
+            }
+
+            loginPanel.style.display = 'block';
+            dashboard.style.display = 'none';
+
+            form?.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const email = form.querySelector('[name="email"]').value.trim();
+                const password = form.querySelector('[name="password"]').value.trim();
+                if (!email || !password) {
+                    showNotification('Please provide both email and password', 'error');
+                    return;
+                }
+
+                const result = await supabaseService.signIn(email, password);
+                if (!result.success) {
+                    showNotification(result.error || 'Admin sign in failed', 'error');
+                    return;
+                }
+
+                const adminCheck = await supabaseService.isUserAdmin(result.user.id);
+                if (adminCheck.success && adminCheck.isAdmin) {
+                    loginPanel.style.display = 'none';
+                    dashboard.style.display = 'block';
+                    updateUserUI();
+                    showNotification('Admin access granted', 'success');
+                } else {
+                    await supabaseService.signOut();
+                    showNotification('Only admin users may access this page', 'error');
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initAdminPage);
+    </script>
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                    <li><a href="terms.html">Terms of Service</a></li>
+                    <li><a href="disclaimer.html">Disclaimer</a></li>
+                    <li><a href="security.html">Security</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Wimp-Drop. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="../js/env.js"></script>
+    <script src="../js/supabase.js"></script>
+    <script src="../js/flutterwave.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+</html>

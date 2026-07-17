@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - Wimp-Drop</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="notification-container"></div>
+    
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <a href="../index.html" style="color: inherit; text-decoration: none;">Wimp<span>-Drop</span></a>
+            </div>
+            
+            <nav>
+                <a href="../index.html">Home</a>
+                <a href="shop.html">Shop</a>
+                <a href="about.html">About</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            
+            <div class="header-actions">
+                <button class="icon-btn" title="Wishlist">
+                    ❤️
+                    <span class="badge" data-wishlist-badge style="display: none;">0</span>
+                </button>
+                
+                <button class="icon-btn" onclick="window.location.href='cart.html'" title="Shopping Cart">
+                    🛒
+                    <span class="badge" data-cart-badge style="display: none;">0</span>
+                </button>
+                
+                <div data-auth-section>
+                    <a href="login.html" class="btn btn-outline btn-small">Login</a>
+                    <a href="register.html" class="btn btn-primary btn-small">Sign Up</a>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <section class="section">
+        <div class="container">
+            <h1>Shopping Cart</h1>
+            <p style="color: #dce3f5; margin-bottom: 2rem;">Review your items before checkout</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem;">
+                <!-- Cart Items -->
+                <div id="cart-items-container">
+                    <div class="cart-item" id="empty-cart-message" style="text-align: center; justify-content: center; border: none;">
+                        <div>
+                            <p style="color: #c8d1e8; font-size: 1rem;">Your cart is empty</p>
+                            <a href="shop.html" class="btn btn-primary">Continue Shopping</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Summary -->
+                <div>
+                    <div class="cart-summary">
+                        <h3 style="margin-bottom: 1.5rem;">Order Summary</h3>
+                        
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span><span id="subtotal">0</span></span>
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span>Shipping:</span>
+                            <span><span id="shipping">0</span></span>
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span>VAT (7.5%):</span>
+                            <span><span id="tax">0</span></span>
+                        </div>
+                        
+                        <div class="summary-row total">
+                            <span>Total:</span>
+                            <span><span id="total">0</span></span>
+                        </div>
+                        
+                        <div style="margin-top: 1.5rem;">
+                            <input type="text" placeholder="Enter promo code" style="width: 100%; margin-bottom: 0.5rem;">
+                            <button class="btn btn-secondary btn-block" style="margin-bottom: 1rem;">Apply Code</button>
+                        </div>
+                        
+                        <button class="btn btn-primary btn-block btn-large" onclick="window.location.href='checkout.html'">Proceed to Checkout</button>
+                        
+                        <a href="shop.html" class="btn btn-secondary btn-block" style="margin-top: 1rem;">Continue Shopping</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                    <li><a href="terms.html">Terms of Service</a></li>
+                    <li><a href="disclaimer.html">Disclaimer</a></li>
+                    <li><a href="security.html">Security</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Wimp-Drop. All rights reserved.</p>
+        </div>
+    </footer>
+
+    
+    <script>
+        function renderCartItems() {
+            const container = document.getElementById('cart-items-container');
+            const emptyMsg = document.getElementById('empty-cart-message');
+            
+            if (AppState.cart.length === 0) {
+                container.innerHTML = `
+                    <div class="cart-item" style="text-align: center; justify-content: center; border: none;">
+                        <div>
+                            <p style="color: #c8d1e8; font-size: 1rem;">Your cart is empty</p>
+                            <a href="shop.html" class="btn btn-primary">Continue Shopping</a>
+                        </div>
+                    </div>
+                `;
+                updateOrderSummary();
+                return;
+            }
+            
+            container.innerHTML = AppState.cart.map(item => `
+                <div class="cart-item">
+                    <div class="cart-item-image">
+                        <img src="${item.image}" alt="${item.name}">
+                    </div>
+                    <div class="cart-item-details">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div style="font-size: 0.875rem; color: #9fb0d6; margin-bottom: 0.5rem;">From ${item.supplier}</div>
+                        <div class="cart-item-quantity">
+                            <button class="quantity-btn" onclick="updateCartQuantity(${item.id}, ${item.quantity - 1})">−</button>
+                            <span style="min-width: 30px; text-align: center;">${item.quantity}</span>
+                            <button class="quantity-btn" onclick="updateCartQuantity(${item.id}, ${item.quantity + 1})">+</button>
+                        </div>
+                    </div>
+                    <div style="text-align: right; display: flex; flex-direction: column; justify-content: space-between;">
+                        <button style="background: none; border: none; color: #9fb0d6; cursor: pointer; font-size: 1.25rem;" onclick="removeFromCart(${item.id})">×</button>
+                        <div class="cart-item-price">${formatCurrency(item.price * item.quantity)}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            updateOrderSummary();
+        }
+        
+        function updateOrderSummary() {
+            const subtotal = Math.round(getCartTotal());
+            const shipping = AppState.cart.length > 0 ? 0 : 0;
+            const vat = Math.round(subtotal * 0.075);
+            const total = subtotal + shipping + vat;
+            
+            document.getElementById('subtotal').textContent = formatCurrency(subtotal, AppState.displayCurrency);
+            document.getElementById('shipping').textContent = formatCurrency(shipping, AppState.displayCurrency);
+            document.getElementById('tax').textContent = formatCurrency(vat, AppState.displayCurrency);
+            document.getElementById('total').textContent = formatCurrency(total, AppState.displayCurrency);
+        }
+        
+        // Initialize cart on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCartItems();
+        });
+    </script>
+    <script src="../js/env.js"></script>
+    <script src="../js/supabase.js"></script>
+    <script src="../js/flutterwave.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+</html>

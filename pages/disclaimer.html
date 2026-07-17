@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disclaimer - Wimp-Drop</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="notification-container"></div>
+    
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <a href="../index.html" style="color: inherit; text-decoration: none;">Wimp<span>-Drop</span></a>
+            </div>
+            
+            <nav>
+                <a href="../index.html">Home</a>
+                <a href="shop.html">Shop</a>
+                <a href="about.html">About</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            
+            <div class="header-actions">
+                <button class="icon-btn" onclick="window.location.href='cart.html'" title="Shopping Cart">
+                    🛒
+                    <span class="badge" data-cart-badge style="display: none;">0</span>
+                </button>
+                <div data-auth-section></div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Hero -->
+    <section class="hero" style="text-align: center; padding: 4rem var(--spacing-lg) 3rem;">
+        <div class="container">
+            <h1>Disclaimer</h1>
+            <p style="font-size: 1.25rem; color: #dce3f5; margin-top: 1rem;">Important information about our service</p>
+        </div>
+    </section>
+    
+    <!-- Content Section -->
+    <section class="section">
+        <div class="container" style="max-width: 900px;">
+            <div style="background: rgba(255,255,255,0.06); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                <h2 style="margin-top: 0;">Service Disclaimer</h2>
+                
+                <h3>General Information</h3>
+                <p>The information provided on Wimp-Drop is for general informational purposes only. We do not make any representations or warranties about the accuracy, reliability, completeness, or timeliness of the information provided.</p>
+                
+                <h3>Product Information</h3>
+                <p>While we strive to provide accurate product information, images, prices, and descriptions, we do not guarantee their accuracy or completeness. Product availability, pricing, and specifications are subject to change without notice. Actual product appearance may differ from images shown on our platform.</p>
+                
+                <h3>Supplier Responsibility</h3>
+                <p>Wimp-Drop connects buyers with independent suppliers through our CJ Dropshipping partnership. We are not responsible for the quality, delivery, or customer service provided by suppliers. All transactions are subject to individual supplier terms and conditions.</p>
+                
+                <h3>Limitation of Liability</h3>
+                <p>In no event shall Wimp-Drop, its directors, employees, or agents be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of this website or services.</p>
+                
+                <h3>External Links</h3>
+                <p>Our website may contain links to external websites. We are not responsible for the content, accuracy, or practices of external websites. Please review their terms and privacy policies before accessing.</p>
+                
+                <h3>User Responsibility</h3>
+                <p>You agree to use Wimp-Drop only for lawful purposes and in a way that does not infringe on the rights of others or restrict their use and enjoyment of the website. Prohibited behavior includes:</p>
+                <ul style="color: #dce3f5; padding-left: 1.5rem;">
+                    <li>Harassing or causing distress or inconvenience to any person</li>
+                    <li>Disrupting the normal flow of dialogue in our platform</li>
+                    <li>Attempting unauthorized access to our systems</li>
+                    <li>Any illegal activity or violation of applicable laws</li>
+                </ul>
+                
+                <h3>Assumption of Risk</h3>
+                <p>Your use of Wimp-Drop is at your own risk. We recommend that you review all product information and supplier terms before making purchases. Always verify pricing, shipping policies, and return conditions.</p>
+                
+                <h3>Changes to Disclaimer</h3>
+                <p>Wimp-Drop reserves the right to modify this disclaimer at any time. Changes will be effective immediately upon posting to the website. Your continued use of the service constitutes acceptance of the updated disclaimer.</p>
+                
+                <h3>Contact Information</h3>
+                <p>If you have any questions about this disclaimer, please contact us at:</p>
+                <p style="margin: 1rem 0;">
+                    Email: <a href="mailto:wimpycooperation@gmail.com">wimpycooperation@gmail.com</a><br>
+                    Location: Lagos, Nigeria<br>
+                    Company: Wimpy Co-operations
+                </p>
+                
+                <p style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color); font-size: 0.9rem; color: #9fb0d6;">
+                    Last Updated: July 17, 2026
+                </p>
+            </div>
+        </div>
+    </section>
+    
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                    <li><a href="terms.html">Terms of Service</a></li>
+                    <li><a href="disclaimer.html">Disclaimer</a></li>
+                    <li><a href="security.html">Security</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Wimp-Drop. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script src="../js/env.js"></script>
+    <script src="../js/supabase.js"></script>
+    <script src="../js/flutterwave.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+</html>

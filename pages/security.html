@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security - Wimp-Drop</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="notification-container"></div>
+    
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <a href="../index.html" style="color: inherit; text-decoration: none;">Wimp<span>-Drop</span></a>
+            </div>
+            
+            <nav>
+                <a href="../index.html">Home</a>
+                <a href="shop.html">Shop</a>
+                <a href="about.html">About</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            
+            <div class="header-actions">
+                <button class="icon-btn" onclick="window.location.href='cart.html'" title="Shopping Cart">
+                    🛒
+                    <span class="badge" data-cart-badge style="display: none;">0</span>
+                </button>
+                <div data-auth-section></div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Hero -->
+    <section class="hero" style="text-align: center; padding: 4rem var(--spacing-lg) 3rem;">
+        <div class="container">
+            <h1>Security at Wimp-Drop</h1>
+            <p style="font-size: 1.25rem; color: #dce3f5; margin-top: 1rem;">Your safety and privacy are our top priorities</p>
+        </div>
+    </section>
+    
+    <!-- Content Section -->
+    <section class="section">
+        <div class="container" style="max-width: 900px;">
+            <div style="background: rgba(255,255,255,0.06); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                <h2 style="margin-top: 0;">Security Standards</h2>
+                
+                <h3>🔒 Data Encryption</h3>
+                <p>All data transmitted between your device and our servers is encrypted using industry-standard SSL/TLS encryption protocols. This ensures that sensitive information cannot be intercepted or read by unauthorized parties.</p>
+                
+                <h3>🛡️ Payment Security</h3>
+                <p>We use Flutterwave, a PCI DSS Level 1 certified payment processor, to handle all payment transactions. Your credit card information is never stored on our servers and is processed securely through Flutterwave's encrypted channels.</p>
+                
+                <h3>👤 Account Protection</h3>
+                <p>Your account is protected by:</p>
+                <ul style="color: #dce3f5; padding-left: 1.5rem;">
+                    <li>Secure password hashing using industry-standard algorithms</li>
+                    <li>Session management with automatic timeout for inactive sessions</li>
+                    <li>Regular security audits and penetration testing</li>
+                    <li>Two-factor authentication options available for enhanced security</li>
+                </ul>
+                
+                <h3>🔐 Personal Information Protection</h3>
+                <p>We implement strict data protection measures:</p>
+                <ul style="color: #dce3f5; padding-left: 1.5rem;">
+                    <li>Personal data is only accessed by authorized personnel</li>
+                    <li>Data is stored in secure, encrypted databases</li>
+                    <li>Regular backups are maintained in geographically diverse locations</li>
+                    <li>Access logs are maintained and monitored for suspicious activity</li>
+                </ul>
+                
+                <h3>🚨 Fraud Prevention</h3>
+                <p>We employ multiple layers of fraud detection and prevention:</p>
+                <ul style="color: #dce3f5; padding-left: 1.5rem;">
+                    <li>Real-time transaction monitoring for suspicious patterns</li>
+                    <li>Address and CVV verification for all card transactions</li>
+                    <li>Automated alerts for unusual account activity</li>
+                    <li>Buyer protection guarantees for eligible purchases</li>
+                </ul>
+                
+                <h3>🌐 Website Security</h3>
+                <p>Our website infrastructure is secured through:</p>
+                <ul style="color: #dce3f5; padding-left: 1.5rem;">
+                    <li>Web Application Firewall (WAF) protection</li>
+                    <li>DDoS mitigation systems</li>
+                    <li>Regular security patches and updates</li>
+                    <li>Vulnerability scanning and remediation</li>
+                </ul>
+                
+                <h3>📋 Compliance Standards</h3>
+                <p>Wimp-Drop complies with international security and privacy standards:</p>
+                <ul style="color: #dce3f5; padding-left: 1.5rem;">
+                    <li>PCI DSS (Payment Card Industry Data Security Standard)</li>
+                    <li>GDPR (General Data Protection Regulation)</li>
+                    <li>Local data protection and privacy laws</li>
+                    <li>Industry best practices for e-commerce security</li>
+                </ul>
+                
+                <h3>🚨 Reporting Security Issues</h3>
+                <p>If you discover a security vulnerability, please report it responsibly to our security team:</p>
+                <p style="margin: 1rem 0;">
+                    Email: <a href="mailto:security@wimpycooperation.com">security@wimpycooperation.com</a>
+                </p>
+                <p>Please do not publicly disclose security issues until we have had time to address them.</p>
+                
+                <h3>💡 User Security Tips</h3>
+                <p>To keep your account secure, we recommend:</p>
+                <ul style="color: #dce3f5; padding-left: 1.5rem;">
+                    <li>Use a strong, unique password for your Wimp-Drop account</li>
+                    <li>Never share your password with anyone</li>
+                    <li>Use a secure network when accessing your account</li>
+                    <li>Logout after each session, especially on shared devices</li>
+                    <li>Enable two-factor authentication if available</li>
+                    <li>Verify URLs before entering sensitive information</li>
+                    <li>Keep your browser and operating system updated</li>
+                </ul>
+                
+                <h3>📞 Security Support</h3>
+                <p>If you have security concerns or questions, please contact our support team:</p>
+                <p style="margin: 1rem 0;">
+                    Email: <a href="mailto:wimpycooperation@gmail.com">wimpycooperation@gmail.com</a><br>
+                    Location: Lagos, Nigeria
+                </p>
+                
+                <p style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color); font-size: 0.9rem; color: #9fb0d6;">
+                    Last Updated: July 17, 2026
+                </p>
+            </div>
+        </div>
+    </section>
+    
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                    <li><a href="terms.html">Terms of Service</a></li>
+                    <li><a href="disclaimer.html">Disclaimer</a></li>
+                    <li><a href="security.html">Security</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Wimp-Drop. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script src="../js/env.js"></script>
+    <script src="../js/supabase.js"></script>
+    <script src="../js/flutterwave.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+</html>

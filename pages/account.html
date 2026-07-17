@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Account - Wimp-Drop</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="notification-container"></div>
+    
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <a href="../index.html" style="color: inherit; text-decoration: none;">Wimp<span>-Drop</span></a>
+            </div>
+            
+            <nav>
+                <a href="../index.html">Home</a>
+                <a href="shop.html">Shop</a>
+                <a href="about.html">About</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            
+            <div class="header-actions">
+                <div data-auth-section style="display: inline-block; margin-right: 1rem;"></div>
+                <button class="icon-btn" onclick="window.location.href='cart.html'" title="Shopping Cart">
+                    🛒
+                    <span class="badge" data-cart-badge style="display: none;">0</span>
+                </button>
+                
+                <button class="btn btn-secondary btn-small" onclick="handleLogout()">Logout</button>
+            </div>
+        </div>
+    </header>
+    
+    <section class="section">
+        <div class="container" style="max-width: 1000px;">
+            <h1>My Account</h1>
+            <p style="color: #dce3f5; margin-bottom: 2rem;">Manage your profile and orders</p>
+            
+            <div style="display: grid; grid-template-columns: 250px 1fr; gap: 2rem;">
+                <!-- Sidebar -->
+                <aside style="background: rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 8px; height: fit-content; border: 1px solid var(--border-color);">
+                    <nav style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <button class="tab-button" onclick="switchTab('profile', event)" style="background: #e63a2e; color: white; padding: 0.75rem 1rem; text-align: left; border: none; border-radius: 4px; cursor: pointer;">
+                            👤 Profile
+                        </button>
+                        <button class="tab-button" onclick="switchTab('orders', event)" style="background: none; padding: 0.75rem 1rem; text-align: left; border: none; border-radius: 4px; cursor: pointer;">
+                            📦 Orders
+                        </button>
+                        <button class="tab-button" onclick="switchTab('addresses', event)" style="background: none; padding: 0.75rem 1rem; text-align: left; border: none; border-radius: 4px; cursor: pointer;">
+                            📍 Addresses
+                        </button>
+                        <button class="tab-button" onclick="switchTab('wishlist', event)" style="background: none; padding: 0.75rem 1rem; text-align: left; border: none; border-radius: 4px; cursor: pointer;">
+                            ❤️ Wishlist
+                        </button>
+                        <button class="tab-button" onclick="switchTab('settings', event)" style="background: none; padding: 0.75rem 1rem; text-align: left; border: none; border-radius: 4px; cursor: pointer;">
+                            ⚙️ Settings
+                        </button>
+                    </nav>
+                </aside>
+                
+                <!-- Main Content -->
+                <main>
+                    <!-- Profile Tab -->
+                    <div id="profile-tab" class="tab-content" style="display: block;">
+                        <div style="background: rgba(255,255,255,0.06); padding: 2rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <h2>Profile Information</h2>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 2rem 0;">
+                                <div class="form-group">
+                                    <label>First Name</label>
+                                    <input id="profile-first-name" type="text" value="" placeholder="First Name">
+                                </div>
+                                <div class="form-group">
+                                    <label>Last Name</label>
+                                    <input id="profile-last-name" type="text" value="" placeholder="Last Name">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input id="profile-email" type="email" value="" placeholder="Email" disabled>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input id="profile-phone" type="tel" value="" placeholder="Phone">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Date of Birth</label>
+                                <input id="profile-dob" type="date">
+                            </div>
+                            
+                            <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Orders Tab -->
+                    <div id="orders-tab" class="tab-content" style="display: none;">
+                        <div style="background: rgba(255,255,255,0.06); padding: 2rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <h2>Order History</h2>
+                            
+                            <table style="width: 100%; margin-top: 1.5rem; border-collapse: collapse;">
+                                <thead style="border-bottom: 2px solid #e0e0e0;">
+                                    <tr>
+                                        <th style="text-align: left; padding: 1rem;">Order #</th>
+                                        <th style="text-align: left; padding: 1rem;">Date</th>
+                                        <th style="text-align: left; padding: 1rem;">Total</th>
+                                        <th style="text-align: left; padding: 1rem;">Status</th>
+                                        <th style="text-align: left; padding: 1rem;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="border-bottom: 1px solid #e0e0e0;">
+                                        <td style="padding: 1rem;">#ORD-001234</td>
+                                        <td style="padding: 1rem;">Dec 15, 2025</td>
+                                        <td style="padding: 1rem;">$129,990.00</td>
+                                        <td style="padding: 1rem;"><span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Delivered</span></td>
+                                        <td style="padding: 1rem;"><a href="#" style="color: #e63a2e;">View Details</a></td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #e0e0e0;">
+                                        <td style="padding: 1rem;">#ORD-001233</td>
+                                        <td style="padding: 1rem;">Dec 10, 2025</td>
+                                        <td style="padding: 1rem;">$79,990.00</td>
+                                        <td style="padding: 1rem;"><span style="background: #cfe2ff; color: #084298; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Shipped</span></td>
+                                        <td style="padding: 1rem;"><a href="#" style="color: #e63a2e;">Track Order</a></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Addresses Tab -->
+                    <div id="addresses-tab" class="tab-content" style="display: none;">
+                        <div style="background: rgba(255,255,255,0.06); padding: 2rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                                <h2>Saved Addresses</h2>
+                                <button class="btn btn-primary">+ Add New Address</button>
+                            </div>
+                            
+                            <div class="grid grid-2" style="gap: 1.5rem;">
+                                <div style="border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 8px; position: relative; background: rgba(255,255,255,0.04);">
+                                    <span style="position: absolute; top: 1rem; right: 1rem; background: #e63a2e; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem;">Default</span>
+                                    <h4>Home Address</h4>
+                                    <p>123 Main Street<br>New York, NY 10001<br>United States<br>+1 (555) 000-0000</p>
+                                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                                        <a href="#" style="color: #e63a2e; font-size: 0.875rem;">Edit</a>
+                                        <a href="#" style="color: #9fb0d6; font-size: 0.875rem;">Delete</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Wishlist Tab -->
+                    <div id="wishlist-tab" class="tab-content" style="display: none;">
+                        <div style="background: rgba(255,255,255,0.06); padding: 2rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <h2>My Wishlist</h2>
+                            <div class="grid grid-3" id="wishlist-items" style="margin-top: 1.5rem;">
+                                <!-- Wishlist items will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Settings Tab -->
+                    <div id="settings-tab" class="tab-content" style="display: none;">
+                        <div style="background: rgba(255,255,255,0.06); padding: 2rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <h2>Account Settings</h2>
+                            
+                            <div style="margin: 2rem 0;">
+                                <h4>Password</h4>
+                                <button class="btn btn-secondary">Change Password</button>
+                            </div>
+                            
+                            <div style="margin: 2rem 0;">
+                                <h4>Notifications</h4>
+                                <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                                    <input type="checkbox" checked>
+                                    <span>Email notifications for order updates</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <input type="checkbox" checked>
+                                    <span>Marketing emails and promotions</span>
+                                </label>
+                            </div>
+                            
+                            <div style="margin: 2rem 0; padding-top: 2rem; border-top: 1px solid #e0e0e0;">
+                                <h4 style="color: #dc3545;">Danger Zone</h4>
+                                <p style="color: #9fb0d6; margin-bottom: 1rem;">Once you delete your account, there is no going back.</p>
+                                <button class="btn" style="background-color: #dc3545; color: white;">Delete Account</button>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </section>
+    
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                    <li><a href="terms.html">Terms of Service</a></li>
+                    <li><a href="disclaimer.html">Disclaimer</a></li>
+                    <li><a href="security.html">Security</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Wimp-Drop. All rights reserved.</p>
+        </div>
+    </footer>
+
+    
+    <script>
+        // Protect account page - redirect to login if not logged in
+        async function protectAccountPage() {
+            // Wait for user loading
+            setTimeout(async () => {
+                if (!AppState.user) {
+                    // Try to restore from Supabase
+                    if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
+                        await supabaseService.restoreSession();
+                        if (supabaseService.currentUser) {
+                            AppState.user = supabaseService.currentUser;
+                            updateUserUI();
+                            return;
+                        }
+                    }
+                    
+                    // Not logged in, redirect to login
+                    showNotification('Please log in to access your account', 'error');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 1000);
+                }
+            }, 100);
+        }
+        
+        function switchTab(tabName, event) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Reset button styles
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.style.background = 'none';
+                btn.style.color = 'inherit';
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').style.display = 'block';
+            
+            // Highlight button
+            if (event?.target) {
+                event.target.style.background = '#e63a2e';
+                event.target.style.color = 'white';
+            }
+            
+            // Load tab-specific data
+            if (tabName === 'wishlist') {
+                loadWishlistTab();
+            } else if (tabName === 'orders') {
+                loadOrdersTab();
+            }
+        }
+        
+        async function loadProfile() {
+            if (!AppState.user) return;
+            const firstNameInput = document.getElementById('profile-first-name');
+            const lastNameInput = document.getElementById('profile-last-name');
+            const emailInput = document.getElementById('profile-email');
+            const phoneInput = document.getElementById('profile-phone');
+            const dobInput = document.getElementById('profile-dob');
+
+            if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
+                const profile = await supabaseService.getUserProfile(AppState.user.id);
+                if (profile.success && profile.profile) {
+                    const p = profile.profile;
+                    if (firstNameInput) firstNameInput.value = (p.full_name || '').split(' ')[0] || '';
+                    if (lastNameInput) lastNameInput.value = (p.full_name || '').split(' ').slice(1).join(' ') || '';
+                    if (emailInput) emailInput.value = p.email || AppState.user.email || '';
+                    if (phoneInput) phoneInput.value = p.phone || '';
+                    if (dobInput) dobInput.value = p.dob || '';
+                    return;
+                }
+            }
+
+            if (firstNameInput) firstNameInput.value = AppState.user?.user_metadata?.full_name?.split(' ')[0] || '';
+            if (lastNameInput) lastNameInput.value = AppState.user?.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '';
+            if (emailInput) emailInput.value = AppState.user?.email || '';
+            if (phoneInput) phoneInput.value = AppState.user?.user_metadata?.phone || '';
+        }
+
+        async function saveProfile() {
+            const firstNameInput = document.getElementById('profile-first-name');
+            const lastNameInput = document.getElementById('profile-last-name');
+            const phoneInput = document.getElementById('profile-phone');
+            const dobInput = document.getElementById('profile-dob');
+
+            if (!AppState.user) {
+                showNotification('Please log in first', 'error');
+                return;
+            }
+
+            const updates = {
+                full_name: `${firstNameInput?.value || ''} ${lastNameInput?.value || ''}`.trim(),
+                phone: phoneInput?.value || '',
+                dob: dobInput?.value || ''
+            };
+
+            if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
+                const result = await supabaseService.updateUserProfile(AppState.user.id, updates);
+                if (result.success) {
+                    showNotification('Profile updated successfully', 'success');
+                } else {
+                    showNotification(result.error || 'Failed to update profile', 'error');
+                }
+            } else {
+                showNotification('Unable to save profile while offline', 'error');
+            }
+        }
+
+        async function loadWishlistTab() {
+            const wishlistContainer = document.getElementById('wishlist-items');
+            
+            if (!AppState.user) {
+                wishlistContainer.innerHTML = '<p style="grid-column: 1/-1;">Please log in to view your wishlist</p>';
+                return;
+            }
+            
+            // Load wishlist from Supabase
+            if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
+                const result = await supabaseService.getUserWishlist(AppState.user.id);
+                
+                if (result.success && result.items && result.items.length > 0) {
+                    wishlistContainer.innerHTML = result.items.map(item => {
+                        const product = item.products;
+                        return `
+                            <div class="product-card">
+                                <div class="product-image">
+                                    <img src="${product.images?.[0] || 'https://via.placeholder.com/300'}" alt="${product.name}">
+                                </div>
+                                <div class="product-info">
+                                    <h3 class="product-name">${product.name}</h3>
+                                    <div class="product-price">
+                                        <span class="price-current">${formatCurrency(product.price)}</span>
+                                    </div>
+                                    <div class="product-actions" style="display: flex; gap: 0.5rem;">
+                                        <button class="btn btn-primary btn-small flex-1" onclick="addToCart(${product.id})">Add to Cart</button>
+                                        <button class="btn btn-outline btn-small" onclick="removeWishlistItem('${product.id}')">Remove</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    wishlistContainer.innerHTML = '<p style="grid-column: 1/-1;">Your wishlist is empty</p>';
+                }
+            } else {
+                // Fall back to localStorage wishlist
+                const productIds = AppState.wishlist;
+                const wishlistProducts = AppState.products.filter(p => productIds.includes(p.id));
+                
+                if (wishlistProducts.length === 0) {
+                    wishlistContainer.innerHTML = '<p style="grid-column: 1/-1;">Your wishlist is empty</p>';
+                } else {
+                    wishlistContainer.innerHTML = wishlistProducts.map(product => `
+                        <div class="product-card">
+                            <div class="product-image">
+                                <img src="${product.image}" alt="${product.name}">
+                            </div>
+                            <div class="product-info">
+                                <h3 class="product-name">${product.name}</h3>
+                                <div class="product-price">
+                                    <span class="price-current">${formatCurrency(product.price)}</span>
+                                </div>
+                                <div class="product-actions" style="display: flex; gap: 0.5rem;">
+                                    <button class="btn btn-primary btn-small flex-1" onclick="addToCart(${product.id})">Add to Cart</button>
+                                    <button class="btn btn-outline btn-small" onclick="removeWishlistItem(${product.id})">Remove</button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
+        }
+        
+        async function removeWishlistItem(productId) {
+            if (AppState.user && typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
+                await supabaseService.removeFromWishlist(AppState.user.id, productId);
+            }
+            
+            removeFromWishlist(productId);
+            loadWishlistTab();
+            showNotification('Removed from wishlist', 'info');
+        }
+        
+        async function loadOrdersTab() {
+            if (!AppState.user) return;
+
+            const tbody = document.querySelector('#orders-tab tbody');
+            if (!tbody) return;
+
+            tbody.innerHTML = '<tr><td colspan="5">Loading orders...</td></tr>';
+
+            if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
+                try {
+                    const res = await supabaseService.getUserOrders(AppState.user.id);
+                    if (res.success && res.orders.length > 0) {
+                        tbody.innerHTML = res.orders.map(order => {
+                            const date = new Date(order.created_at).toLocaleDateString('en-NG', { year: 'numeric', month: 'short', day: 'numeric' });
+                            const total = formatCurrency(Number(order.total_amount || order.total || 0));
+                            const statusColor = {
+                                pending: ['#fff3cd','#856404'],
+                                processing: ['#cfe2ff','#084298'],
+                                shipped: ['#cfe2ff','#084298'],
+                                delivered: ['#d4edda','#155724'],
+                                cancelled: ['#f8d7da','#721c24']
+                            }[order.status] || ['#e0e0e0','#333'];
+
+                            return `
+                                <tr style="border-bottom: 1px solid #e0e0e0;">
+                                    <td style="padding: 1rem;">#${order.id}</td>
+                                    <td style="padding: 1rem;">${date}</td>
+                                    <td style="padding: 1rem;">${total}</td>
+                                    <td style="padding: 1rem;"><span style="background: ${statusColor[0]}; color: ${statusColor[1]}; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">${order.status}</span></td>
+                                    <td style="padding: 1rem;"><a href="#" onclick="viewOrderDetails(${order.id})" style="color: #e63a2e;">View Details</a></td>
+                                </tr>
+                            `;
+                        }).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="5">You have no orders yet.</td></tr>';
+                    }
+                } catch (e) {
+                    console.error('Load orders error', e);
+                    tbody.innerHTML = '<tr><td colspan="5">Failed to load orders</td></tr>';
+                }
+            } else {
+                tbody.innerHTML = '<tr><td colspan="5">Orders require an internet connection</td></tr>';
+            }
+        }
+
+        function viewOrderDetails(orderId) {
+            // Save order id and open order details page or modal
+            sessionStorage.setItem('viewOrderId', orderId);
+            window.location.href = 'order-success.html';
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            protectAccountPage();
+            setTimeout(() => {
+                if (AppState.user) {
+                    loadProfile();
+                }
+            }, 300);
+        });
+    </script>
+    <script src="../js/env.js"></script>
+    <script src="../js/supabase.js"></script>
+    <script src="../js/flutterwave.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+</html>

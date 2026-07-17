@@ -1,0 +1,16 @@
+{
+  "name": "wimp-drop",
+  "version": "1.0.0",
+  "description": "Wimp-Drop Premium E-commerce Storefront",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "resend": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

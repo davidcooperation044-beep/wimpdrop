@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wimp-Drop - Premium Dropshipping Store</title>
+    <meta name="description" content="Wimp-Drop: Your trusted dropshipping marketplace for premium products worldwide">
+    <meta name="theme-color" content="#e63a2e">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+    
+    <!-- Header & Navigation -->
+    <header>
+        <div class="header-container">
+              <div class="logo">
+                <a href="../index.html" style="color: inherit; text-decoration: none;">Wimp<span>-Drop</span></a>
+            </div>
+            
+            <nav>
+                <a href="pages/shop.html">Shop</a>
+                <a href="pages/about.html">About</a>
+                <a href="pages/contact.html">Contact</a>
+            </nav>
+            
+            <div class="header-actions">
+                <input type="text" placeholder="Search products..." data-search style="padding: 0.5rem 1rem; border: 1px solid #e0e0e0; border-radius: 4px; width: 200px;">
+                
+                <button class="icon-btn" title="Wishlist">
+                    ❤️
+                    <span class="badge" data-wishlist-badge style="display: none;">0</span>
+                </button>
+                
+                <button class="icon-btn" onclick="window.location.href='pages/cart.html'" title="Shopping Cart">
+                    🛒
+                    <span class="badge" data-cart-badge style="display: none;">0</span>
+                </button>
+                
+                <div data-auth-section>
+                    <a href="pages/login.html" class="btn btn-outline btn-small">Login</a>
+                    <a href="pages/register.html" class="btn btn-primary btn-small">Sign Up</a>
+                </div>
+                
+                <button class="icon-btn mobile-menu-btn" style="display: none;">☰</button>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Hero Section -->
+    <section class="hero hero-fullscreen">
+        <video class="hero-video" autoplay muted loop playsinline poster="/images/hero-fallback.svg">
+            <source src="" type="video/mp4">
+        </video>
+        <div class="hero-overlay"></div>
+        <div class="container hero-shell">
+            <div class="hero-card">
+                <div class="hero-badge">Live global commerce</div>
+                <h1>Luxury retail, powered in real time.</h1>
+                <p>Experience a premium storefront with live rates, instant inventory updates, and a sleek black, gold, and blue experience crafted for modern shoppers.</p>
+                <div class="hero-actions">
+                    <a href="pages/shop.html" class="btn btn-primary btn-large">Start Shopping</a>
+                    <a href="pages/about.html" class="btn btn-secondary btn-large">Explore the Brand</a>
+                </div>
+                <div class="hero-stats">
+                    <div class="counter-card" data-counter-card>
+                        <strong class="counter-value" data-counter data-target="24" data-suffix="/7">0</strong>
+                        <span>Live storefront</span>
+                    </div>
+                    <div class="counter-card" data-counter-card>
+                        <strong class="counter-value" data-counter data-target="180" data-suffix="+">0</strong>
+                        <span>Curated suppliers</span>
+                    </div>
+                    <div class="counter-card" data-counter-card>
+                        <strong class="counter-value" data-counter data-target="99" data-suffix="%">0</strong>
+                        <span>Realtime pricing</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-panel">
+                <div class="panel-item">
+                    <strong>Realtime pricing</strong>
+                    <p>Currency and exchange data update live for every shopper session.</p>
+                </div>
+                <div class="panel-item">
+                    <strong>Connected checkout</strong>
+                    <p>Secure payments and fast delivery flows are built for modern commerce.</p>
+                </div>
+                <div class="panel-item">
+                    <strong>Always-on experience</strong>
+                    <p>The site is designed as a live storefront with continuous visual motion and live pricing updates.</p>
+                </div>
+            </div>
+        </div>
+        <div class="hero-ticker" aria-live="polite">
+            <div class="hero-ticker-track">
+                <span class="ticker-item" data-live-ticker>12,430 shoppers online now</span>
+                <span class="ticker-item">Live FX rates refreshed every 5 minutes</span>
+                <span class="ticker-item">98% delivery readiness across global suppliers</span>
+                <span class="ticker-item">New arrivals every 15 minutes</span>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section class="section">
+        <div class="container">
+            <h2 style="text-align: center; margin-bottom: 3rem;">Why Wimp-Drop feels premium</h2>
+            <div class="grid grid-3">
+                <div class="card" style="text-align: center; padding: 2rem;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">⚡</div>
+                    <h3>Realtime commerce</h3>
+                    <p>Prices, availability, and customer experience stay live throughout every visit.</p>
+                </div>
+                <div class="card" style="text-align: center; padding: 2rem;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">💳</div>
+                    <h3>Secure checkout</h3>
+                    <p>Payments and customer flows are designed for a polished modern store.</p>
+                </div>
+                <div class="card" style="text-align: center; padding: 2rem;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🌍</div>
+                    <h3>Global ready</h3>
+                    <p>Multi-region pricing and a contemporary interface support shoppers worldwide.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Featured Products Section -->
+    <section class="section section-light">
+        <div class="container">
+            <h2 style="margin-bottom: 2rem;">Featured Products</h2>
+            <div class="grid grid-4" id="product-list">
+                <!-- Products will be loaded here by JavaScript -->
+                <div class="skeleton" style="height: 300px;"></div>
+                <div class="skeleton" style="height: 300px;"></div>
+                <div class="skeleton" style="height: 300px;"></div>
+                <div class="skeleton" style="height: 300px;"></div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Categories Section -->
+    <section class="section">
+        <div class="container">
+            <h2 style="text-align: center; margin-bottom: 2rem;">Shop by Category</h2>
+            <div class="grid grid-3">
+                <a href="pages/shop.html?category=electronics" style="text-decoration: none;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 4rem 2rem; text-align: center; border-radius: 12px; cursor: pointer; transition: transform 0.3s ease;" class="hover-transform">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📱</div>
+                        <h3 style="color: white;">Electronics</h3>
+                    </div>
+                </a>
+                <a href="pages/shop.html?category=fashion" style="text-decoration: none;">
+                    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 4rem 2rem; text-align: center; border-radius: 12px; cursor: pointer; transition: transform 0.3s ease;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">👗</div>
+                        <h3 style="color: white;">Fashion</h3>
+                    </div>
+                </a>
+                <a href="pages/shop.html?category=home" style="text-decoration: none;">
+                    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 4rem 2rem; text-align: center; border-radius: 12px; cursor: pointer; transition: transform 0.3s ease;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">🏠</div>
+                        <h3 style="color: white;">Home & Living</h3>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Newsletter Section -->
+    <section class="section section-light">
+        <div class="container">
+            <div style="max-width: 600px; margin: 0 auto; text-align: center;">
+                <h2>Subscribe to Our Newsletter</h2>
+                <p style="margin-bottom: 2rem;">Get exclusive deals, new product launches, and special discounts delivered to your inbox.</p>
+                <div style="display: flex; gap: 1rem;">
+                    <input id="newsletter-email" type="email" placeholder="Enter your email" style="flex: 1; padding: 0.75rem 1rem; border: 1px solid #cccccc; border-radius: 4px; font-size: 1rem;">
+                    <button id="newsletter-btn" class="btn btn-primary btn-large">Subscribe</button>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="pages/privacy.html">Privacy Policy</a></li>
+                    <li><a href="pages/terms.html">Terms of Service</a></li>
+                    <li><a href="pages/disclaimer.html">Disclaimer</a></li>
+                    <li><a href="pages/security.html">Security</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Wimp-Drop. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script src="js/env.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/flutterwave.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

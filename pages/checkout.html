@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - Wimp-Drop</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="notification-container"></div>
+    
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <a href="../index.html" style="color: inherit; text-decoration: none;">Wimp<span>-Drop</span></a>
+            </div>
+            
+            <nav>
+                <a href="../index.html">Home</a>
+                <a href="shop.html">Shop</a>
+                <a href="about.html">About</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            
+            <div class="header-actions">
+                <div data-auth-section></div>
+            </div>
+        </div>
+    </header>
+    
+    <section class="section">
+        <div class="container">
+            <h1>Checkout</h1>
+            <p style="color: #dce3f5; margin-bottom: 2rem;">Complete your purchase securely</p>
+            
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+                <!-- Checkout Form -->
+                <div>
+                    <!-- Step 1: Shipping Address -->
+                    <div class="checkout-step" style="background: rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid var(--border-color);">
+                        <h3 style="margin-bottom: 1.5rem;">1. Shipping Address</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label>First Name *</label>
+                                <input type="text" placeholder="John" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Last Name *</label>
+                                <input type="text" placeholder="Doe" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Email Address *</label>
+                            <input type="email" placeholder="john@example.com" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Phone Number *</label>
+                            <input type="tel" placeholder="+1 (555) 000-0000" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Street Address *</label>
+                            <input type="text" placeholder="123 Main Street" required>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label>City *</label>
+                                <input type="text" placeholder="New York" required>
+                            </div>
+                            <div class="form-group">
+                                <label>State/Province *</label>
+                                <input type="text" placeholder="NY" required>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label>Postal Code *</label>
+                                <input type="text" placeholder="10001" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Country *</label>
+                                <select required>
+                                    <option value="NG" selected>Nigeria</option>
+                                    <option value="US">United States</option>
+                                    <option value="CA">Canada</option>
+                                    <option value="GB">United Kingdom</option>
+                                    <option value="AU">Australia</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2: Shipping Method -->
+                    <div class="checkout-step" style="background: rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid var(--border-color);">
+                        <h3 style="margin-bottom: 1.5rem;">2. Shipping Method</h3>
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #e63a2e; border-radius: 4px; cursor: pointer; background: rgba(230, 58, 46, 0.05);">
+                                <input type="radio" name="shipping" value="standard" checked style="margin-right: 1rem;" data-shipping-cost="5000">
+                                <div>
+                                    <strong>Standard Shipping (7-14 days)</strong>
+                                    <p style="color: #9fb0d6; font-size: 0.875rem; margin: 0;">$5,000.00</p>
+                                </div>
+                            </label>
+                            
+                            <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ccc; border-radius: 4px; cursor: pointer;">
+                                <input type="radio" name="shipping" value="express" style="margin-right: 1rem;" data-shipping-cost="10000">
+                                <div>
+                                    <strong>Express Shipping (3-5 days)</strong>
+                                    <p style="color: #9fb0d6; font-size: 0.875rem; margin: 0;">$10,000.00</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 3: Payment -->
+                    <div class="checkout-step" style="background: rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid var(--border-color);">
+                        <h3 style="margin-bottom: 1.5rem;">3. Payment Method</h3>
+                        
+                        <div style="background: rgba(45,108,223,0.18); border: 1px solid rgba(45,108,223,0.34); padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
+                            <p style="margin: 0; color: #084298; font-size: 0.875rem;">
+                                <strong>💳 Flutterwave Secure Payment</strong><br/>
+                                Your payment is processed securely through Flutterwave. No card details are stored on our servers.
+                            </p>
+                        </div>
+                        
+                        <p style="color: #dce3f5; margin-bottom: 1rem;">
+                            You'll be redirected to Flutterwave's secure payment page where you can pay using:
+                        </p>
+                        <ul style="color: #dce3f5; margin-bottom: 1.5rem; padding-left: 1.5rem;">
+                            <li>Credit/Debit Cards (Visa, Mastercard, Amex)</li>
+                            <li>Bank Transfers</li>
+                            <li>USSD</li>
+                            <li>Mobile Money</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Agreements -->
+                    <div style="margin-bottom: 2rem;">
+                        <label style="display: flex; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" required>
+                            <span>I agree to the <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Policy</a></span>
+                        </label>
+                        <label style="display: flex; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox">
+                            <span>Send me promotional emails and updates</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Order Summary -->
+                <div>
+                    <div class="cart-summary" style="position: sticky; top: 100px;">
+                        <h3 style="margin-bottom: 1.5rem;">Order Summary</h3>
+                        
+                        <div id="order-items" style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #ccc;">
+                            <!-- Items will be populated here -->
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span><span id="checkout-subtotal">0</span></span>
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span>Shipping:</span>
+                            <span><span id="checkout-shipping">5000</span></span>
+                        </div>
+
+                        <div class="summary-row" style="margin-top: 1rem; display:flex; gap:0.5rem; align-items:center;">
+                            <input type="text" id="promo-code-input" placeholder="Promo code" style="flex:1; padding:0.5rem; border:1px solid #ccc; border-radius:4px;">
+                            <button class="btn btn-secondary" id="apply-promo-btn">Apply</button>
+                        </div>
+
+                        <div class="summary-row" id="promo-line" style="display:none;">
+                            <span>Discount:</span>
+                            <span>-<span id="checkout-discount">0</span></span>
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span>VAT (7.5%):</span>
+                            <span><span id="checkout-tax">0</span></span>
+                        </div>
+                        
+                        <div class="summary-row total">
+                            <span>Total:</span>
+                            <span><span id="checkout-total">0</span></span>
+                        </div>
+                        
+                        <button class="btn btn-primary btn-block btn-large" onclick="processOrder()">Complete Order</button>
+                        <a href="cart.html" class="btn btn-secondary btn-block" style="margin-top: 1rem;">Back to Cart</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                    <li><a href="terms.html">Terms of Service</a></li>
+                    <li><a href="disclaimer.html">Disclaimer</a></li>
+                    <li><a href="security.html">Security</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Wimp-Drop. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script>
+        function initCheckout() {
+            // Check if user is logged in
+            if (!AppState.user) {
+                showNotification('Please log in to checkout', 'error');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1500);
+                return;
+            }
+            
+            // Render order items
+            const itemsContainer = document.getElementById('order-items');
+            itemsContainer.innerHTML = AppState.cart.map(item => `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                    <div>
+                        <strong>${item.name}</strong>
+                        <p style="font-size: 0.875rem; color: #9fb0d6; margin: 0;">Qty: ${item.quantity}</p>
+                    </div>
+                    <span>${formatCurrency(item.price * item.quantity)}</span>
+                </div>
+            `).join('');
+            
+            updateCheckoutSummary();
+        }
+        
+        function updateCheckoutSummary() {
+            const subtotal = getCartTotal();
+            const shippingElement = document.querySelector('input[name="shipping"]:checked');
+            const shippingValue = shippingElement ? parseInt(shippingElement.getAttribute('data-shipping-cost')) : 5000;
+            const vat = Math.round(subtotal * 0.075); // 7.5% VAT
+
+            // Promo discount
+            let discount = 0;
+            if (window.AppState && window.AppState.appliedPromo) {
+                const promo = window.AppState.appliedPromo;
+                if (promo.discount_type === 'percent') {
+                    discount = Math.round(subtotal * (Number(promo.discount_value || 0) / 100));
+                } else if (promo.discount_type === 'fixed') {
+                    discount = Math.round(Number(promo.discount_value || 0));
+                }
+            }
+
+            const total = subtotal + shippingValue + vat - discount;
+            
+            document.getElementById('checkout-subtotal').textContent = formatCurrency(Math.round(subtotal), AppState.displayCurrency);
+            document.getElementById('checkout-shipping').textContent = formatCurrency(shippingValue, AppState.displayCurrency);
+            document.getElementById('checkout-tax').textContent = formatCurrency(vat, AppState.displayCurrency);
+            document.getElementById('checkout-total').textContent = formatCurrency(total, AppState.displayCurrency);
+
+            // Update promo UI
+            const promoLine = document.getElementById('promo-line');
+            if (promoLine) {
+                if (discount > 0) {
+                    promoLine.style.display = 'flex';
+                    document.getElementById('checkout-discount').textContent = formatCurrency(discount, AppState.displayCurrency);
+                } else {
+                    promoLine.style.display = 'none';
+                }
+            }
+        }
+
+        // Wire promo apply button
+        document.addEventListener('DOMContentLoaded', () => {
+            const applyBtn = document.getElementById('apply-promo-btn');
+            if (applyBtn) applyBtn.addEventListener('click', (e) => { e.preventDefault(); if (typeof applyPromoCode === 'function') applyPromoCode(); });
+        });
+        
+        async function processOrder() {
+            try {
+                // Validate user is logged in
+                if (!AppState.user) {
+                    showNotification('Please log in to complete your purchase', 'error');
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                // Validate cart
+                if (AppState.cart.length === 0) {
+                    showNotification('Your cart is empty', 'error');
+                    return;
+                }
+                
+                // Get form data
+                const firstName = document.querySelector('[name="firstName"]')?.value || '';
+                const lastName = document.querySelector('[name="lastName"]')?.value || '';
+                const email = document.querySelector('[name="email"]')?.value || AppState.user.email || '';
+                const phone = document.querySelector('[name="phone"]')?.value || '';
+                const street = document.querySelector('input[placeholder="123 Main Street"]')?.value || '';
+                const city = document.querySelector('input[placeholder="New York"]')?.value || '';
+                const state = document.querySelector('input[placeholder="NY"]')?.value || '';
+                const postal = document.querySelector('input[placeholder="10001"]')?.value || '';
+                const country = document.querySelector('select[required]')?.value || 'NG';
+                
+                // Validate required fields
+                if (!firstName || !lastName || !email || !phone || !street || !city) {
+                    showNotification('Please fill in all shipping address fields', 'error');
+                    return;
+                }
+                
+                // Get shipping method
+                const shippingMethod = document.querySelector('input[name="shipping"]:checked')?.value || 'standard';
+                const shippingCost = parseInt(document.querySelector('input[name="shipping"]:checked')?.getAttribute('data-shipping-cost')) || 5000;
+                
+                // Calculate totals
+                const subtotal = getCartTotal();
+                const vat = Math.round(subtotal * 0.075);
+                const total = subtotal + shippingCost + vat;
+                
+                // Validate Flutterwave is initialized
+                if (!flutterwaveService.isInitialized) {
+                    showNotification('Payment service not ready. Please refresh the page.', 'error');
+                    return;
+                }
+                
+                // Create Flutterwave payment object
+                const paymentData = createFlutterwavePayment(
+                    AppState.cart,
+                    {
+                        firstName,
+                        lastName,
+                        email,
+                        phone,
+                        userId: AppState.user.id
+                    },
+                    total
+                );
+                
+                // Add shipping and address info to metadata
+                paymentData.meta = {
+                    ...paymentData.meta,
+                    shipping_address: {
+                        first_name: firstName,
+                        last_name: lastName,
+                        street,
+                        city,
+                        state,
+                        postal,
+                        country
+                    },
+                    shipping_method: shippingMethod,
+                    cart_items: AppState.cart
+                };
+                
+                // Set up payment success handler
+                window.onFlutterwaveSuccess = async (response) => {
+                    try {
+                        showNotification('Processing your order...', 'info');
+                        
+                        // Create order in Supabase
+                        if (supabaseService.isInitialized) {
+                            const orderResult = await supabaseService.createOrder(AppState.user.id, {
+                                items: AppState.cart,
+                                totalAmount: total,
+                                shippingAddress: {
+                                    firstName,
+                                    lastName,
+                                    email,
+                                    phone,
+                                    street,
+                                    city,
+                                    state,
+                                    postal,
+                                    country
+                                },
+                                shippingMethod,
+                                paymentRef: response.transaction_id
+                            });
+                            
+                            if (orderResult.success) {
+                                // Save order ID to session for order-success page
+                                sessionStorage.setItem('lastOrderId', orderResult.order.id);
+                                sessionStorage.setItem('lastOrderTotal', total);
+                                sessionStorage.setItem('lastOrderEmail', email);
+                                
+                                // Send order confirmation emails to admin and user
+                                if (typeof emailService !== 'undefined') {
+                                    try {
+                                        await emailService.sendOrderConfirmation(orderResult.order, email);
+                                        showNotification('Order confirmation sent to your email', 'success');
+                                    } catch (emailError) {
+                                        console.warn('Email sending error:', emailError);
+                                        // Don't fail the order if email fails
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Clear cart
+                        clearCart();
+                        
+                        // Redirect to success page
+                        setTimeout(() => {
+                            window.location.href = 'order-success.html';
+                        }, 1000);
+                    } catch (error) {
+                        console.error('Error saving order:', error);
+                        showNotification('Order saved but there was an error. Please check your account.', 'warning');
+                        clearCart();
+                        setTimeout(() => {
+                            window.location.href = 'order-success.html';
+                        }, 2000);
+                    }
+                };
+                
+                // Set up payment failure handler
+                window.onFlutterwaveFailure = (message) => {
+                    showNotification('Payment failed: ' + message, 'error');
+                };
+                
+                // Initiate payment
+                showNotification('Opening secure payment page...', 'info');
+                const paymentResult = await flutterwaveService.initiatePayment(paymentData);
+                
+                if (!paymentResult.success) {
+                    showNotification('Failed to initialize payment: ' + paymentResult.error, 'error');
+                }
+                
+            } catch (error) {
+                console.error('Checkout error:', error);
+                showNotification('Checkout error: ' + error.message, 'error');
+            }
+        }
+        
+        // Shipping method change listener
+        document.querySelectorAll('input[name="shipping"]').forEach(radio => {
+            radio.addEventListener('change', updateCheckoutSummary);
+        });
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', initCheckout);
+    </script>
+    <script src="../js/env.js"></script>
+    <script src="../js/supabase.js"></script>
+    <script src="../js/flutterwave.js"></script>
+    <script src="../js/email-service.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+</html>
