@@ -14,7 +14,7 @@
     <header>
         <div class="header-container">
             <div class="logo">
-                <a href="../index.html" style="color: inherit; text-decoration: none;">Wimp<span>-Drop</span></a>
+                <a href="../index.html" class="link-reset">Wimp<span>-Drop</span></a>
             </div>
             
             <nav>
@@ -25,16 +25,16 @@
             </nav>
             
             <div class="header-actions">
-                <input type="text" placeholder="Search products..." data-search style="padding: 0.5rem 1rem; border: 1px solid #e0e0e0; border-radius: 4px; width: 200px;">
+                <input type="text" placeholder="Search products..." data-search class="search-input">
                 
                 <button class="icon-btn" title="Wishlist">
                     ❤️
-                    <span class="badge" data-wishlist-badge style="display: none;">0</span>
+                    <span class="badge hidden" data-wishlist-badge>0</span>
                 </button>
                 
                 <button class="icon-btn" onclick="window.location.href='cart.html'" title="Shopping Cart">
                     🛒
-                    <span class="badge" data-cart-badge style="display: none;">0</span>
+                    <span class="badge hidden" data-cart-badge>0</span>
                 </button>
                 
                 <div data-auth-section>
@@ -48,31 +48,31 @@
     <section class="section">
         <div class="container">
             <h1>Our Store</h1>
-            <p style="color: #dce3f5; margin-bottom: 2rem;">Discover our curated collection of premium products</p>
+            <p class="section-description">Discover our curated collection of premium products</p>
             
-            <div style="display: flex; gap: 2rem; margin-bottom: 3rem;">
+            <div class="page-layout--columns">
                 <!-- Filters Sidebar -->
-                <aside style="width: 250px;">
-                    <div style="background: rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                        <h3 style="margin-bottom: 1rem;">Filters</h3>
+                <aside class="sidebar-filter">
+                    <div class="panel-card">
+                        <h3 class="panel-heading">Filters</h3>
                         
                         <!-- Category Filter -->
-                        <div style="margin-bottom: 1.5rem;">
-                            <h4 style="margin-bottom: 0.75rem; font-size: 1rem;">Category</h4>
-                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <div class="filter-group">
+                            <h4 class="filter-heading">Category</h4>
+                            <div class="filter-column">
+                                <label class="filter-label">
                                     <input type="radio" name="category" value="all" checked onchange="filterProducts()">
                                     All Products
                                 </label>
-                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <label class="filter-label">
                                     <input type="radio" name="category" value="electronics" onchange="filterProducts()">
                                     Electronics
                                 </label>
-                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <label class="filter-label">
                                     <input type="radio" name="category" value="fashion" onchange="filterProducts()">
                                     Fashion
                                 </label>
-                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <label class="filter-label">
                                     <input type="radio" name="category" value="home" onchange="filterProducts()">
                                     Home & Living
                                 </label>
@@ -80,19 +80,19 @@
                         </div>
                         
                         <!-- Price Filter -->
-                        <div style="margin-bottom: 1.5rem;">
-                            <h4 style="margin-bottom: 0.75rem; font-size: 1rem;">Price Range</h4>
-                            <input type="range" min="0" max="1000" value="1000" style="width: 100%;" onchange="filterProducts()">
-                            <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.875rem;">
+                        <div class="filter-group">
+                            <h4 class="filter-heading">Price Range</h4>
+                            <input type="range" min="0" max="1000" value="1000" class="range-full" onchange="filterProducts()">
+                            <div class="space-between">
                                 <span>$0.00</span>
                                 <span>$<span id="max-price">1000</span></span>
                             </div>
                         </div>
                         
                         <!-- Sort -->
-                        <div style="margin-bottom: 1.5rem;">
-                            <h4 style="margin-bottom: 0.75rem; font-size: 1rem;">Sort By</h4>
-                            <select onchange="filterProducts()" style="width: 100%; padding: 0.5rem; border-radius: 4px;">
+                        <div class="filter-group">
+                            <h4 class="filter-heading">Sort By</h4>
+                            <select onchange="filterProducts()" class="form-select">
                                 <option value="newest">Newest</option>
                                 <option value="popular">Most Popular</option>
                                 <option value="price-low">Price: Low to High</option>
@@ -106,19 +106,19 @@
                 </aside>
                 
                 <!-- Products Grid -->
-                <div style="flex: 1;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                        <p id="result-count" style="color: #dce3f5;">Showing 12 products</p>
+                <div class="flex-full">
+                    <div class="toolbar-row">
+                        <p id="result-count" class="result-count">Showing 12 products</p>
                     </div>
                     
                     <div class="grid grid-3" id="product-list">
                         <!-- Products loaded by JavaScript -->
-                        <div class="skeleton" style="height: 300px;"></div>
-                        <div class="skeleton" style="height: 300px;"></div>
-                        <div class="skeleton" style="height: 300px;"></div>
-                        <div class="skeleton" style="height: 300px;"></div>
-                        <div class="skeleton" style="height: 300px;"></div>
-                        <div class="skeleton" style="height: 300px;"></div>
+                        <div class="skeleton skeleton-tall"></div>
+                        <div class="skeleton skeleton-tall"></div>
+                        <div class="skeleton skeleton-tall"></div>
+                        <div class="skeleton skeleton-tall"></div>
+                        <div class="skeleton skeleton-tall"></div>
+                        <div class="skeleton skeleton-tall"></div>
                     </div>
                 </div>
             </div>
@@ -126,10 +126,10 @@
     </section>
     
     <!-- Pagination -->
-    <section class="section" style="text-align: center;">
-        <div class="flex-center" id="pagination-container" style="gap: 1rem; justify-content: center;">
+    <section class="section">
+        <div class="pagination-row" id="pagination-container">
             <button class="btn btn-secondary" id="pagination-prev">← Previous</button>
-            <span id="pagination-pages" style="display: flex; gap: 0.5rem;">
+            <span id="pagination-pages" class="pagination-pages">
                 <!-- Page buttons rendered here -->
             </span>
             <button class="btn btn-secondary" id="pagination-next">Next →</button>

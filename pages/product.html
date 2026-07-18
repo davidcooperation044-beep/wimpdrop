@@ -14,7 +14,7 @@
     <header>
         <div class="header-container">
             <div class="logo">
-                <a href="../index.html" style="color: inherit; text-decoration: none;">Wimp<span>-Drop</span></a>
+                <a href="../index.html" class="link-reset">Wimp<span>-Drop</span></a>
             </div>
             
             <nav>
@@ -27,12 +27,12 @@
             <div class="header-actions">
                 <button class="icon-btn" title="Wishlist">
                     ❤️
-                    <span class="badge" data-wishlist-badge style="display: none;">0</span>
+                    <span class="badge hidden" data-wishlist-badge>0</span>
                 </button>
                 
                 <button class="icon-btn" onclick="window.location.href='cart.html'" title="Shopping Cart">
                     🛒
-                    <span class="badge" data-cart-badge style="display: none;">0</span>
+                    <span class="badge hidden" data-cart-badge>0</span>
                 </button>
                 
                 <div data-auth-section></div>
@@ -41,26 +41,26 @@
     </header>
     
     <!-- Breadcrumb -->
-    <div style="background: rgba(255,255,255,0.04); padding: 1rem var(--spacing-lg); border-bottom: 1px solid var(--border-color);">
+    <div class="breadcrumb-bar">
         <div class="container">
-            <a href="../index.html" style="color: #e63a2e;">Home</a>
-            <span style="color: #9fb0d6; margin: 0 0.5rem;">/</span>
-            <a href="shop.html" style="color: #e63a2e;">Shop</a>
-            <span style="color: #9fb0d6; margin: 0 0.5rem;">/</span>
-            <span id="product-breadcrumb" style="color: #dce3f5;">Product</span>
+            <a href="../index.html" class="breadcrumb-link">Home</a>
+            <span class="breadcrumb-separator">/</span>
+            <a href="shop.html" class="breadcrumb-link">Shop</a>
+            <span class="breadcrumb-separator">/</span>
+            <span id="product-breadcrumb" class="breadcrumb-current">Product</span>
         </div>
     </div>
     
     <section class="section">
         <div class="container">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
+            <div class="product-two-column">
                 <!-- Product Images -->
                 <div>
-                    <div id="main-image" style="width: 100%; aspect-ratio: 1; background: rgba(255,255,255,0.06); border-radius: 8px; overflow: hidden; margin-bottom: 1rem; border: 1px solid var(--border-color);">
-                        <img id="product-main-image" src="" alt="Product" style="width: 100%; height: 100%; object-fit: cover;">
+                    <div id="main-image" class="product-image-wrapper">
+                        <img id="product-main-image" src="" alt="Product" class="product-main-img">
                     </div>
                     
-                    <div class="grid grid-4" id="thumbnail-gallery" style="gap: 0.75rem;">
+                    <div class="grid grid-4 thumbnail-gallery" id="thumbnail-gallery">
                         <!-- Thumbnails will be populated here -->
                     </div>
                 </div>
@@ -68,102 +68,102 @@
                 <!-- Product Details -->
                 <div>
                     <div class="product-category" id="product-category">Electronics</div>
-                    <h1 id="product-name" style="margin-bottom: 1rem;">Product Name</h1>
+                    <h1 id="product-name" class="product-title">Product Name</h1>
                     
                     <!-- Rating -->
-                    <div class="product-rating" style="margin-bottom: 1.5rem;">
+                            <div class="product-rating-row">
                         <span class="stars" id="product-stars">★★★★★</span>
                         <span class="rating-count" id="product-rating-count">(256 reviews)</span>
-                        <a href="#reviews" style="margin-left: auto; color: #9fb0d6; font-size: 0.875rem;">See all reviews</a>
+                        <a href="#reviews" class="product-review-link">See all reviews</a>
                     </div>
                     
                     <!-- Price -->
-                    <div style="margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid #e0e0e0;">
-                        <div style="display: flex; align-items: baseline; gap: 1rem; margin-bottom: 0.5rem;">
-                            <span style="font-size: 2rem; font-weight: 700; color: #e63a2e;" id="product-price">$0.00</span>
-                            <span style="font-size: 1rem; color: #9fb0d6; text-decoration: line-through;" id="product-original-price">$0.00</span>
-                            <span style="background: #e63a2e; color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;" id="product-discount">Save 30%</span>
+                    <div class="product-price-panel">
+                        <div class="price-row">
+                            <span class="price-current" id="product-price">$0.00</span>
+                            <span class="product-original-price" id="product-original-price">$0.00</span>
+                            <span class="discount-pill" id="product-discount">Save 30%</span>
                         </div>
-                        <p style="color: #9fb0d6; font-size: 0.875rem;">Supplier: <strong id="product-supplier">CJ Dropshipping</strong></p>
+                        <p class="supplier-note">Supplier: <strong id="product-supplier">CJ Dropshipping</strong></p>
                     </div>
                     
                     <!-- Description -->
-                    <div style="margin-bottom: 2rem;">
-                        <p id="product-description" style="color: #dce3f5; line-height: 1.8;">
+                    <div class="product-description-block">
+                        <p id="product-description" class="product-description">
                             Product description will appear here
                         </p>
                     </div>
                     
                     <!-- Variants -->
-                    <div style="margin-bottom: 2rem;">
+                    <div class="product-variant-section">
                         <div id="variants-container"></div>
                     </div>
                     
                     <!-- Stock Status -->
-                    <div style="margin-bottom: 2rem; padding: 1rem; background: rgba(255,255,255,0.06); border-radius: 8px; border: 1px solid var(--border-color);">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                            <span style="font-weight: 600;">Availability:</span>
-                            <span id="stock-status" style="color: #28a745; font-weight: 600;">In Stock</span>
+                    <div class="stock-panel">
+                        <div class="stock-header">
+                            <span>Availability:</span>
+                            <span id="stock-status">In Stock</span>
                         </div>
-                        <div style="background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden;">
-                            <div id="stock-bar" style="background: #28a745; height: 100%; width: 85%;"></div>
+                        <div class="stock-track">
+                            <div id="stock-bar" class="stock-bar"></div>
                         </div>
-                        <p style="font-size: 0.875rem; color: #9fb0d6; margin-top: 0.5rem;">Only <span id="stock-count">42</span> items left - order soon!</p>
+                        <p class="stock-note">Only <span id="stock-count">42</span> items left - order soon!</p>
                     </div>
                     
                     <!-- Add to Cart Section -->
-                    <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
-                        <div class="quantity-selector" style="display: flex; align-items: center; gap: 0.5rem; border: 1px solid #e0e0e0; border-radius: 4px; width: fit-content;">
+                    <div class="product-actions">
+                        <div class="quantity-selector">
                             <button class="quantity-btn" onclick="decreaseQuantity()">−</button>
-                            <input type="number" id="quantity" value="1" min="1" max="100" style="width: 60px; border: none; text-align: center; padding: 0;">
+                            <input type="number" id="quantity" value="1" min="1" max="100" class="quantity-input">
                             <button class="quantity-btn" onclick="increaseQuantity()">+</button>
                         </div>
                         
-                        <button class="btn btn-primary btn-large" onclick="addProductToCart()" style="flex: 1;">
+                        <button class="btn btn-primary btn-large btn-block" onclick="addProductToCart()">
                             🛒 Add to Cart
                         </button>
                         
-                        <button class="btn btn-outline btn-large" onclick="toggleProductWishlist()" id="wishlist-btn">
+                        <button class="btn btn-outline btn-large btn-block" onclick="toggleProductWishlist()" id="wishlist-btn">
                             ♡ Add to Wishlist
                         </button>
                     </div>
                     
                     <!-- Shipping Info -->
-                    <div style="background: rgba(45,108,223,0.16); padding: 1rem; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid var(--primary-blue);">
-                        <div style="display: flex; gap: 1rem; margin-bottom: 0.75rem;">
-                            <span style="font-size: 1.5rem;">🚚</span>
+                    <div class="info-card">
+                        <div class="info-row">
+                            <span class="feature-symbol">🚚</span>
                             <div>
-                                <p style="font-weight: 600; margin: 0;">Free shipping on orders over $50,000.00</p>
-                                <p style="font-size: 0.875rem; color: #dce3f5; margin: 0.5rem 0 0 0;">Standard delivery: 7-14 days</p>
+                                <p class="info-card-heading">Free shipping on orders over $50,000.00</p>
+                                <p class="stock-note">Standard delivery: 7-14 days</p>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Product Details Tabs -->
-                    <div style="border-top: 1px solid #e0e0e0; padding-top: 2rem;">
-                        <div style="display: flex; gap: 1rem; margin-bottom: 1rem; border-bottom: 1px solid #e0e0e0;">
-                            <button class="tab-button" onclick="switchProductTab('details', event)" style="padding: 0.75rem 1rem; border: none; background: none; cursor: pointer; border-bottom: 2px solid #e63a2e; color: #e63a2e; font-weight: 600;">Details</button>
-                            <button class="tab-button" onclick="switchProductTab('specs', event)" style="padding: 0.75rem 1rem; border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; color: #9fb0d6;">Specifications</button>
-                            <button class="tab-button" onclick="switchProductTab('shipping', event)" style="padding: 0.75rem 1rem; border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; color: #9fb0d6;">Shipping Info</button>
+                    <div class="product-tabs-panel">
+                        <div class="tabs-bar">
+                            <button class="tab-button active" onclick="switchProductTab('details', event)">Details</button>
+                            <button class="tab-button" onclick="switchProductTab('specs', event)">Specifications</button>
+                            <button class="tab-button" onclick="switchProductTab('shipping', event)">Shipping Info</button>
                         </div>
                         
-                        <div id="details-tab" class="product-tab">
-                            <p id="full-description" style="color: #dce3f5; line-height: 1.8; margin: 0;">Full product description and details</p>
+                        <div id="details-tab" class="product-tab active">
+                            <p id="full-description" class="product-tab-content">Full product description and details</p>
                         </div>
                         
-                        <div id="specs-tab" class="product-tab" style="display: none;">
-                            <table style="width: 100%; font-size: 0.875rem;">
+                        <div id="specs-tab" class="product-tab">
+                            <table class="spec-table">
                                 <tbody id="specs-table">
-                                    <tr style="border-bottom: 1px solid #e0e0e0;">
-                                        <td style="padding: 0.75rem 0; font-weight: 600;">Weight:</td>
-                                        <td style="padding: 0.75rem 0;">Loading...</td>
+                                    <tr class="spec-row">
+                                        <td class="spec-key">Weight:</td>
+                                        <td class="spec-value">Loading...</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                         
-                        <div id="shipping-tab" class="product-tab" style="display: none;">
-                            <p style="color: #dce3f5; margin: 0;">Shipped directly from our suppliers to your address. Tracking information will be provided.</p>
+                        <div id="shipping-tab" class="product-tab">
+                            <p class="product-tab-content">Shipped directly from our suppliers to your address. Tracking information will be provided.</p>
                         </div>
                     </div>
                 </div>
@@ -174,66 +174,56 @@
     <!-- Reviews Section -->
     <section class="section section-light" id="reviews">
         <div class="container">
-            <h2 style="margin-bottom: 2rem;">Customer Reviews</h2>
+            <h2 class="section-title">Customer Reviews</h2>
             
-            <div style="display: grid; grid-template-columns: 250px 1fr; gap: 2rem;">
+            <div class="review-layout">
                 <!-- Review Summary -->
-                <div>
-                    <div style="background: rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
-                        <div style="font-size: 3rem; font-weight: 700; color: #e63a2e; margin-bottom: 0.5rem;">4.5</div>
-                        <div style="color: #ffc107; margin-bottom: 0.5rem;">★★★★☆</div>
-                        <p style="color: #9fb0d6; font-size: 0.875rem; margin: 0;">Based on 256 reviews</p>
-                        
-                        <div style="margin-top: 1.5rem; text-align: left;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-size: 0.875rem;">
-                                <span>5 ★</span>
-                                <div style="width: 60px; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden;">
-                                    <div style="width: 60%; height: 100%; background: #ffc107;"></div>
-                                </div>
-                                <span style="color: #9fb0d6;">142</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-size: 0.875rem;">
-                                <span>4 ★</span>
-                                <div style="width: 60px; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden;">
-                                    <div style="width: 35%; height: 100%; background: #ffc107;"></div>
-                                </div>
-                                <span style="color: #9fb0d6;">82</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-size: 0.875rem;">
-                                <span>3 ★</span>
-                                <div style="width: 60px; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden;">
-                                    <div style="width: 20%; height: 100%; background: #ffc107;"></div>
-                                </div>
-                                <span style="color: #9fb0d6;">24</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;">
-                                <span>1-2 ★</span>
-                                <div style="width: 60px; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden;">
-                                    <div style="width: 5%; height: 100%; background: #ffc107;"></div>
-                                </div>
-                                <span style="color: #9fb0d6;">8</span>
-                            </div>
+                <div class="review-summary">
+                    <div class="review-score">4.5</div>
+                    <div class="review-stars">★★★★☆</div>
+                    <p class="review-meta">Based on 256 reviews</p>
+                    
+                    <div class="review-score-list">
+                        <div class="review-score-row">
+                            <span>5 ★</span>
+                            <div class="review-bar"><div class="review-bar-fill review-bar-fill--60"></div></div>
+                            <span class="review-meta">142</span>
+                        </div>
+                        <div class="review-score-row">
+                            <span>4 ★</span>
+                            <div class="review-bar"><div class="review-bar-fill review-bar-fill--35"></div></div>
+                            <span class="review-meta">82</span>
+                        </div>
+                        <div class="review-score-row">
+                            <span>3 ★</span>
+                            <div class="review-bar"><div class="review-bar-fill review-bar-fill--20"></div></div>
+                            <span class="review-meta">24</span>
+                        </div>
+                        <div class="review-score-row">
+                            <span>1-2 ★</span>
+                            <div class="review-bar"><div class="review-bar-fill review-bar-fill--5"></div></div>
+                            <span class="review-meta">8</span>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Individual Reviews -->
                 <div id="reviews-container">
-                    <div style="background: rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border-color);">
-                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
+                    <div class="review-card">
+                        <div class="review-card-meta">
                             <div>
                                 <strong>Great product!</strong>
-                                <div style="color: #ffc107; font-size: 0.875rem;">★★★★★</div>
+                                <div class="review-stars">★★★★★</div>
                             </div>
-                            <span style="color: #9fb0d6; font-size: 0.875rem;">2 days ago</span>
+                            <span class="review-meta">2 days ago</span>
                         </div>
-                        <p style="color: #dce3f5; margin: 0.75rem 0;">This product exceeded my expectations. Fast shipping and great quality. Highly recommend!</p>
-                        <div style="font-size: 0.875rem; color: #9fb0d6;">By <strong>Sarah M.</strong> - Verified Purchase</div>
+                        <p class="review-card-text">This product exceeded my expectations. Fast shipping and great quality. Highly recommend!</p>
+                        <div class="reviewer-note">By <strong>Sarah M.</strong> - Verified Purchase</div>
                     </div>
                 </div>
             </div>
             
-            <div style="text-align: center; margin-top: 2rem;">
+            <div class="review-load">
                 <button class="btn btn-secondary">Load More Reviews</button>
             </div>
         </div>
@@ -242,7 +232,7 @@
     <!-- Related Products -->
     <section class="section">
         <div class="container">
-            <h2 style="margin-bottom: 2rem;">Related Products</h2>
+            <h2 class="section-title">Related Products</h2>
             <div class="grid grid-4" id="related-products">
                 <!-- Related products will be loaded here -->
             </div>
@@ -378,9 +368,8 @@
             const thumbnails = currentProduct.images || (currentProduct.image ? [currentProduct.image] : []);
             const galleryContainer = document.getElementById('thumbnail-gallery');
             galleryContainer.innerHTML = thumbnails.map((img, idx) => `
-                <div style="cursor: pointer; border: 2px solid transparent; border-radius: 4px; overflow: hidden;"
-                     onclick="document.getElementById('product-main-image').src='${img}'">
-                    <img src="${img}" alt="Thumbnail ${idx + 1}" style="width: 100%; aspect-ratio: 1; object-fit: cover;">
+                <div class="thumbnail-item" onclick="document.getElementById('product-main-image').src='${img}'">
+                    <img src="${img}" alt="Thumbnail ${idx + 1}" class="thumbnail-img">
                 </div>
             `).join('');
         }
@@ -437,16 +426,12 @@
         }
         
         function switchProductTab(tabName, event) {
-            document.querySelectorAll('.product-tab').forEach(tab => tab.style.display = 'none');
-            document.getElementById(tabName + '-tab').style.display = 'block';
+            document.querySelectorAll('.product-tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabName + '-tab').classList.add('active');
             
-            document.querySelectorAll('.tab-button').forEach(btn => {
-                btn.style.borderBottomColor = 'transparent';
-                btn.style.color = '#999';
-            });
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
             if (event?.target) {
-                event.target.style.borderBottomColor = '#e63a2e';
-                event.target.style.color = '#e63a2e';
+                event.target.classList.add('active');
             }
         }
         

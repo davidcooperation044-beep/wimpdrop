@@ -20,7 +20,7 @@
     <header>
         <div class="header-container">
               <div class="logo">
-                <a href="../index.html" style="color: inherit; text-decoration: none;">Wimp<span>-Drop</span></a>
+                <a href="../index.html" class="link-reset">Wimp<span>-Drop</span></a>
             </div>
             
             <nav>
@@ -30,16 +30,16 @@
             </nav>
             
             <div class="header-actions">
-                <input type="text" placeholder="Search products..." data-search style="padding: 0.5rem 1rem; border: 1px solid #e0e0e0; border-radius: 4px; width: 200px;">
+                <input type="text" placeholder="Search products..." data-search class="search-input">
                 
                 <button class="icon-btn" title="Wishlist">
                     ❤️
-                    <span class="badge" data-wishlist-badge style="display: none;">0</span>
+                    <span class="badge hidden" data-wishlist-badge>0</span>
                 </button>
                 
                 <button class="icon-btn" onclick="window.location.href='pages/cart.html'" title="Shopping Cart">
                     🛒
-                    <span class="badge" data-cart-badge style="display: none;">0</span>
+                    <span class="badge hidden" data-cart-badge>0</span>
                 </button>
                 
                 <div data-auth-section>
@@ -47,7 +47,7 @@
                     <a href="pages/register.html" class="btn btn-primary btn-small">Sign Up</a>
                 </div>
                 
-                <button class="icon-btn mobile-menu-btn" style="display: none;">☰</button>
+                <button class="icon-btn mobile-menu-btn">☰</button>
             </div>
         </div>
     </header>
@@ -110,20 +110,20 @@
     <!-- Features Section -->
     <section class="section">
         <div class="container">
-            <h2 style="text-align: center; margin-bottom: 3rem;">Why Wimp-Drop feels premium</h2>
+            <h2 class="section-heading">Why Wimp-Drop feels premium</h2>
             <div class="grid grid-3">
-                <div class="card" style="text-align: center; padding: 2rem;">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">⚡</div>
+                <div class="card text-center card-panel">
+                    <div class="feature-symbol">⚡</div>
                     <h3>Realtime commerce</h3>
                     <p>Prices, availability, and customer experience stay live throughout every visit.</p>
                 </div>
-                <div class="card" style="text-align: center; padding: 2rem;">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">💳</div>
+                <div class="card text-center card-panel">
+                    <div class="feature-symbol">💳</div>
                     <h3>Secure checkout</h3>
                     <p>Payments and customer flows are designed for a polished modern store.</p>
                 </div>
-                <div class="card" style="text-align: center; padding: 2rem;">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">🌍</div>
+                <div class="card text-center card-panel">
+                    <div class="feature-symbol">🌍</div>
                     <h3>Global ready</h3>
                     <p>Multi-region pricing and a contemporary interface support shoppers worldwide.</p>
                 </div>
@@ -134,13 +134,13 @@
     <!-- Featured Products Section -->
     <section class="section section-light">
         <div class="container">
-            <h2 style="margin-bottom: 2rem;">Featured Products</h2>
+            <h2 class="section-title">Featured Products</h2>
             <div class="grid grid-4" id="product-list">
                 <!-- Products will be loaded here by JavaScript -->
-                <div class="skeleton" style="height: 300px;"></div>
-                <div class="skeleton" style="height: 300px;"></div>
-                <div class="skeleton" style="height: 300px;"></div>
-                <div class="skeleton" style="height: 300px;"></div>
+                <div class="skeleton skeleton-tall"></div>
+                <div class="skeleton skeleton-tall"></div>
+                <div class="skeleton skeleton-tall"></div>
+                <div class="skeleton skeleton-tall"></div>
             </div>
         </div>
     </section>
@@ -148,24 +148,24 @@
     <!-- Categories Section -->
     <section class="section">
         <div class="container">
-            <h2 style="text-align: center; margin-bottom: 2rem;">Shop by Category</h2>
+            <h2 class="section-heading">Shop by Category</h2>
             <div class="grid grid-3">
-                <a href="pages/shop.html?category=electronics" style="text-decoration: none;">
-                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 4rem 2rem; text-align: center; border-radius: 12px; cursor: pointer; transition: transform 0.3s ease;" class="hover-transform">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">📱</div>
-                        <h3 style="color: white;">Electronics</h3>
+                <a href="pages/shop.html?category=electronics" class="link-reset">
+                    <div class="category-card category-card--electronics hover-transform">
+                        <div class="feature-symbol">📱</div>
+                        <h3>Electronics</h3>
                     </div>
                 </a>
-                <a href="pages/shop.html?category=fashion" style="text-decoration: none;">
-                    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 4rem 2rem; text-align: center; border-radius: 12px; cursor: pointer; transition: transform 0.3s ease;">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">👗</div>
-                        <h3 style="color: white;">Fashion</h3>
+                <a href="pages/shop.html?category=fashion" class="link-reset">
+                    <div class="category-card category-card--fashion hover-transform">
+                        <div class="feature-symbol">👗</div>
+                        <h3>Fashion</h3>
                     </div>
                 </a>
-                <a href="pages/shop.html?category=home" style="text-decoration: none;">
-                    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 4rem 2rem; text-align: center; border-radius: 12px; cursor: pointer; transition: transform 0.3s ease;">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">🏠</div>
-                        <h3 style="color: white;">Home & Living</h3>
+                <a href="pages/shop.html?category=home" class="link-reset">
+                    <div class="category-card category-card--home hover-transform">
+                        <div class="feature-symbol">🏠</div>
+                        <h3>Home & Living</h3>
                     </div>
                 </a>
             </div>
@@ -175,11 +175,11 @@
     <!-- Newsletter Section -->
     <section class="section section-light">
         <div class="container">
-            <div style="max-width: 600px; margin: 0 auto; text-align: center;">
+            <div class="newsletter-panel">
                 <h2>Subscribe to Our Newsletter</h2>
-                <p style="margin-bottom: 2rem;">Get exclusive deals, new product launches, and special discounts delivered to your inbox.</p>
-                <div style="display: flex; gap: 1rem;">
-                    <input id="newsletter-email" type="email" placeholder="Enter your email" style="flex: 1; padding: 0.75rem 1rem; border: 1px solid #cccccc; border-radius: 4px; font-size: 1rem;">
+                <p class="newsletter-description">Get exclusive deals, new product launches, and special discounts delivered to your inbox.</p>
+                <div class="newsletter-form">
+                    <input id="newsletter-email" type="email" placeholder="Enter your email" class="newsletter-input">
                     <button id="newsletter-btn" class="btn btn-primary btn-large">Subscribe</button>
                 </div>
             </div>
