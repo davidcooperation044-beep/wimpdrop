@@ -191,10 +191,30 @@ async function handleAdminCJSync(request, response) {
     target.searchParams.set('limit', String(perPage));
     if (cjConfig.storeId) target.searchParams.set('storeId', cjConfig.storeId);
 
-    const upstream = await fetch(target.toString(), { headers: { Authorization: `Bearer ${cjConfig.apiKey}`, 'X-API-Key': cjConfig.apiKey } });
-    const text = await upstream.text();
+    let upstream = await fetch(target.toString(), { headers: { Authorization: `Bearer ${cjConfig.apiKey}`, 'X-API-Key': cjConfig.apiKey } });
+    let text = await upstream.text();
     let payload;
     try { payload = JSON.parse(text); } catch (e) { payload = text; }
+
+    // If CJ reports interface not found, try POST fallback (some CJ endpoints expect POST)
+    const interfaceNotFound = payload && (payload.message === 'Interface not found' || payload.result === false);
+    if (!upstream.ok || interfaceNotFound) {
+      try {
+        const postTarget = new URL(`${cjConfig.apiUrl}/products/search`);
+        if (cjConfig.storeId) postTarget.searchParams.set('storeId', cjConfig.storeId);
+        const postResp = await fetch(postTarget.toString(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cjConfig.apiKey}`, 'X-API-Key': cjConfig.apiKey },
+          body: JSON.stringify({ keyword: search, page, limit: perPage })
+        });
+        const postText = await postResp.text();
+        let postPayload; try { postPayload = JSON.parse(postText); } catch (e) { postPayload = postText; }
+        const products = Array.isArray(postPayload?.products) ? postPayload.products : (postPayload?.data || []);
+        return sendJson(response, 200, { success: true, fetched: products.length, products, raw: postPayload, note: 'POST fallback used' });
+      } catch (postErr) {
+        console.error('CJ POST fallback failed', postErr);
+      }
+    }
 
     const products = Array.isArray(payload?.products) ? payload.products : (payload?.data || []);
     return sendJson(response, 200, { success: true, fetched: products.length, products, raw: payload });
@@ -496,6 +516,7 @@ async function handleEmailRequest(request, response) {
 }
 
 const server = http.createServer(async (request, response) => {
+  console.log('[HTTP]', request.method, request.url);
   if (request.url && request.url.startsWith('/api/cj')) {
     await proxyCJRequest(request, response);
     return;
