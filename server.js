@@ -164,6 +164,85 @@ async function proxyCJRequest(request, response) {
   }
 }
 
+function getSupabaseConfig() {
+  const envFile = loadEnvFile();
+  return {
+    url: process.env.VITE_SUPABASE_URL || envFile.VITE_SUPABASE_URL || '',
+    anonKey: process.env.VITE_SUPABASE_ANON_KEY || envFile.VITE_SUPABASE_ANON_KEY || ''
+  };
+}
+
+// Admin: fetch products from CJ and return summary
+async function handleAdminCJSync(request, response) {
+  try {
+    const url = new URL(request.url, `http://localhost:${port}`);
+    const search = url.searchParams.get('search') || 'electronics';
+    const page = Number(url.searchParams.get('page') || 1);
+    const perPage = Number(url.searchParams.get('perPage') || 50);
+
+    const cjConfig = getCJConfig();
+    if (!cjConfig.apiKey) {
+      return sendJson(response, 500, { success: false, error: 'CJ API key not configured' });
+    }
+
+    const target = new URL(`${cjConfig.apiUrl}/products/search`);
+    target.searchParams.set('keyword', search);
+    target.searchParams.set('page', String(page));
+    target.searchParams.set('limit', String(perPage));
+    if (cjConfig.storeId) target.searchParams.set('storeId', cjConfig.storeId);
+
+    const upstream = await fetch(target.toString(), { headers: { Authorization: `Bearer ${cjConfig.apiKey}`, 'X-API-Key': cjConfig.apiKey } });
+    const text = await upstream.text();
+    let payload;
+    try { payload = JSON.parse(text); } catch (e) { payload = text; }
+
+    const products = Array.isArray(payload?.products) ? payload.products : (payload?.data || []);
+    return sendJson(response, 200, { success: true, fetched: products.length, products, raw: payload });
+  } catch (error) {
+    console.error('Admin CJ sync error', error);
+    return sendJson(response, 500, { success: false, error: error.message });
+  }
+}
+
+// Admin: import products to Supabase via REST (uses anon key from env.local)
+async function handleAdminImportProducts(request, response) {
+  if (request.method !== 'POST') return sendJson(response, 405, { success: false, error: 'Method not allowed' });
+  try {
+    const body = await readRequestBody(request);
+    const payload = JSON.parse(body);
+    const products = Array.isArray(payload.products) ? payload.products : [];
+    if (!products.length) return sendJson(response, 400, { success: false, error: 'No products provided' });
+
+    const sb = getSupabaseConfig();
+    if (!sb.url || !sb.anonKey) return sendJson(response, 500, { success: false, error: 'Supabase config missing on server' });
+
+    const target = `${sb.url.replace(/\/$/, '')}/rest/v1/products`;
+    const res = await fetch(target, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: sb.anonKey,
+        Authorization: `Bearer ${sb.anonKey}`,
+        Prefer: 'return=representation'
+      },
+      body: JSON.stringify(products)
+    });
+
+    const text = await res.text();
+    let result;
+    try { result = JSON.parse(text); } catch (e) { result = text; }
+
+    if (!res.ok) {
+      return sendJson(response, res.status, { success: false, status: res.status, error: result });
+    }
+
+    return sendJson(response, 200, { success: true, inserted: Array.isArray(result) ? result.length : 0, result });
+  } catch (error) {
+    console.error('Admin import products error', error);
+    return sendJson(response, 500, { success: false, error: error.message });
+  }
+}
+
 async function handleEmailRequest(request, response) {
   if (request.method !== 'POST') {
     return sendJson(response, 405, { success: false, error: 'Method not allowed' });
@@ -370,6 +449,16 @@ async function handleEmailRequest(request, response) {
 const server = http.createServer(async (request, response) => {
   if (request.url && request.url.startsWith('/api/cj')) {
     await proxyCJRequest(request, response);
+    return;
+  }
+
+  if (request.url && request.url.startsWith('/api/admin/cj-sync')) {
+    await handleAdminCJSync(request, response);
+    return;
+  }
+
+  if (request.url && request.url.startsWith('/api/admin/import-products')) {
+    await handleAdminImportProducts(request, response);
     return;
   }
 

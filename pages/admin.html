@@ -151,26 +151,54 @@
 
     <script>
         async function performSyncProducts() {
-            showNotification('Syncing products from CJ...', 'info');
+            showNotification('Requesting product list from CJ...', 'info');
             try {
-                if (typeof cjAPI === 'undefined') throw new Error('CJ API client not loaded');
-                const result = await cjAPI.searchProducts('', 1, 50);
-                const products = result?.products || [];
-                if (!products.length) throw new Error('No products returned from CJ');
+                const resp = await fetch('/api/admin/cj-sync?search=&page=1&perPage=50');
+                const data = await resp.json();
+                if (!data.success) throw new Error(data.error || 'CJ sync failed');
 
-                let imported = 0;
-                for (const p of products) {
-                    const pid = p.id || p.productId || p.product_id;
-                    if (!pid) continue;
-                    try {
-                        await importProductToCatalog(pid.toString());
-                        imported++;
-                    } catch (err) {
-                        console.warn('Import failed for', pid, err);
-                    }
+                const products = data.products || [];
+                if (!products.length) {
+                    showNotification('No products returned from CJ', 'error');
+                    return;
                 }
 
-                showNotification(`Product sync complete (${imported}/${products.length})`, 'success');
+                // display confirmation dialog with summary
+                const proceed = confirm(`Fetched ${products.length} products from CJ. Import into catalog now?`);
+                if (!proceed) {
+                    showNotification('Import cancelled', 'info');
+                    return;
+                }
+
+                showNotification('Importing products to Supabase...', 'info');
+
+                // map products to simplified shape for import
+                const payload = products.map(p => ({
+                    external_id: p.id || p.productId || p.product_id,
+                    name: p.name || p.productTitle || '',
+                    category: p.category || 'uncategorized',
+                    price: Number(p.price || p.salePrice || 0),
+                    original_price: Number(p.listPrice || p.originalPrice || 0),
+                    thumbnail: p.thumbnail || p.image || (p.images && p.images[0]) || null,
+                    supplier: 'CJ Dropshipping',
+                    description: p.description || p.productDescription || '',
+                    metadata: JSON.stringify({ raw: p })
+                }));
+
+                const importResp = await fetch('/api/admin/import-products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ products: payload })
+                });
+
+                const importResult = await importResp.json();
+                if (!importResult.success) {
+                    console.error('Import error', importResult);
+                    showNotification('Import failed: ' + (importResult.error || JSON.stringify(importResult)), 'error');
+                    return;
+                }
+
+                showNotification(`Imported ${importResult.inserted || 0} products`, 'success');
             } catch (error) {
                 console.error('Product sync error:', error);
                 showNotification('Product sync failed: ' + (error.message || error), 'error');
