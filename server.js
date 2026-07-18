@@ -243,6 +243,55 @@ async function handleAdminImportProducts(request, response) {
   }
 }
 
+// Admin: run connectivity tests for CJ and Supabase (read-only)
+async function handleAdminRunTests(request, response) {
+  try {
+    const cjConfig = getCJConfig();
+    const sb = getSupabaseConfig();
+
+    const results = { cj: null, supabase: null };
+
+    // CJ test: attempt a simple search
+    try {
+      if (!cjConfig.apiKey) {
+        results.cj = { ok: false, error: 'CJ API key missing' };
+      } else {
+        const t = new URL(`${cjConfig.apiUrl}/products/search`);
+        t.searchParams.set('keyword', 'test');
+        t.searchParams.set('page', '1');
+        t.searchParams.set('limit', '1');
+        if (cjConfig.storeId) t.searchParams.set('storeId', cjConfig.storeId);
+        const r = await fetch(t.toString(), { headers: { Authorization: `Bearer ${cjConfig.apiKey}`, 'X-API-Key': cjConfig.apiKey } });
+        const txt = await r.text();
+        let json; try { json = JSON.parse(txt); } catch(e) { json = txt; }
+        results.cj = { ok: r.ok, status: r.status, body: json };
+      }
+    } catch (e) {
+      results.cj = { ok: false, error: e.message };
+    }
+
+    // Supabase test: try a read from public products (REST) using anon key
+    try {
+      if (!sb.url || !sb.anonKey) {
+        results.supabase = { ok: false, error: 'Supabase URL or anon key missing' };
+      } else {
+        const target = `${sb.url.replace(/\/$/, '')}/rest/v1/products?select=id&limit=1`;
+        const r2 = await fetch(target, { headers: { apikey: sb.anonKey, Authorization: `Bearer ${sb.anonKey}` } });
+        const txt2 = await r2.text();
+        let json2; try { json2 = JSON.parse(txt2); } catch(e) { json2 = txt2; }
+        results.supabase = { ok: r2.ok, status: r2.status, body: json2 };
+      }
+    } catch (e) {
+      results.supabase = { ok: false, error: e.message };
+    }
+
+    return sendJson(response, 200, { success: true, results });
+  } catch (error) {
+    console.error('Admin run tests error', error);
+    return sendJson(response, 500, { success: false, error: error.message });
+  }
+}
+
 async function handleEmailRequest(request, response) {
   if (request.method !== 'POST') {
     return sendJson(response, 405, { success: false, error: 'Method not allowed' });
@@ -459,6 +508,11 @@ const server = http.createServer(async (request, response) => {
 
   if (request.url && request.url.startsWith('/api/admin/import-products')) {
     await handleAdminImportProducts(request, response);
+    return;
+  }
+
+  if (request.url && request.url.startsWith('/api/admin/run-tests')) {
+    await handleAdminRunTests(request, response);
     return;
   }
 

@@ -48,7 +48,7 @@
                     <div style="padding: 1.5rem; background: #fff; border-radius: 12px; border: 1px solid #e0e0e0;">
                         <h3>Products</h3>
                         <p>View and sync product catalog from CJ Dropshipping.</p>
-                        <button class="btn btn-primary btn-small">Sync Products</button>
+                        <button id="sync-products-btn" class="btn btn-primary btn-small">Sync Products</button>
                     </div>
                     <div style="padding: 1.5rem; background: #fff; border-radius: 12px; border: 1px solid #e0e0e0;">
                         <h3>Orders</h3>
@@ -60,6 +60,10 @@
                         <p>Create promo codes and newsletter campaigns.</p>
                         <button class="btn btn-primary btn-small">Create Promo</button>
                     </div>
+                </div>
+                <div style="display:flex;gap:12px;margin-bottom:1.5rem;">
+                    <button id="run-tests-btn" class="btn btn-secondary btn-small">Run CJ / Supabase Tests</button>
+                    <div id="test-results" style="flex:1;color:#9fb0d6; font-size:0.9rem;"></div>
                 </div>
                 <div style="background: rgba(255,255,255,0.06); border-radius: 12px; padding: 1.5rem; border: 1px solid var(--border-color);">
                     <h2>Admin Notes</h2>
@@ -125,6 +129,33 @@
         }
 
         document.addEventListener('DOMContentLoaded', initAdminPage);
+        document.addEventListener('DOMContentLoaded', () => {
+            const runBtn = document.getElementById('run-tests-btn');
+            const resultsEl = document.getElementById('test-results');
+            const syncBtn = document.getElementById('sync-products-btn');
+
+            runBtn?.addEventListener('click', async () => {
+                resultsEl.textContent = 'Running tests...';
+                try {
+                    const r = await fetch('/api/admin/run-tests');
+                    const data = await r.json();
+                    if (!data.success) {
+                        resultsEl.textContent = 'Tests failed: ' + (data.error || JSON.stringify(data));
+                        return;
+                    }
+                    const cj = data.results.cj;
+                    const sb = data.results.supabase;
+                    resultsEl.innerHTML = `CJ: ${cj.ok ? 'OK' : 'FAIL'} (status ${cj.status || ''})<br>Supabase: ${sb.ok ? 'OK' : 'FAIL'} (status ${sb.status || ''})`;
+                } catch (e) {
+                    resultsEl.textContent = 'Test runner error: ' + e.message;
+                }
+            });
+
+            syncBtn?.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await performSyncProducts();
+            });
+        });
     </script>
     <footer>
         <div class="footer-content">
