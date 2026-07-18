@@ -25,9 +25,9 @@
     </header>
     <section class="section">
         <div class="container" style="max-width: 1100px;">
-            <div id="admin-login-panel" style="display: none; background: rgba(255,255,255,0.06); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color);">
+            <div id="admin-login-panel" class="admin-card" style="display: none;">
                 <h1>Admin Login</h1>
-                <p style="color: #dce3f5; margin-bottom: 1.5rem;">Enter your admin credentials to access the dashboard.</p>
+                <p class="admin-subtitle">Enter your admin credentials to access the dashboard.</p>
                 <form id="admin-login-form">
                     <div class="form-group">
                         <label>Email</label>
@@ -43,27 +43,27 @@
 
             <div id="admin-dashboard" style="display: none;">
                 <h1>Admin Dashboard</h1>
-                <p style="color: #dce3f5; margin-bottom: 1.5rem;">Manage products, orders, and promotions from your admin panel.</p>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
-                    <div style="padding: 1.5rem; background: #fff; border-radius: 12px; border: 1px solid #e0e0e0;">
+                <p class="admin-subtitle">Manage products, orders, and promotions from your admin panel.</p>
+                <div class="admin-grid" style="margin-bottom: 2rem;">
+                    <div class="admin-card">
                         <h3>Products</h3>
                         <p>View and sync product catalog from CJ Dropshipping.</p>
-                        <button id="sync-products-btn" class="btn btn-primary btn-small">Sync Products</button>
+                        <button id="sync-products-btn" class="btn btn-primary btn-small btn-block">Sync Products</button>
                     </div>
-                    <div style="padding: 1.5rem; background: #fff; border-radius: 12px; border: 1px solid #e0e0e0;">
+                    <div class="admin-card">
                         <h3>Orders</h3>
                         <p>Review recent orders and update fulfillment status.</p>
-                        <button class="btn btn-primary btn-small">Review Orders</button>
+                        <button class="btn btn-primary btn-small btn-block">Review Orders</button>
                     </div>
-                    <div style="padding: 1.5rem; background: #fff; border-radius: 12px; border: 1px solid #e0e0e0;">
+                    <div class="admin-card">
                         <h3>Promotions</h3>
                         <p>Create promo codes and newsletter campaigns.</p>
-                        <button class="btn btn-primary btn-small">Create Promo</button>
+                        <button class="btn btn-primary btn-small btn-block">Create Promo</button>
                     </div>
-                    <div style="padding: 1.5rem; background: #fff; border-radius: 12px; border: 1px solid #e0e0e0;">
+                    <div class="admin-card">
                         <h3>Admin Setup</h3>
                         <p>Securely create an admin user on the server.</p>
-                        <button id="create-admin-user-btn" class="btn btn-secondary btn-small">Create Admin User</button>
+                        <button id="create-admin-user-btn" class="btn btn-secondary btn-small btn-block">Create Admin User</button>
                     </div>
                 </div>
                 <div style="display:flex;gap:12px;margin-bottom:1.5rem;">
