@@ -60,6 +60,11 @@
                         <p>Create promo codes and newsletter campaigns.</p>
                         <button class="btn btn-primary btn-small">Create Promo</button>
                     </div>
+                    <div style="padding: 1.5rem; background: #fff; border-radius: 12px; border: 1px solid #e0e0e0;">
+                        <h3>Admin Setup</h3>
+                        <p>Securely create an admin user on the server.</p>
+                        <button id="create-admin-user-btn" class="btn btn-secondary btn-small">Create Admin User</button>
+                    </div>
                 </div>
                 <div style="display:flex;gap:12px;margin-bottom:1.5rem;">
                     <button id="run-tests-btn" class="btn btn-secondary btn-small">Run CJ / Supabase Tests</button>
@@ -267,6 +272,45 @@
                 syncBtn.addEventListener('click', async (e) => {
                     e.preventDefault();
                     await performSyncProducts();
+                });
+            }
+
+            const createAdminBtn = document.getElementById('create-admin-user-btn');
+            if (createAdminBtn) {
+                createAdminBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    const secret = prompt('Enter ADMIN_CREATION_SECRET to create the admin user:');
+                    if (!secret) return;
+
+                    const email = prompt('Admin email', 'wimpycooperation@gmail.com');
+                    const password = prompt('Admin password', 'trexsrexs456$');
+                    if (!email || !password) {
+                        showNotification('Admin email and password are required.', 'error');
+                        return;
+                    }
+
+                    const confirmCreate = confirm(`Create admin user ${email} on the server?`);
+                    if (!confirmCreate) return;
+
+                    try {
+                        const resp = await fetch('/api/admin/create-admin', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'x-admin-secret': secret
+                            },
+                            body: JSON.stringify({ email, password, full_name: 'Wimp Admin' })
+                        });
+                        const data = await resp.json();
+                        if (!data.success) {
+                            showNotification('Create admin failed: ' + (data.error || JSON.stringify(data)), 'error');
+                            return;
+                        }
+                        showNotification('Admin user created successfully.', 'success');
+                    } catch (error) {
+                        console.error('Create admin error:', error);
+                        showNotification('Failed to create admin user: ' + error.message, 'error');
+                    }
                 });
             }
         });
