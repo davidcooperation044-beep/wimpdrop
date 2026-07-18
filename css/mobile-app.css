@@ -35,3 +35,19 @@ nav{display:none}
     nav{display:flex;gap:12px}
     .bottom-nav{display:none}
 }
+
+/* Product card visuals and skeletons */
+.product-card{border:1px solid rgba(255,255,255,0.03);background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);display:flex;flex-direction:column;gap:8px}
+.product-image img{border-radius:10px;transition:transform 220ms cubic-bezier(.2,.9,.2,1), box-shadow 220ms}
+.product-image img:hover{transform:scale(1.03);box-shadow:0 8px 20px rgba(0,0,0,0.4)}
+.product-info{padding:6px}
+.product-actions{display:flex;gap:8px;margin-top:8px}
+
+/* Skeleton loader */
+.skeleton{background:linear-gradient(90deg,#0f1724 8%, #172033 18%, #0f1724 33%);background-size:200% 100%;animation: shimmer 1.2s linear infinite;border-radius:12px}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.skeleton.img{height:140px}
+.skeleton.text{height:16px;margin-top:8px;border-radius:6px}
+
+/* Fly-to-cart animation */
+.fly-image{position:fixed;z-index:9999;pointer-events:none;transition:transform 600ms cubic-bezier(.2,.9,.2,1), opacity 360ms}

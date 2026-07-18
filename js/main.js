@@ -386,9 +386,12 @@ function setupEventListeners() {
 function addToCart(productId, quantity = 1) {
   const product = AppState.products.find(p => p.id === productId);
   if (!product) return false;
-  
+
+  // animate product image to cart
+  try { animateAddToCart(productId); } catch (e) { /* ignore animation errors */ }
+
   const existingItem = AppState.cart.find(item => item.id === productId);
-  
+
   if (existingItem) {
     existingItem.quantity += quantity;
   } else {
@@ -401,11 +404,62 @@ function addToCart(productId, quantity = 1) {
       supplier: product.supplier
     });
   }
-  
+
   Storage.setCart(AppState.cart);
   updateCartBadge();
   showNotification('Added to cart!', 'success');
   return true;
+}
+
+function animateAddToCart(productId) {
+  try {
+    const pidUrl = encodeURIComponent(productId);
+    const img = document.querySelector(`a[href*="product.html?id=${pidUrl}"] img`);
+    const cartBtn = document.querySelector('[data-cart-badge]') || document.querySelector('a[title="Shopping Cart"]');
+    if (!img || !cartBtn) return;
+
+    const imgRect = img.getBoundingClientRect();
+    const cartRect = cartBtn.getBoundingClientRect();
+
+    const clone = img.cloneNode(true);
+    clone.className = 'fly-image';
+    clone.style.left = imgRect.left + 'px';
+    clone.style.top = imgRect.top + 'px';
+    clone.style.width = imgRect.width + 'px';
+    clone.style.height = imgRect.height + 'px';
+    clone.style.opacity = '1';
+    document.body.appendChild(clone);
+
+    // force layout
+    clone.getBoundingClientRect();
+
+    const translateX = (cartRect.left + cartRect.width/2) - (imgRect.left + imgRect.width/2);
+    const translateY = (cartRect.top + cartRect.height/2) - (imgRect.top + imgRect.height/2);
+
+    clone.style.transform = `translate(${translateX}px, ${translateY}px) scale(0.2)`;
+    clone.style.opacity = '0.6';
+
+    setTimeout(() => {
+      clone.style.transition = 'opacity 200ms ease';
+      clone.style.opacity = '0';
+    }, 520);
+
+    setTimeout(() => { try { clone.remove(); } catch(e){} }, 820);
+  } catch (e) {
+    console.warn('animateAddToCart failed', e);
+  }
+}
+
+function showProductSkeletons(count = 6) {
+  const productList = document.getElementById('product-list');
+  if (!productList) return;
+  productList.innerHTML = '';
+  for (let i=0;i<count;i++){
+    const el = document.createElement('div');
+    el.className = 'product-card skeleton';
+    el.innerHTML = `<div class="skeleton img"></div><div style="padding:10px"><div class="skeleton text" style="width:80%"></div><div class="skeleton text" style="width:60%; margin-top:8px"></div></div>`;
+    productList.appendChild(el);
+  }
 }
 
 function removeFromCart(productId) {
@@ -500,6 +554,9 @@ async function loadProducts(filters = {}) {
   try {
     const productList = document.getElementById('product-list');
     if (!productList) return;
+
+    // show skeletons while loading
+    showProductSkeletons(12);
 
     // Pagination and filters from URL
     const urlParams = new URLSearchParams(window.location.search);
