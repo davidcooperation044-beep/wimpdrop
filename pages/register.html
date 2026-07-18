@@ -130,21 +130,33 @@
             btn.disabled = true;
 
             try {
-                const { data, error } = await window._supabase.auth.signUp({
-                    email,
-                    password,
-                    options: {
-                        data: { full_name: `${firstName} ${lastName}` }
+                await window._supabaseReady;
+
+                // Use centralized supabaseService wrapper for consistent error handling
+                if (typeof supabaseService !== 'undefined') {
+                    const result = await supabaseService.signUp(email, password, { full_name: `${firstName} ${lastName}` });
+                    if (!result.success) {
+                        throw new Error(result.error || 'Registration failed');
                     }
-                });
 
-                if (error) throw error;
-
-                showNotification('Account created! Check your email to verify.', 'success');
-                setTimeout(() => window.location.href = 'login.html', 2000);
+                    showNotification('Account created! Check your email to verify.', 'success');
+                    setTimeout(() => window.location.href = 'login.html', 2000);
+                } else if (window._supabase && window._supabase.auth && window._supabase.auth.signUp) {
+                    const { data, error } = await window._supabase.auth.signUp({
+                        email,
+                        password,
+                        options: { data: { full_name: `${firstName} ${lastName}` } }
+                    });
+                    if (error) throw error;
+                    showNotification('Account created! Check your email to verify.', 'success');
+                    setTimeout(() => window.location.href = 'login.html', 2000);
+                } else {
+                    throw new Error('Auth service not available');
+                }
 
             } catch (error) {
-                showNotification(error.message || 'Registration failed', 'error');
+                const message = (error?.message || error || '').toString();
+                showNotification(message || 'Registration failed', 'error');
                 btn.textContent = 'Create Account';
                 btn.disabled = false;
             }
