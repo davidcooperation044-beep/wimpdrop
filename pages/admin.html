@@ -24,8 +24,8 @@
         </div>
     </header>
     <section class="section">
-        <div class="container" style="max-width: 1100px;">
-            <div id="admin-login-panel" class="admin-card" style="display: none;">
+        <div class="container admin-page-container">
+            <div id="admin-login-panel" class="admin-card hidden">
                 <h1>Admin Login</h1>
                 <p class="admin-subtitle">Enter your admin credentials to access the dashboard.</p>
                 <form id="admin-login-form">
@@ -41,10 +41,10 @@
                 </form>
             </div>
 
-            <div id="admin-dashboard" style="display: none;">
-                <h1>Admin Dashboard</h1>
+            <div id="admin-dashboard" class="hidden">
+                <h1 class="section-title">Admin Dashboard</h1>
                 <p class="admin-subtitle">Manage products, orders, and promotions from your admin panel.</p>
-                <div class="admin-grid" style="margin-bottom: 2rem;">
+                <div class="admin-grid">
                     <div class="admin-card">
                         <h3>Products</h3>
                         <p>View and sync product catalog from CJ Dropshipping.</p>
@@ -66,13 +66,13 @@
                         <button id="create-admin-user-btn" class="btn btn-secondary btn-small btn-block">Create Admin User</button>
                     </div>
                 </div>
-                <div style="display:flex;gap:12px;margin-bottom:1.5rem;">
+                <div class="admin-panel-toolbar">
                     <button id="run-tests-btn" class="btn btn-secondary btn-small">Run CJ / Supabase Tests</button>
-                    <div id="test-results" style="flex:1;color:#9fb0d6; font-size:0.9rem;"></div>
+                    <div id="test-results" class="admin-test-results"></div>
                 </div>
-                <div style="background: rgba(255,255,255,0.06); border-radius: 12px; padding: 1.5rem; border: 1px solid var(--border-color);">
+                <div class="admin-notes-card">
                     <h2>Admin Notes</h2>
-                    <ul style="list-style: disc inside; color: #555;">
+                    <ul class="admin-notes-list">
                         <li>Only authorized personnel should access this page.</li>
                         <li>Use Supabase for managing orders, wishlists, and products.</li>
                         <li>Ensure Internet access for backend API calls.</li>
@@ -106,20 +106,20 @@
             dashboard.style.display = 'none';
 
             // Load env and check for local admin override flag
-+            let LOCAL_ADMIN_EMAIL = '';
-+            let LOCAL_ADMIN_PASSWORD = '';
-+            let ENABLE_LOCAL_ADMIN_OVERRIDE = false;
-+
-+            if (window.env && typeof window.env.load === 'function') {
-+                try {
-+                    if (!window.env.isLoaded) await window.env.load();
-+                } catch (e) { /* ignore */ }
-+                ENABLE_LOCAL_ADMIN_OVERRIDE = !!window.env.get('VITE_ENABLE_LOCAL_ADMIN_OVERRIDE');
-+                LOCAL_ADMIN_EMAIL = window.env.get('VITE_LOCAL_ADMIN_EMAIL') || '';
-+                LOCAL_ADMIN_PASSWORD = window.env.get('VITE_LOCAL_ADMIN_PASSWORD') || '';
-+            }
-+
-+            form?.addEventListener('submit', async (event) => {
+            let LOCAL_ADMIN_EMAIL = '';
+            let LOCAL_ADMIN_PASSWORD = '';
+            let ENABLE_LOCAL_ADMIN_OVERRIDE = false;
+
+            if (window.env && typeof window.env.load === 'function') {
+                try {
+                    if (!window.env.isLoaded) await window.env.load();
+                } catch (e) { /* ignore */ }
+                ENABLE_LOCAL_ADMIN_OVERRIDE = !!window.env.get('VITE_ENABLE_LOCAL_ADMIN_OVERRIDE');
+                LOCAL_ADMIN_EMAIL = window.env.get('VITE_LOCAL_ADMIN_EMAIL') || '';
+                LOCAL_ADMIN_PASSWORD = window.env.get('VITE_LOCAL_ADMIN_PASSWORD') || '';
+            }
+
+            form?.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 const email = form.querySelector('[name="email"]').value.trim();
                 const password = form.querySelector('[name="password"]').value.trim();

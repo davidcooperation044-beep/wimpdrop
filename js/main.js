@@ -596,20 +596,28 @@ async function loadProducts(filters = {}) {
       try {
         const search = urlParams.get('search') || 'electronics';
         const result = await cjAPI.searchProducts(search, page, perPage);
-        if (result && result.products && Array.isArray(result.products)) {
-          products = result.products.map(p => ({
-            id: p.id || p.productId,
-            name: p.name || p.productTitle,
-            category: p.category || 'electronics',
-            price: Number(p.price || p.salePrice || 0) * 100,
-            originalPrice: Number(p.originalPrice || p.listPrice || p.price || 0) * 100,
+        const cjProducts = Array.isArray(result?.products)
+          ? result.products
+          : Array.isArray(result?.data)
+            ? result.data
+            : Array.isArray(result?.result)
+              ? result.result
+              : [];
+
+        if (cjProducts.length) {
+          products = cjProducts.map(p => ({
+            id: p.id || p.productId || p.product_id,
+            name: p.name || p.productTitle || p.productName,
+            category: p.category || p.category_name || 'electronics',
+            price: Number(p.price || p.salePrice || p.sale_price || 0) * 100,
+            originalPrice: Number(p.originalPrice || p.listPrice || p.price || p.market_price || 0) * 100,
             image: p.thumbnail || p.image || p.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop',
             rating: Number(p.rating || 4.5),
-            reviews: Number(p.reviews || p.reviewCount || 0),
+            reviews: Number(p.reviews || p.reviewCount || p.review_count || 0),
             supplier: 'CJ Dropshipping',
-            description: p.description || p.productDescription || ''
+            description: p.description || p.productDescription || p.product_description || ''
           }));
-          totalCount = result.totalCount || products.length;
+          totalCount = result.totalCount || result.total_count || result.total || products.length;
         }
       } catch (cjError) {
         console.warn('CJ API error:', cjError);
@@ -678,8 +686,8 @@ function renderProducts(products) {
       ${hasDiscount ? `<div class="discount-badge">-${discountPercent}%</div>` : ''}
       <div class="supplier-badge">${product.supplier || ''}</div>
       <div class="product-image">
-        <a href="product.html?id=${pidUrl}" style="text-decoration: none; color: inherit;">
-          <img src="${product.image}" alt="${product.name}" style="cursor: pointer;">
+        <a href="product.html?id=${pidUrl}" class="product-link">
+          <img src="${product.image}" alt="${product.name}" class="product-image-inner">
         </a>
       </div>
       <div class="product-info">
@@ -926,18 +934,29 @@ async function searchCJProducts(keyword) {
   try {
     if (typeof cjAPI !== 'undefined') {
       const result = await cjAPI.searchProducts(keyword, 1, 12);
-      const products = Array.isArray(result?.products) ? result.products : [];
-      return products;
+      return Array.isArray(result?.products)
+        ? result.products
+        : Array.isArray(result?.data)
+          ? result.data
+          : Array.isArray(result?.result)
+            ? result.result
+            : [];
     }
 
-    const response = await fetch('/api/cj/search', {
+    const response = await fetch('/api/cj/products/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keyword })
+      body: JSON.stringify({ keyword, page: 1, limit: 12 })
     });
 
     const data = await response.json();
-    return data.products || [];
+    return Array.isArray(data?.products)
+      ? data.products
+      : Array.isArray(data?.data)
+        ? data.data
+        : Array.isArray(data?.result)
+          ? data.result
+          : [];
 
   } catch (error) {
     console.error('CJ search error:', error);
@@ -947,16 +966,13 @@ async function searchCJProducts(keyword) {
 
 async function createCJOrder(cartItems, shippingInfo) {
   try {
-    // TODO: Create order via CJ Dropshipping API through backend
-    const response = await fetch('/api/cj/orders', {
+    const response = await fetch('/api/cj/orders/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ items: cartItems, shipping: shippingInfo })
     });
-    
     const data = await response.json();
-    return data.order;
-    
+    return data.order || data.data || null;
   } catch (error) {
     console.error('Order creation error:', error);
     return null;

@@ -7,40 +7,66 @@ class CJDropshippingAPI {
   constructor() {
     this.baseUrl = (typeof env !== 'undefined' ? env.get('VITE_CJ_API_URL') : '') || 'https://developers.cjdropshipping.com/api2.0/v1';
     this.backendBase = '/api/cj';
-    this.apiKey = (typeof env !== 'undefined' ? env.get('VITE_CJ_API_KEY') : '') || '';
-    this.storeId = (typeof env !== 'undefined' ? env.get('VITE_CJ_STORE_ID') : '') || '';
+    this.apiKey = '';
+    this.storeId = '';
   }
 
-  get storeIdValue() {
-    const envStoreId = (typeof env !== 'undefined' ? env.get('VITE_CJ_STORE_ID') : '') || '';
-    return (envStoreId || this.storeId || window.CJ_STORE_ID || '').toString();
+  async getApiKey() {
+    if (this.apiKey) return this.apiKey;
+    if (typeof env !== 'undefined' && env.get) {
+      if (!env.isLoaded && typeof env.load === 'function') {
+        await env.load();
+      }
+      const envKey = env.get('VITE_CJ_API_KEY') || '';
+      if (envKey) {
+        this.apiKey = envKey;
+        return envKey;
+      }
+    }
+    if (window.ENV_CONFIG?.VITE_CJ_API_KEY) {
+      this.apiKey = window.ENV_CONFIG.VITE_CJ_API_KEY;
+      return this.apiKey;
+    }
+    return this.apiKey;
   }
 
-  buildUrl(path) {
+  async getStoreIdValue() {
+    const envStoreId = (typeof env !== 'undefined' && env.get) ? env.get('VITE_CJ_STORE_ID') : '';
+    const storeId = envStoreId || this.storeId || window.CJ_STORE_ID || '';
+    return storeId.toString();
+  }
+
+  async buildUrl(path) {
     const url = new URL(path, window.location.origin);
-    if (this.storeIdValue) {
-      url.searchParams.set('storeId', this.storeIdValue);
+    const storeId = await this.getStoreIdValue();
+    if (storeId) {
+      url.searchParams.set('storeId', storeId);
     }
     return url.toString();
   }
 
-  buildPayload(payload = {}) {
+  async buildPayload(payload = {}) {
     const body = { ...payload };
-    if (this.storeIdValue) {
-      body.storeId = this.storeIdValue;
-      body.store_id = this.storeIdValue;
+    const storeId = await this.getStoreIdValue();
+    if (storeId) {
+      body.storeId = storeId;
+      body.store_id = storeId;
     }
     return body;
   }
 
   async request(path, options = {}) {
-    const url = path.startsWith('http') ? path : this.buildUrl(path);
+    const url = path.startsWith('http') ? path : await this.buildUrl(path);
+    const apiKey = await this.getApiKey();
+    const isProxyRequest = path.startsWith('/api/cj') || url.startsWith(`${window.location.origin}/api/cj`);
     const headers = {
       'Content-Type': 'application/json',
-      'Authorization': this.apiKey ? `Bearer ${this.apiKey}` : undefined,
-      'X-API-Key': this.apiKey || undefined,
       ...(options.headers || {})
     };
+    if (!isProxyRequest && apiKey) {
+      headers.Authorization = `Bearer ${apiKey}`;
+      headers['X-API-Key'] = apiKey;
+    }
     Object.keys(headers).forEach((key) => {
       if (headers[key] === undefined || headers[key] === null || headers[key] === '') {
         delete headers[key];
@@ -52,7 +78,8 @@ class CJDropshippingAPI {
     };
 
     if (options.body !== undefined && options.body !== null) {
-      init.body = typeof options.body === 'string' ? options.body : JSON.stringify(this.buildPayload(options.body));
+      const bodyValue = typeof options.body === 'string' ? options.body : JSON.stringify(await this.buildPayload(options.body));
+      init.body = bodyValue;
     }
 
     let response;
@@ -87,14 +114,14 @@ class CJDropshippingAPI {
    * @param {number} pageNo - Page number for pagination
    * @param {number} pageSize - Items per page
    */
-  async searchProducts(keyword, pageNo = 1, pageSize = 50) {
+  async searchProducts(keyword, page = 1, limit = 50) {
     try {
       return await this.request('/api/cj/products/search', {
         method: 'POST',
         body: {
           keyword,
-          pageNo,
-          pageSize
+          page,
+          limit
         }
       });
     } catch (error) {

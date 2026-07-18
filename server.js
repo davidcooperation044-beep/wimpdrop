@@ -133,7 +133,37 @@ async function proxyCJRequest(request, response) {
 
   let body;
   if (!['GET', 'HEAD'].includes(request.method)) {
-    body = await readRequestBody(request);
+    const rawBody = await readRequestBody(request);
+    body = rawBody;
+    const contentType = request.headers['content-type'] || '';
+    if (rawBody && contentType.includes('application/json')) {
+      try {
+        const parsed = JSON.parse(rawBody);
+        if (pathname === '/products/search' && parsed && typeof parsed === 'object') {
+          if (parsed.pageNo !== undefined || parsed.pageSize !== undefined) {
+            parsed.page = parsed.pageNo !== undefined ? parsed.pageNo : parsed.page;
+            parsed.limit = parsed.pageSize !== undefined ? parsed.pageSize : parsed.limit;
+            delete parsed.pageNo;
+            delete parsed.pageSize;
+          }
+          if (parsed.pageno !== undefined) {
+            parsed.page = parsed.pageno;
+            delete parsed.pageno;
+          }
+          if (parsed.page_size !== undefined) {
+            parsed.limit = parsed.page_size;
+            delete parsed.page_size;
+          }
+          if (parsed.search && parsed.keyword === undefined) {
+            parsed.keyword = parsed.search;
+            delete parsed.search;
+          }
+        }
+        body = JSON.stringify(parsed);
+      } catch (parseError) {
+        body = rawBody;
+      }
+    }
   }
 
   try {
