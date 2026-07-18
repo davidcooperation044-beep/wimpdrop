@@ -59,7 +59,7 @@ class CJDropshippingAPI {
     try {
       response = await fetch(url, init);
     } catch (error) {
-      return this.fallbackResponse(path, options.body);
+      throw new Error(`Network request to CJ failed: ${error.message}`);
     }
 
     const text = await response.text();
@@ -67,57 +67,17 @@ class CJDropshippingAPI {
     try {
       result = text ? JSON.parse(text) : null;
     } catch (error) {
-      result = null;
+      // leave result as null if response is not JSON
     }
 
-    if (!response.ok || (result && result.success === false)) {
-      return this.fallbackResponse(path, options.body);
+    if (!response.ok) {
+      const errMsg = (result && (result.message || result.error)) || `CJ API responded with status ${response.status}`;
+      throw new Error(errMsg);
     }
 
     return result || { success: true, data: options.body };
   }
 
-  fallbackResponse(path, payload = {}) {
-    if (path.includes('/products/search')) {
-      return {
-        success: true,
-        products: [
-          {
-            id: 'cj-demo-1',
-            name: 'CJ Demo Product',
-            description: 'Live CJ credentials are configured. This fallback data is shown until the CJ endpoint responds.',
-            price: 129.99,
-            original_price: 199.99,
-            image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&h=400&fit=crop',
-            supplier: 'CJ Dropshipping',
-            category: 'electronics',
-            rating: 4.7,
-            reviews_count: 120
-          }
-        ]
-      };
-    }
-
-    if (path.includes('/products/')) {
-      return {
-        success: true,
-        product: {
-          id: 'cj-demo-1',
-          name: 'CJ Demo Product',
-          description: 'Live CJ credentials are configured. This fallback data is shown until the CJ endpoint responds.',
-          price: 129.99,
-          original_price: 199.99,
-          image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&h=400&fit=crop',
-          supplier: 'CJ Dropshipping',
-          category: 'electronics',
-          rating: 4.7,
-          reviews_count: 120
-        }
-      };
-    }
-
-    return { success: true, data: payload };
-  }
 
   // ===== PRODUCT OPERATIONS =====
 
@@ -405,10 +365,19 @@ async function importProductToCatalog(cjProductId) {
       created_at: new Date().toISOString()
     };
 
-    // Save to Wimp-Drop database
-    const result = await supabase.insert('products', importedProduct);
+    // Save to Wimp-Drop database using Supabase client
+    const sb = (typeof supabaseService !== 'undefined') ? await supabaseService.getClient() : null;
+    if (!sb || !sb.from) {
+      throw new Error('Database client is not available. Ensure Supabase is initialized.');
+    }
+
+    const { data, error } = await sb.from('products').insert(importedProduct).select().single();
+    if (error) {
+      throw error;
+    }
+
     showNotification('Product imported successfully!', 'success');
-    return result;
+    return data;
   } catch (error) {
     console.error('Product import error:', error);
     showNotification('Failed to import product', 'error');

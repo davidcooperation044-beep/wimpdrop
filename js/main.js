@@ -480,7 +480,7 @@ async function loadProducts(filters = {}) {
           totalCount = result.totalCount || products.length;
         }
       } catch (cjError) {
-        console.warn('CJ API error, falling back to mock products:', cjError);
+        console.warn('CJ API error:', cjError);
         products = [];
       }
     }
@@ -512,84 +512,6 @@ async function loadProducts(filters = {}) {
     }
 
     // Fallback: Use mock products if no real products loaded
-    if (products.length === 0) {
-      const mockProducts = [
-        {
-          id: 'cj-1',
-          name: 'Premium Wireless Headphones',
-          category: 'electronics',
-          price: 89990,
-          originalPrice: 129990,
-          image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop',
-          rating: 4.5,
-          reviews: 128,
-          supplier: 'CJ Dropshipping',
-          description: 'High-quality wireless headphones with noise cancellation'
-        },
-        {
-          id: 'cj-2',
-          name: 'Smart Watch Pro',
-          category: 'electronics',
-          price: 19999,
-          originalPrice: 29999,
-          image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop',
-          rating: 4.8,
-          reviews: 256,
-          supplier: 'CJ Dropshipping',
-          description: 'Advanced smartwatch with fitness tracking'
-        },
-        {
-          id: 'cj-3',
-          name: 'Portable Phone Charger 20000mAh',
-          category: 'accessories',
-          price: 2999,
-          originalPrice: 4999,
-          image: 'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=400&h=400&fit=crop',
-          rating: 4.6,
-          reviews: 512,
-          supplier: 'CJ Dropshipping',
-          description: '20000mAh portable charger with fast charging'
-        },
-        {
-          id: 'cj-4',
-          name: 'Bluetooth Speaker Waterproof',
-          category: 'electronics',
-          price: 7999,
-          originalPrice: 12999,
-          image: 'https://images.unsplash.com/photo-1589003077984-894e133814c9?w=400&h=400&fit=crop',
-          rating: 4.7,
-          reviews: 341,
-          supplier: 'CJ Dropshipping',
-          description: 'Waterproof wireless speaker with 360° sound'
-        },
-        {
-          id: 'cj-5',
-          name: 'USB-C Fast Charger 65W',
-          category: 'accessories',
-          price: 3499,
-          originalPrice: 5999,
-          image: 'https://images.unsplash.com/photo-1625948515291-69613efd103f?w=400&h=400&fit=crop',
-          rating: 4.4,
-          reviews: 189,
-          supplier: 'CJ Dropshipping',
-          description: 'Fast charging adapter for multiple devices'
-        },
-        {
-          id: 'cj-6',
-          name: 'Wireless Charging Pad Pro',
-          category: 'accessories',
-          price: 4999,
-          originalPrice: 7999,
-          image: 'https://images.unsplash.com/photo-1592286927505-1def25e5e5fa?w=400&h=400&fit=crop',
-          rating: 4.7,
-          reviews: 203,
-          supplier: 'CJ Dropshipping',
-          description: 'Fast wireless charging pad with LED indicator'
-        }
-      ];
-      products = mockProducts;
-      totalCount = mockProducts.length;
-    }
 
     AppState.products = products;
     renderProducts(products);
