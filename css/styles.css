@@ -435,6 +435,22 @@ tr:nth-child(even) {
 .stat-card { background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); padding: 1rem; border-radius: 12px; text-align: center; }
 .stat-card strong { display: block; font-size: 1.5rem; color: var(--primary-gold); margin-bottom: 0.25rem; }
 
+/* Admin activity and log panel */
+.admin-activity-grid { display: grid; grid-template-columns: 1fr 420px; gap: 1rem; margin-top: 1.5rem; }
+.activity-feed { padding: 1rem; min-height: 160px; }
+.activity-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 240px; overflow: auto; }
+.activity-entry { padding: 0.5rem; background: rgba(255,255,255,0.02); border-radius: 8px; color: var(--light-gray); font-size: 0.95rem; }
+.activity-empty { color: #9fb0d6; }
+.log-panel { padding: 1rem; min-height: 160px; }
+.progress-bar { width: 100%; height: 10px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden; margin-bottom: 0.75rem; border: 1px solid rgba(255,255,255,0.04); }
+.progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary-gold), var(--primary-blue)); transition: width 0.45s ease; }
+.log-entries { max-height: 260px; overflow: auto; display: flex; flex-direction: column-reverse; gap: 0.45rem; }
+.log-entry { padding: 0.45rem 0.6rem; border-radius: 6px; font-size: 0.9rem; color: #dfe9ff; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.03); }
+.log-entry.log-error { background: rgba(255,100,100,0.06); border-color: rgba(255,100,100,0.12); }
+.log-entry.log-warn { background: rgba(255,180,80,0.04); border-color: rgba(255,180,80,0.12); }
+.log-entry.log-success { background: rgba(50,200,120,0.06); border-color: rgba(50,200,120,0.12); }
+.log-actions { margin-top: 0.75rem; display: flex; justify-content: flex-end; }
+
 /* ===== GRID & LAYOUT ===== */
 .grid {
   display: grid;

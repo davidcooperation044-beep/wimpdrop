@@ -92,6 +92,20 @@
                         <li>Ensure Internet access for backend API calls.</li>
                     </ul>
                 </div>
+                <div class="admin-activity-grid">
+                    <div class="activity-feed card">
+                        <h3>Activity Feed</h3>
+                        <div id="activity-feed" class="activity-list">
+                            <div class="activity-empty">No activity yet.</div>
+                        </div>
+                    </div>
+                    <div class="log-panel card">
+                        <h3>Sync Logs</h3>
+                        <div class="progress-bar"><div id="sync-progress" class="progress-fill" style="width:0%"></div></div>
+                        <div id="sync-log" class="log-entries"></div>
+                        <div class="log-actions"><button id="clear-log" class="btn btn-outline btn-small">Clear</button></div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -225,58 +239,109 @@
 
     <script>
         async function performSyncProducts() {
-            showNotification('Requesting product list from CJ...', 'info');
-            try {
-                const resp = await fetch('/api/admin/cj-sync?search=&page=1&perPage=50');
-                const data = await resp.json();
-                if (!data.success) throw new Error(data.error || 'CJ sync failed');
-
-                const products = data.products || [];
-                if (!products.length) {
-                    showNotification('No products returned from CJ', 'error');
-                    return;
+                // Enhanced sync with progress and logs
+                const syncBtn = document.getElementById('sync-products-btn');
+                const progressEl = document.getElementById('sync-progress');
+                const logEl = document.getElementById('sync-log');
+                const feedEl = document.getElementById('activity-feed');
+                function appendLog(msg, level = 'info') {
+                    const d = new Date().toLocaleTimeString();
+                    const entry = document.createElement('div');
+                    entry.className = 'log-entry log-' + level;
+                    entry.textContent = `[${d}] ${msg}`;
+                    logEl.prepend(entry);
+                    // add to activity feed as well
+                    const af = document.createElement('div');
+                    af.className = 'activity-entry';
+                    af.textContent = `${d} — ${msg}`;
+                    if (feedEl.querySelector('.activity-empty')) feedEl.innerHTML = '';
+                    feedEl.prepend(af);
                 }
 
-                // display confirmation dialog with summary
-                const proceed = confirm(`Fetched ${products.length} products from CJ. Import into catalog now?`);
-                if (!proceed) {
-                    showNotification('Import cancelled', 'info');
-                    return;
+                try {
+                    syncBtn.disabled = true;
+                    appendLog('Starting CJ product sync...', 'info');
+                    progressEl.style.width = '8%';
+
+                    const resp = await fetch('/api/admin/cj-sync?search=&page=1&perPage=50');
+                    appendLog('CJ sync request sent', 'info');
+                    progressEl.style.width = '28%';
+
+                    const data = await resp.json();
+                    if (!data.success) {
+                        appendLog('CJ sync failed: ' + (data.error || 'unknown'), 'error');
+                        showNotification('CJ sync failed', 'error');
+                        progressEl.style.width = '0%';
+                        syncBtn.disabled = false;
+                        return;
+                    }
+
+                    const products = data.products || [];
+                    appendLog(`Received ${products.length} products from CJ`, 'info');
+                    progressEl.style.width = '48%';
+
+                    if (!products.length) {
+                        appendLog('No products to import', 'warn');
+                        showNotification('No products returned from CJ', 'error');
+                        progressEl.style.width = '0%';
+                        syncBtn.disabled = false;
+                        return;
+                    }
+
+                    const proceed = confirm(`Fetched ${products.length} products from CJ. Import into catalog now?`);
+                    if (!proceed) {
+                        appendLog('Import cancelled by user', 'info');
+                        showNotification('Import cancelled', 'info');
+                        progressEl.style.width = '0%';
+                        syncBtn.disabled = false;
+                        return;
+                    }
+
+                    appendLog('Preparing payload for import', 'info');
+                    progressEl.style.width = '62%';
+
+                    const payload = products.map((p, idx) => ({
+                        external_id: p.id || p.productId || p.product_id,
+                        name: p.name || p.productTitle || '',
+                        category: p.category || 'uncategorized',
+                        price: Number(p.price || p.salePrice || 0),
+                        original_price: Number(p.listPrice || p.originalPrice || 0),
+                        thumbnail: p.thumbnail || p.image || (p.images && p.images[0]) || null,
+                        supplier: 'CJ Dropshipping',
+                        description: p.description || p.productDescription || '',
+                        metadata: JSON.stringify({ raw: p })
+                    }));
+
+                    appendLog('Importing products to Supabase...', 'info');
+                    progressEl.style.width = '75%';
+
+                    const importResp = await fetch('/api/admin/import-products', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ products: payload })
+                    });
+
+                    const importResult = await importResp.json();
+                    if (!importResult.success) {
+                        appendLog('Import failed: ' + (importResult.error || JSON.stringify(importResult)), 'error');
+                        showNotification('Import failed', 'error');
+                        progressEl.style.width = '0%';
+                        syncBtn.disabled = false;
+                        return;
+                    }
+
+                    appendLog(`Imported ${importResult.inserted || 0} products`, 'success');
+                    progressEl.style.width = '100%';
+                    showNotification(`Imported ${importResult.inserted || 0} products`, 'success');
+                    // small animation before reset
+                    setTimeout(() => { progressEl.style.width = '0%'; syncBtn.disabled = false; }, 900);
+                } catch (error) {
+                    appendLog('Product sync error: ' + (error.message || error), 'error');
+                    console.error('Product sync error:', error);
+                    showNotification('Product sync failed: ' + (error.message || error), 'error');
+                    progressEl.style.width = '0%';
+                    document.getElementById('sync-products-btn').disabled = false;
                 }
-
-                showNotification('Importing products to Supabase...', 'info');
-
-                // map products to simplified shape for import
-                const payload = products.map(p => ({
-                    external_id: p.id || p.productId || p.product_id,
-                    name: p.name || p.productTitle || '',
-                    category: p.category || 'uncategorized',
-                    price: Number(p.price || p.salePrice || 0),
-                    original_price: Number(p.listPrice || p.originalPrice || 0),
-                    thumbnail: p.thumbnail || p.image || (p.images && p.images[0]) || null,
-                    supplier: 'CJ Dropshipping',
-                    description: p.description || p.productDescription || '',
-                    metadata: JSON.stringify({ raw: p })
-                }));
-
-                const importResp = await fetch('/api/admin/import-products', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ products: payload })
-                });
-
-                const importResult = await importResp.json();
-                if (!importResult.success) {
-                    console.error('Import error', importResult);
-                    showNotification('Import failed: ' + (importResult.error || JSON.stringify(importResult)), 'error');
-                    return;
-                }
-
-                showNotification(`Imported ${importResult.inserted || 0} products`, 'success');
-            } catch (error) {
-                console.error('Product sync error:', error);
-                showNotification('Product sync failed: ' + (error.message || error), 'error');
-            }
         }
 
         // attach to the Sync Products button when admin is ready
