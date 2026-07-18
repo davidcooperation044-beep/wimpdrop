@@ -423,6 +423,18 @@ tr:nth-child(even) {
   flex-wrap: wrap;
 }
 
+/* Additional UI controls for redesign */
+.toolbar-controls { display: flex; gap: 1rem; align-items: center; }
+.view-toggle { display: inline-flex; gap: 0.5rem; }
+.view-btn { background: rgba(255,255,255,0.04); color: var(--light-gray); border: 1px solid rgba(255,255,255,0.04); padding: 0.45rem 0.8rem; border-radius: 8px; cursor: pointer; }
+.view-btn.active { background: linear-gradient(90deg,var(--primary-gold),var(--primary-blue)); color: var(--primary-dark); border-color: transparent; }
+
+.thumbnail-item.active { border-color: var(--primary-gold); box-shadow: 0 8px 20px rgba(0,0,0,0.28); transform: translateY(-4px); }
+
+.admin-stats-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1rem; margin: 1rem 0 2rem; }
+.stat-card { background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); padding: 1rem; border-radius: 12px; text-align: center; }
+.stat-card strong { display: block; font-size: 1.5rem; color: var(--primary-gold); margin-bottom: 0.25rem; }
+
 /* ===== GRID & LAYOUT ===== */
 .grid {
   display: grid;

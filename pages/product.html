@@ -368,10 +368,20 @@
             const thumbnails = currentProduct.images || (currentProduct.image ? [currentProduct.image] : []);
             const galleryContainer = document.getElementById('thumbnail-gallery');
             galleryContainer.innerHTML = thumbnails.map((img, idx) => `
-                <div class="thumbnail-item" onclick="document.getElementById('product-main-image').src='${img}'">
+                <div class="thumbnail-item" data-thumb-index="${idx}">
                     <img src="${img}" alt="Thumbnail ${idx + 1}" class="thumbnail-img">
                 </div>
             `).join('');
+
+            // Attach click handlers to thumbnails (avoid inline onclick)
+            document.querySelectorAll('.thumbnail-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    const img = item.querySelector('img')?.src;
+                    if (img) document.getElementById('product-main-image').src = img;
+                    document.querySelectorAll('.thumbnail-item').forEach(t => t.classList.remove('active'));
+                    item.classList.add('active');
+                });
+            });
         }
         
         function increaseQuantity() {
