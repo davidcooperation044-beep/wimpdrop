@@ -144,7 +144,48 @@
 
     <script src="../js/env.js"></script>
     <script src="../js/supabase.js"></script>
+    <script src="../js/api/cj-dropshipping.js"></script>
     <script src="../js/flutterwave.js"></script>
     <script src="../js/main.js"></script>
+
+    <script>
+        async function performSyncProducts() {
+            showNotification('Syncing products from CJ...', 'info');
+            try {
+                if (typeof cjAPI === 'undefined') throw new Error('CJ API client not loaded');
+                const result = await cjAPI.searchProducts('', 1, 50);
+                const products = result?.products || [];
+                if (!products.length) throw new Error('No products returned from CJ');
+
+                let imported = 0;
+                for (const p of products) {
+                    const pid = p.id || p.productId || p.product_id;
+                    if (!pid) continue;
+                    try {
+                        await importProductToCatalog(pid.toString());
+                        imported++;
+                    } catch (err) {
+                        console.warn('Import failed for', pid, err);
+                    }
+                }
+
+                showNotification(`Product sync complete (${imported}/${products.length})`, 'success');
+            } catch (error) {
+                console.error('Product sync error:', error);
+                showNotification('Product sync failed: ' + (error.message || error), 'error');
+            }
+        }
+
+        // attach to the Sync Products button when admin is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            const syncBtn = document.querySelector('button.btn-primary.btn-small');
+            if (syncBtn) {
+                syncBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    await performSyncProducts();
+                });
+            }
+        });
+    </script>
 </body>
 </html>
