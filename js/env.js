@@ -129,7 +129,11 @@ class EnvConfig {
       'VITE_DEFAULT_CURRENCY': 'NGN',
       'VITE_TAX_RATE': 0.075,
       'VITE_SHIPPING_STANDARD_COST': 5000,
-      'VITE_SHIPPING_EXPRESS_COST': 10000
+      'VITE_SHIPPING_EXPRESS_COST': 10000,
+      // Local admin override settings (development only)
+      'VITE_ENABLE_LOCAL_ADMIN_OVERRIDE': false,
+      'VITE_LOCAL_ADMIN_EMAIL': '',
+      'VITE_LOCAL_ADMIN_PASSWORD': ''
     };
     
     Object.keys(defaults).forEach(key => {

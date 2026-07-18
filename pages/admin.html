@@ -100,11 +100,21 @@
             loginPanel.style.display = 'block';
             dashboard.style.display = 'none';
 
-            // Local admin credential override (development convenience)
-            const LOCAL_ADMIN_EMAIL = 'wimpycooperation@gmail.com';
-            const LOCAL_ADMIN_PASSWORD = 'trexsrexs456$';
-
-            form?.addEventListener('submit', async (event) => {
+            // Load env and check for local admin override flag
++            let LOCAL_ADMIN_EMAIL = '';
++            let LOCAL_ADMIN_PASSWORD = '';
++            let ENABLE_LOCAL_ADMIN_OVERRIDE = false;
++
++            if (window.env && typeof window.env.load === 'function') {
++                try {
++                    if (!window.env.isLoaded) await window.env.load();
++                } catch (e) { /* ignore */ }
++                ENABLE_LOCAL_ADMIN_OVERRIDE = !!window.env.get('VITE_ENABLE_LOCAL_ADMIN_OVERRIDE');
++                LOCAL_ADMIN_EMAIL = window.env.get('VITE_LOCAL_ADMIN_EMAIL') || '';
++                LOCAL_ADMIN_PASSWORD = window.env.get('VITE_LOCAL_ADMIN_PASSWORD') || '';
++            }
++
++            form?.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 const email = form.querySelector('[name="email"]').value.trim();
                 const password = form.querySelector('[name="password"]').value.trim();
@@ -113,8 +123,8 @@
                     return;
                 }
 
-                // If credentials match the configured local admin, grant access without contacting Supabase.
-                if (email === LOCAL_ADMIN_EMAIL && password === LOCAL_ADMIN_PASSWORD) {
+                // If local override is enabled and credentials match the configured local admin, grant access without contacting Supabase.
+                if (ENABLE_LOCAL_ADMIN_OVERRIDE && email === LOCAL_ADMIN_EMAIL && password === LOCAL_ADMIN_PASSWORD) {
                     loginPanel.style.display = 'none';
                     dashboard.style.display = 'block';
                     updateUserUI && updateUserUI();

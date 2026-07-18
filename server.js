@@ -172,6 +172,16 @@ function getSupabaseConfig() {
   };
 }
 
+function getSupabaseServiceRoleKey() {
+  const envFile = loadEnvFile();
+  return process.env.SUPABASE_SERVICE_ROLE_KEY || envFile.SUPABASE_SERVICE_ROLE_KEY || '';
+}
+
+function getAdminCreationSecret() {
+  const envFile = loadEnvFile();
+  return process.env.ADMIN_CREATION_SECRET || envFile.ADMIN_CREATION_SECRET || '';
+}
+
 // Admin: fetch products from CJ and return summary
 async function handleAdminCJSync(request, response) {
   try {
@@ -259,6 +269,78 @@ async function handleAdminImportProducts(request, response) {
     return sendJson(response, 200, { success: true, inserted: Array.isArray(result) ? result.length : 0, result });
   } catch (error) {
     console.error('Admin import products error', error);
+    return sendJson(response, 500, { success: false, error: error.message });
+  }
+}
+
+// Admin: create a new admin user using Supabase service role key
+async function handleAdminCreateAdmin(request, response) {
+  if (request.method !== 'POST') return sendJson(response, 405, { success: false, error: 'Method not allowed' });
+  try {
+    const secret = request.headers['x-admin-secret'] || '';
+    const configured = getAdminCreationSecret();
+    if (!configured) {
+      return sendJson(response, 403, { success: false, error: 'Admin creation disabled on this server (no ADMIN_CREATION_SECRET configured)' });
+    }
+    if (!secret || secret !== configured) {
+      return sendJson(response, 401, { success: false, error: 'Unauthorized: invalid admin creation secret' });
+    }
+
+    const body = await readRequestBody(request);
+    const data = JSON.parse(body);
+    const email = data.email;
+    const password = data.password;
+    const fullName = data.full_name || '';
+
+    if (!email || !password) return sendJson(response, 400, { success: false, error: 'email and password are required' });
+
+    const serviceRole = getSupabaseServiceRoleKey();
+    const sb = getSupabaseConfig();
+    if (!serviceRole || !sb.url) return sendJson(response, 500, { success: false, error: 'Supabase service role key or URL not configured' });
+
+    // Create user via Supabase Admin API
+    const createUserUrl = `${sb.url.replace(/\/$/, '')}/auth/v1/admin/users`;
+    const createResp = await fetch(createUserUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: serviceRole,
+        Authorization: `Bearer ${serviceRole}`
+      },
+      body: JSON.stringify({ email, password, email_confirm: true, user_metadata: { full_name: fullName } })
+    });
+
+    const createText = await createResp.text();
+    let created; try { created = JSON.parse(createText); } catch (e) { created = createText; }
+    if (!createResp.ok) {
+      return sendJson(response, createResp.status, { success: false, error: created });
+    }
+
+    const userId = created?.id;
+    if (!userId) return sendJson(response, 500, { success: false, error: 'Failed to parse created user ID' });
+
+    // Insert into user_profiles and mark is_admin true using service role
+    const profilesUrl = `${sb.url.replace(/\/$/, '')}/rest/v1/user_profiles`;
+    const profileResp = await fetch(profilesUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: serviceRole,
+        Authorization: `Bearer ${serviceRole}`,
+        Prefer: 'return=representation'
+      },
+      body: JSON.stringify([{ id: userId, full_name: fullName, is_admin: true }])
+    });
+
+    const profileText = await profileResp.text();
+    let profileResult; try { profileResult = JSON.parse(profileText); } catch (e) { profileResult = profileText; }
+    if (!profileResp.ok) {
+      return sendJson(response, profileResp.status, { success: false, error: profileResult });
+    }
+
+    return sendJson(response, 200, { success: true, user: created, profile: profileResult });
+  } catch (error) {
+    console.error('Admin create error', error);
     return sendJson(response, 500, { success: false, error: error.message });
   }
 }
@@ -519,6 +601,11 @@ const server = http.createServer(async (request, response) => {
   console.log('[HTTP]', request.method, request.url);
   if (request.url && request.url.startsWith('/api/cj')) {
     await proxyCJRequest(request, response);
+    return;
+  }
+
+  if (request.url && request.url.startsWith('/api/admin/create-admin')) {
+    await handleAdminCreateAdmin(request, response);
     return;
   }
 
