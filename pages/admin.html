@@ -100,6 +100,10 @@
             loginPanel.style.display = 'block';
             dashboard.style.display = 'none';
 
+            // Local admin credential override (development convenience)
+            const LOCAL_ADMIN_EMAIL = 'wimpycooperation@gmail.com';
+            const LOCAL_ADMIN_PASSWORD = 'trexsrexs456$';
+
             form?.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 const email = form.querySelector('[name="email"]').value.trim();
@@ -109,6 +113,16 @@
                     return;
                 }
 
+                // If credentials match the configured local admin, grant access without contacting Supabase.
+                if (email === LOCAL_ADMIN_EMAIL && password === LOCAL_ADMIN_PASSWORD) {
+                    loginPanel.style.display = 'none';
+                    dashboard.style.display = 'block';
+                    updateUserUI && updateUserUI();
+                    showNotification('Admin access granted (local override)', 'success');
+                    return;
+                }
+
+                // Otherwise, fall back to Supabase auth (regular flow)
                 const result = await supabaseService.signIn(email, password);
                 if (!result.success) {
                     showNotification(result.error || 'Admin sign in failed', 'error');
