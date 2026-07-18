@@ -174,6 +174,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.warn('Currency refresh failed', error);
     }
   }, 6000);
+
+  // Load mobile UI enhancements when appropriate
+  try {
+    if (window.matchMedia && window.matchMedia('(max-width:899px)').matches) {
+      const s = document.createElement('script');
+      s.src = '/js/mobile-ui.js';
+      s.defer = true;
+      document.body.appendChild(s);
+    }
+  } catch (e) {
+    console.warn('Failed to load mobile UI enhancements', e);
+  }
 });
 
 async function initializeCurrencySystem() {
@@ -572,18 +584,23 @@ function renderProducts(products) {
   const productList = document.getElementById('product-list');
   if (!productList) return;
   
-  productList.innerHTML = products.map(product => `
+  productList.innerHTML = products.map(product => {
+    const pid = product.id;
+    const pidUrl = encodeURIComponent(pid);
+    const pidJson = JSON.stringify(pid);
+    const stars = '★'.repeat(Math.floor(product.rating)) + '☆'.repeat(5 - Math.floor(product.rating));
+    return `
     <div class="product-card">
       <div class="product-image">
-        <a href="product.html?id=${product.id}" style="text-decoration: none; color: inherit;">
+        <a href="product.html?id=${pidUrl}" style="text-decoration: none; color: inherit;">
           <img src="${product.image}" alt="${product.name}" style="cursor: pointer;">
         </a>
       </div>
       <div class="product-info">
         <div class="product-category">${product.category}</div>
-        <h3 class="product-name"><a href="product.html?id=${product.id}" style="text-decoration: none; color: inherit; cursor: pointer;">${product.name}</a></h3>
+        <h3 class="product-name"><a href="product.html?id=${pidUrl}" style="text-decoration: none; color: inherit; cursor: pointer;">${product.name}</a></h3>
         <div class="product-rating">
-          <span class="stars">${'★'.repeat(Math.floor(product.rating))}${'☆'.repeat(5 - Math.floor(product.rating))}</span>
+          <span class="stars">${stars}</span>
           <span class="rating-count">${product.rating} (${product.reviews})</span>
         </div>
         <div class="product-price">
@@ -591,12 +608,13 @@ function renderProducts(products) {
           <span class="price-original">${formatCurrency(product.originalPrice)}</span>
         </div>
         <div class="product-actions">
-          <button class="btn btn-primary btn-small flex-1" onclick="addToCart(${product.id})">Add to Cart</button>
-          <button class="btn btn-outline btn-small" onclick="toggleWishlist(${product.id})" title="Add to Wishlist">♡</button>
+          <button class="btn btn-primary btn-small flex-1" onclick="addToCart(${pidJson})">Add to Cart</button>
+          <button class="btn btn-outline btn-small" onclick="toggleWishlist(${pidJson})" title="Add to Wishlist">♡</button>
         </div>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function renderPagination(totalItems, currentPage, perPage) {
