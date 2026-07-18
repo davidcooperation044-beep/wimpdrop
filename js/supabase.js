@@ -25,82 +25,60 @@ class SupabaseService {
     if (this.isInitialized) return this.client;
     if (this._initPromise) return this._initPromise;
 
-    this._initPromise = new Promise(async (resolve) => {
-      // Wait for env to be ready
+    this._initPromise = new Promise(async (resolve, reject) => {
+      // Resolve env/config
       let supabaseUrl = this.manualUrl || '';
       let supabaseKey = this.manualKey || '';
 
-      // Try CONFIG first (from main.js)
       if (!supabaseUrl && typeof CONFIG !== 'undefined') {
         supabaseUrl = CONFIG.supabaseUrl;
         supabaseKey = CONFIG.supabaseKey;
       }
 
-      // Fallback to env
       if (!supabaseUrl && typeof env !== 'undefined') {
         await env.load();
         supabaseUrl = env.get('VITE_SUPABASE_URL') || '';
         supabaseKey = env.get('VITE_SUPABASE_ANON_KEY') || '';
       }
 
-      // Fallback to window.ENV_CONFIG
       if (!supabaseUrl && window.ENV_CONFIG) {
         supabaseUrl = window.ENV_CONFIG.VITE_SUPABASE_URL || '';
         supabaseKey = window.ENV_CONFIG.VITE_SUPABASE_ANON_KEY || '';
       }
 
       if (!supabaseUrl || !supabaseKey) {
-        console.error('❌ Supabase URL or Key missing. Check .env.local');
-        resolve(null);
+        const msg = 'Supabase URL or Key missing. Realtime mode requires Supabase SDK and keys.';
+        console.error('❌ ' + msg);
+        this.isInitialized = false;
+        reject(new Error(msg));
         return;
       }
 
-      // Check if official SDK is available
-      if (window.supabase && window.supabase.createClient) {
+      // Require official SDK for realtime-only mode
+      if (!(window.supabase && window.supabase.createClient)) {
+        const msg = 'Supabase JS SDK not found. Realtime mode requires @supabase/supabase-js v2 loaded via CDN.';
+        console.error('❌ ' + msg);
+        this.isInitialized = false;
+        reject(new Error(msg));
+        return;
+      }
+
+      try {
         this.client = window.supabase.createClient(supabaseUrl, supabaseKey);
         window._supabase = this.client;
         this.isInitialized = true;
-        console.log('✓ Supabase initialized successfully (SDK)');
+        this.supabaseUrl = supabaseUrl;
+        this.supabaseKey = supabaseKey;
+        this.channels = {};
+        console.log('✓ Supabase SDK initialized (realtime-only mode)');
         resolve(this.client);
         return;
+      } catch (err) {
+        console.error('Failed to initialize Supabase SDK:', err);
+        this.isInitialized = false;
+        reject(err);
+        return;
       }
-
-      // Fallback: raw REST API approach
-      this.supabaseUrl = supabaseUrl;
-      this.supabaseKey = supabaseKey;
-      this.headers = {
-        'Content-Type': 'application/json',
-        'apikey': supabaseKey,
-        'Authorization': `Bearer ${supabaseKey}`
-      };
-      this.isInitialized = true;
-      this.auth = {
-        signUp: async ({ email, password, options = {} }) => {
-          const result = await this.signUp(email, password, options.data || {});
-          if (!result.success) {
-            return { data: null, error: { message: result.error || 'Signup failed' } };
-          }
-          return { data: { user: result.user, session: result.session }, error: null };
-        },
-        signInWithPassword: async ({ email, password }) => {
-          const result = await this.signIn(email, password);
-          if (!result.success) {
-            return { data: null, error: { message: result.error || 'Login failed' } };
-          }
-          return { data: { user: result.user, session: result.session }, error: null };
-        },
-        signOut: async () => {
-          const result = await this.signOut();
-          return { error: result.success ? null : { message: result.error || 'Sign out failed' } };
-        },
-        signInWithOAuth: async ({ provider }) => {
-          return { data: null, error: { message: 'OAuth is not available in REST fallback mode' } };
-        }
-      };
-      window._supabase = this;
-      window._supabase.auth = this.auth;
-      console.log('✓ Supabase initialized (REST fallback)');
-      resolve(this);
     });
 
     window._supabaseReady = this._initPromise;
@@ -110,7 +88,8 @@ class SupabaseService {
   // ── Get initialized client ──
   async getClient() {
     if (!this.isInitialized) await this.init();
-    return this.client || this;
+    if (!this.client) throw new Error('Supabase client is not initialized. Realtime mode requires the SDK.');
+    return this.client;
   }
 
   getCurrentUser() {
@@ -719,6 +698,50 @@ class SupabaseService {
     } catch (error) {
       return { success: false, isAdmin: false, error: error.message };
     }
+  }
+
+  // ── Realtime subscriptions ──
+  subscribe(table, callback, opts = {}) {
+    if (!this.isInitialized || !this.client) throw new Error('Supabase client not initialized. Cannot subscribe.');
+    const channelName = `table:${table}`;
+    if (this.channels[channelName]) {
+      // already subscribed
+      return this.channels[channelName];
+    }
+
+    const filter = opts.filter || null; // optional filter for postgres_changes
+    const match = filter ? { schema: 'public', table, filter } : { schema: 'public', table };
+
+    const channel = this.client.channel(channelName, { config: {}})
+      .on('postgres_changes', match, (payload) => {
+        try {
+          callback(payload);
+        } catch (e) {
+          console.error('Realtime callback error:', e);
+        }
+      }).subscribe();
+
+    this.channels[channelName] = channel;
+    return channel;
+  }
+
+  unsubscribe(table) {
+    const channelName = `table:${table}`;
+    const ch = this.channels[channelName];
+    if (!ch) return;
+    try {
+      ch.unsubscribe();
+    } catch (e) {
+      console.warn('Failed to unsubscribe channel', channelName, e);
+    }
+    delete this.channels[channelName];
+  }
+
+  unsubscribeAll() {
+    Object.keys(this.channels).forEach(name => {
+      try { this.channels[name].unsubscribe(); } catch (e) { /* ignore */ }
+      delete this.channels[name];
+    });
   }
 }
 

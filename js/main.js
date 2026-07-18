@@ -127,6 +127,45 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateWishlistBadge();
   registerPWA();
 
+  // Setup realtime subscriptions (requires Supabase SDK)
+  try {
+    if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
+      // Products table updates
+      supabaseService.subscribe('products', async (payload) => {
+        console.log('Realtime products change:', payload);
+        if (typeof loadProducts === 'function') {
+          await loadProducts();
+        }
+      });
+
+      // Orders updates
+      supabaseService.subscribe('orders', async (payload) => {
+        console.log('Realtime orders change:', payload);
+        if (AppState.user && typeof supabaseService.getUserOrders === 'function') {
+          const res = await supabaseService.getUserOrders();
+          if (res.success) {
+            AppState.orders = res.orders;
+            if (typeof updateOrderList === 'function') updateOrderList();
+          }
+        }
+      });
+
+      // User profile updates for current user
+      if (AppState.user && AppState.user.id) {
+        supabaseService.subscribe('user_profiles', async (payload) => {
+          console.log('Realtime user profile change:', payload);
+          const r = await supabaseService.getUserProfile();
+          if (r.success) {
+            AppState.userProfile = r.profile;
+            if (typeof updateUserUI === 'function') updateUserUI();
+          }
+        });
+      }
+    }
+  } catch (e) {
+    console.warn('Realtime subscription setup failed', e);
+  }
+
   setInterval(async () => {
     try {
       await refreshExchangeRates(true);
