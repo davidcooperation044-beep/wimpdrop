@@ -126,21 +126,59 @@ class SupabaseService {
       const sb = await this.getClient();
 
       if (sb.auth) {
-        // Official SDK path
-        const { data, error } = await sb.auth.signUp({
-          email,
-          password,
-          options: { data: metadata }
-        });
-        if (error) throw error;
-        if (data?.user) {
-          this.currentUser = {
-            id: data.user.id,
-            email: data.user.email,
-            user_metadata: data.user.user_metadata || {}
-          };
+        // Official SDK path - attempt and gracefully fallback on network/auth fetch errors
+        try {
+          const { data, error } = await sb.auth.signUp({
+            email,
+            password,
+            options: { data: metadata }
+          });
+          if (error) throw error;
+          if (data?.user) {
+            this.currentUser = {
+              id: data.user.id,
+              email: data.user.email,
+              user_metadata: data.user.user_metadata || {}
+            };
+          }
+          return { success: true, user: data.user, session: data.session };
+        } catch (sdkErr) {
+          // Log detailed SDK error for diagnostics
+          console.error('Supabase SDK signUp error:', sdkErr);
+          // If it's a fetch/retryable error, fall back to REST endpoint to capture full response
+          try {
+            const restResp = await fetch(`${this.supabaseUrl}/auth/v1/signup`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': this.supabaseKey,
+                'Authorization': `Bearer ${this.supabaseKey}`
+              },
+              body: JSON.stringify({ email, password, data: metadata })
+            });
+
+            const text = await restResp.text();
+            let json = null;
+            try { json = text ? JSON.parse(text) : null; } catch (e) { json = null; }
+
+            if (!restResp.ok) {
+              const bodyMsg = json && (json.error_description || json.message || json.error) ? (json.error_description || json.message || json.error) : text;
+              const errMsg = `Supabase REST signup failed: ${restResp.status} ${restResp.statusText} - ${bodyMsg}`;
+              console.error(errMsg, json || text);
+              return { success: false, error: errMsg };
+            }
+
+            // Success path for REST fallback
+            const user = json?.user || null;
+            if (user) {
+              this.currentUser = { id: user.id, email: user.email, user_metadata: user.user_metadata || {} };
+            }
+            return { success: true, user: user, session: json?.session };
+          } catch (restErr) {
+            console.error('Supabase REST fallback error during signUp:', restErr);
+            return { success: false, error: restErr.message || 'AuthRetryableFetchError' };
+          }
         }
-        return { success: true, user: data.user, session: data.session };
       }
 
       // REST fallback
