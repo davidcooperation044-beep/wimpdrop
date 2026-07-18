@@ -366,6 +366,21 @@ function setupEventListeners() {
       nav.classList.toggle('mobile-active');
     });
   }
+
+  // global ripple effect for buttons
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn');
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const ripple = document.createElement('span');
+    ripple.className = 'ripple';
+    const size = Math.max(rect.width, rect.height) * 1.2;
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = (e.clientX - rect.left - size/2) + 'px';
+    ripple.style.top = (e.clientY - rect.top - size/2) + 'px';
+    btn.appendChild(ripple);
+    setTimeout(() => { try { ripple.remove(); } catch(e){} }, 650);
+  });
   
   // Search functionality
   const searchInput = document.querySelector('[data-search]');
@@ -491,6 +506,15 @@ function updateCartBadge() {
     const count = getCartItemCount();
     badge.textContent = count;
     badge.parentElement.style.display = count > 0 ? 'block' : 'none';
+    try {
+      // animate badge bounce
+      badge.classList.remove('badge-bounce');
+      // trigger reflow
+      void badge.offsetWidth;
+      if (count > 0) badge.classList.add('badge-bounce');
+    } catch (e) {
+      // ignore
+    }
   }
 }
 
@@ -646,8 +670,13 @@ function renderProducts(products) {
     const pidUrl = encodeURIComponent(pid);
     const pidJson = JSON.stringify(pid);
     const stars = '★'.repeat(Math.floor(product.rating)) + '☆'.repeat(5 - Math.floor(product.rating));
+    // compute discount if originalPrice present
+    const hasDiscount = product.originalPrice && product.originalPrice > product.price;
+    const discountPercent = hasDiscount ? Math.round((1 - (product.price / product.originalPrice)) * 100) : 0;
     return `
     <div class="product-card">
+      ${hasDiscount ? `<div class="discount-badge">-${discountPercent}%</div>` : ''}
+      <div class="supplier-badge">${product.supplier || ''}</div>
       <div class="product-image">
         <a href="product.html?id=${pidUrl}" style="text-decoration: none; color: inherit;">
           <img src="${product.image}" alt="${product.name}" style="cursor: pointer;">
@@ -666,12 +695,26 @@ function renderProducts(products) {
         </div>
         <div class="product-actions">
           <button class="btn btn-primary btn-small flex-1" onclick="addToCart(${pidJson})">Add to Cart</button>
+          <button class="btn btn-primary btn-small" onclick="buyNow(${pidJson})">Buy Now</button>
           <button class="btn btn-outline btn-small" onclick="toggleWishlist(${pidJson})" title="Add to Wishlist">♡</button>
+          <button class="btn btn-outline btn-small" onclick="quickView(${pidJson})" title="Quick view">👁</button>
         </div>
       </div>
     </div>
   `;
   }).join('');
+}
+
+function buyNow(productId) {
+  addToCart(productId, 1);
+  // small delay for animation then navigate to cart
+  setTimeout(() => { window.location.href = '/pages/cart.html'; }, 450);
+}
+
+function quickView(productId) {
+  // Basic quick view: open product page in new small window; can be upgraded to modal
+  const url = `/pages/product.html?id=${encodeURIComponent(productId)}`;
+  window.open(url, '_blank', 'toolbar=0,location=0,status=0,menubar=0,width=420,height=720');
 }
 
 function renderPagination(totalItems, currentPage, perPage) {

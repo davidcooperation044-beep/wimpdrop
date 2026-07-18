@@ -51,3 +51,18 @@ nav{display:none}
 
 /* Fly-to-cart animation */
 .fly-image{position:fixed;z-index:9999;pointer-events:none;transition:transform 600ms cubic-bezier(.2,.9,.2,1), opacity 360ms}
+
+/* Badges and micro-interactions */
+.badge-label{display:inline-block;padding:4px 8px;border-radius:999px;font-size:0.75rem;background:rgba(0,0,0,0.25);color:var(--muted)}
+.discount-badge{position:absolute;left:10px;top:10px;background:linear-gradient(90deg,#ff6b00,#ff3b30);color:#fff;padding:6px 8px;border-radius:10px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,0.35)}
+.supplier-badge{position:absolute;right:10px;top:10px;background:rgba(0,0,0,0.35);color:var(--muted);padding:6px 8px;border-radius:10px}
+.product-card{position:relative}
+
+/* Button ripple */
+.btn{position:relative;overflow:hidden}
+.btn .ripple{position:absolute;border-radius:50%;transform:scale(0);background:rgba(255,255,255,0.3);animation:ripple 600ms linear;pointer-events:none}
+@keyframes ripple{to{transform:scale(4);opacity:0}}
+
+/* Cart badge bounce */
+.badge-bounce{animation: badge-pop 520ms cubic-bezier(.2,.9,.2,1)}
+@keyframes badge-pop{0%{transform:scale(1)}30%{transform:scale(1.5)}100%{transform:scale(1)}}
