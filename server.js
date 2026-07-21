@@ -56,15 +56,6 @@ function loadEnvFile() {
   return vars;
 }
 
-function getCJConfig() {
-  const envFile = loadEnvFile();
-  return {
-    apiKey: process.env.VITE_CJ_API_KEY || envFile.VITE_CJ_API_KEY || '',
-    apiUrl: process.env.VITE_CJ_API_URL || envFile.VITE_CJ_API_URL || 'https://developers.cjdropshipping.com/api2.0/v1',
-    storeId: process.env.VITE_CJ_STORE_ID || envFile.VITE_CJ_STORE_ID || ''
-  };
-}
-
 function sendResponse(response, filePath) {
   const ext = path.extname(filePath).toLowerCase();
   const contentType = mimeTypes[ext] || 'application/octet-stream';
@@ -100,98 +91,7 @@ function readRequestBody(request) {
 }
 
 async function proxyCJRequest(request, response) {
-  const cjConfig = getCJConfig();
-  const requestUrl = new URL(request.url, `http://localhost:${port}`);
-  let pathname = requestUrl.pathname.replace(/^\/api\/cj\/?/, '/');
-
-  if (pathname === '/search') {
-    pathname = '/products/search';
-  }
-
-  if (pathname === '/orders') {
-    pathname = '/orders/create';
-  }
-
-  if (!cjConfig.apiKey) {
-    return sendJson(response, 500, {
-      success: false,
-      error: 'CJ API key is not configured on the server.'
-    });
-  }
-
-  const targetUrl = new URL(`${cjConfig.apiUrl}${pathname}${requestUrl.search}`);
-  if (cjConfig.storeId) {
-    targetUrl.searchParams.set('storeId', cjConfig.storeId);
-  }
-
-  const headers = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    Authorization: `Bearer ${cjConfig.apiKey}`,
-    'X-API-Key': cjConfig.apiKey
-  };
-
-  let body;
-  if (!['GET', 'HEAD'].includes(request.method)) {
-    const rawBody = await readRequestBody(request);
-    body = rawBody;
-    const contentType = request.headers['content-type'] || '';
-    if (rawBody && contentType.includes('application/json')) {
-      try {
-        const parsed = JSON.parse(rawBody);
-        if (pathname === '/products/search' && parsed && typeof parsed === 'object') {
-          if (parsed.pageNo !== undefined || parsed.pageSize !== undefined) {
-            parsed.page = parsed.pageNo !== undefined ? parsed.pageNo : parsed.page;
-            parsed.limit = parsed.pageSize !== undefined ? parsed.pageSize : parsed.limit;
-            delete parsed.pageNo;
-            delete parsed.pageSize;
-          }
-          if (parsed.pageno !== undefined) {
-            parsed.page = parsed.pageno;
-            delete parsed.pageno;
-          }
-          if (parsed.page_size !== undefined) {
-            parsed.limit = parsed.page_size;
-            delete parsed.page_size;
-          }
-          if (parsed.search && parsed.keyword === undefined) {
-            parsed.keyword = parsed.search;
-            delete parsed.search;
-          }
-        }
-        body = JSON.stringify(parsed);
-      } catch (parseError) {
-        body = rawBody;
-      }
-    }
-  }
-
-  try {
-    const upstreamResponse = await fetch(targetUrl, {
-      method: request.method,
-      headers,
-      body: body || undefined
-    });
-
-    const rawText = await upstreamResponse.text();
-    let payload;
-    try {
-      payload = JSON.parse(rawText);
-    } catch (error) {
-      payload = rawText;
-    }
-
-    response.writeHead(upstreamResponse.status, {
-      'Content-Type': upstreamResponse.headers.get('content-type') || 'application/json'
-    });
-    response.end(typeof payload === 'string' ? payload : JSON.stringify(payload));
-  } catch (error) {
-    return sendJson(response, 502, {
-      success: false,
-      error: 'Failed to reach CJ Dropshipping API.',
-      details: error.message
-    });
-  }
+  return sendJson(response, 404, { success: false, error: 'CJ proxy has been removed. Please use Zendrop integration.' });
 }
 
 function getSupabaseConfig() {
@@ -213,57 +113,6 @@ function getAdminCreationSecret() {
 }
 
 // Admin: fetch products from CJ and return summary
-async function handleAdminCJSync(request, response) {
-  try {
-    const url = new URL(request.url, `http://localhost:${port}`);
-    const search = url.searchParams.get('search') || 'electronics';
-    const page = Number(url.searchParams.get('page') || 1);
-    const perPage = Number(url.searchParams.get('perPage') || 50);
-
-    const cjConfig = getCJConfig();
-    if (!cjConfig.apiKey) {
-      return sendJson(response, 500, { success: false, error: 'CJ API key not configured' });
-    }
-
-    const target = new URL(`${cjConfig.apiUrl}/products/search`);
-    target.searchParams.set('keyword', search);
-    target.searchParams.set('page', String(page));
-    target.searchParams.set('limit', String(perPage));
-    if (cjConfig.storeId) target.searchParams.set('storeId', cjConfig.storeId);
-
-    let upstream = await fetch(target.toString(), { headers: { Authorization: `Bearer ${cjConfig.apiKey}`, 'X-API-Key': cjConfig.apiKey } });
-    let text = await upstream.text();
-    let payload;
-    try { payload = JSON.parse(text); } catch (e) { payload = text; }
-
-    // If CJ reports interface not found, try POST fallback (some CJ endpoints expect POST)
-    const interfaceNotFound = payload && (payload.message === 'Interface not found' || payload.result === false);
-    if (!upstream.ok || interfaceNotFound) {
-      try {
-        const postTarget = new URL(`${cjConfig.apiUrl}/products/search`);
-        if (cjConfig.storeId) postTarget.searchParams.set('storeId', cjConfig.storeId);
-        const postResp = await fetch(postTarget.toString(), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cjConfig.apiKey}`, 'X-API-Key': cjConfig.apiKey },
-          body: JSON.stringify({ keyword: search, page, limit: perPage })
-        });
-        const postText = await postResp.text();
-        let postPayload; try { postPayload = JSON.parse(postText); } catch (e) { postPayload = postText; }
-        const products = Array.isArray(postPayload?.products) ? postPayload.products : (postPayload?.data || []);
-        return sendJson(response, 200, { success: true, fetched: products.length, products, raw: postPayload, note: 'POST fallback used' });
-      } catch (postErr) {
-        console.error('CJ POST fallback failed', postErr);
-      }
-    }
-
-    const products = Array.isArray(payload?.products) ? payload.products : (payload?.data || []);
-    return sendJson(response, 200, { success: true, fetched: products.length, products, raw: payload });
-  } catch (error) {
-    console.error('Admin CJ sync error', error);
-    return sendJson(response, 500, { success: false, error: error.message });
-  }
-}
-
 // Admin: import products to Supabase via REST (uses anon key from env.local)
 async function handleAdminImportProducts(request, response) {
   if (request.method !== 'POST') return sendJson(response, 405, { success: false, error: 'Method not allowed' });
@@ -375,32 +224,12 @@ async function handleAdminCreateAdmin(request, response) {
   }
 }
 
-// Admin: run connectivity tests for CJ and Supabase (read-only)
+// Admin: run connectivity tests for Supabase (read-only)
 async function handleAdminRunTests(request, response) {
   try {
-    const cjConfig = getCJConfig();
     const sb = getSupabaseConfig();
 
-    const results = { cj: null, supabase: null };
-
-    // CJ test: attempt a simple search
-    try {
-      if (!cjConfig.apiKey) {
-        results.cj = { ok: false, error: 'CJ API key missing' };
-      } else {
-        const t = new URL(`${cjConfig.apiUrl}/products/search`);
-        t.searchParams.set('keyword', 'test');
-        t.searchParams.set('page', '1');
-        t.searchParams.set('limit', '1');
-        if (cjConfig.storeId) t.searchParams.set('storeId', cjConfig.storeId);
-        const r = await fetch(t.toString(), { headers: { Authorization: `Bearer ${cjConfig.apiKey}`, 'X-API-Key': cjConfig.apiKey } });
-        const txt = await r.text();
-        let json; try { json = JSON.parse(txt); } catch(e) { json = txt; }
-        results.cj = { ok: r.ok, status: r.status, body: json };
-      }
-    } catch (e) {
-      results.cj = { ok: false, error: e.message };
-    }
+    const results = { supabase: null };
 
     // Supabase test: try a read from public products (REST) using anon key
     try {
@@ -421,6 +250,136 @@ async function handleAdminRunTests(request, response) {
   } catch (error) {
     console.error('Admin run tests error', error);
     return sendJson(response, 500, { success: false, error: error.message });
+  }
+}
+
+// Admin: stream CJ sync + import progress via Server-Sent Events (SSE)
+async function handleAdminCJSyncStream(request, response) {
+  const cjConfig = getCJConfig();
+  const sb = getSupabaseConfig();
+
+  // SSE headers
+  response.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive'
+  });
+  response.write('\n');
+
+  function sendEvent(event, payload) {
+    try {
+      const data = typeof payload === 'string' ? { message: payload } : payload;
+      response.write(`event: ${event}\n`);
+      response.write(`data: ${JSON.stringify(data)}\n\n`);
+    } catch (e) {
+      console.error('SSE send error', e);
+    }
+  }
+
+  sendEvent('log', 'Starting CJ sync (stream)');
+
+  if (!cjConfig.apiKey) {
+    sendEvent('error', 'CJ API key not configured on server');
+    response.end();
+    return;
+  }
+
+  try {
+    sendEvent('progress', { pct: 5 });
+    // Fetch products from CJ
+    const target = new URL(`${cjConfig.apiUrl}/products/search`);
+    target.searchParams.set('keyword', 'electronics');
+    target.searchParams.set('page', '1');
+    target.searchParams.set('limit', '50');
+    if (cjConfig.storeId) target.searchParams.set('storeId', cjConfig.storeId);
+
+    sendEvent('log', 'Querying CJ products...');
+    const upstream = await fetch(target.toString(), { headers: { Authorization: `Bearer ${cjConfig.apiKey}`, 'X-API-Key': cjConfig.apiKey } });
+    const text = await upstream.text();
+    let payload; try { payload = JSON.parse(text); } catch(e) { payload = text; }
+
+    // Fallback to POST if interface not found
+    const interfaceNotFound = payload && (payload.message === 'Interface not found' || payload.result === false);
+    let products = Array.isArray(payload?.products) ? payload.products : (payload?.data || []);
+    if (!upstream.ok || interfaceNotFound) {
+      sendEvent('log', 'GET fallback failed, trying POST fallback');
+      const postTarget = new URL(`${cjConfig.apiUrl}/products/search`);
+      if (cjConfig.storeId) postTarget.searchParams.set('storeId', cjConfig.storeId);
+      const postResp = await fetch(postTarget.toString(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cjConfig.apiKey}`, 'X-API-Key': cjConfig.apiKey },
+        body: JSON.stringify({ keyword: 'electronics', page: 1, limit: 50 })
+      });
+      const postText = await postResp.text();
+      let postPayload; try { postPayload = JSON.parse(postText); } catch(e) { postPayload = postText; }
+      products = Array.isArray(postPayload?.products) ? postPayload.products : (postPayload?.data || []);
+      sendEvent('log', `POST fallback returned ${products.length} products`);
+    } else {
+      sendEvent('log', `CJ returned ${products.length} products`);
+    }
+
+    sendEvent('progress', { pct: 40 });
+
+    if (!products || !products.length) {
+      sendEvent('error', 'No products returned from CJ');
+      response.end();
+      return;
+    }
+
+    // Prepare payload for Supabase import
+    sendEvent('log', 'Preparing products payload for import');
+    const payloadToImport = products.map(p => ({
+      external_id: p.id || p.productId || p.product_id,
+      name: p.name || p.productTitle || '',
+      category: p.category || 'uncategorized',
+      price: Number(p.price || p.salePrice || 0),
+      original_price: Number(p.listPrice || p.originalPrice || 0),
+      thumbnail: p.thumbnail || p.image || (p.images && p.images[0]) || null,
+      supplier: 'CJ Dropshipping',
+      description: p.description || p.productDescription || '',
+      metadata: JSON.stringify({ raw: p })
+    }));
+
+    sendEvent('progress', { pct: 65 });
+
+    // Import to Supabase
+    if (!sb.url || !sb.anonKey) {
+      sendEvent('error', 'Supabase URL or anon key missing on server');
+      response.end();
+      return;
+    }
+
+    sendEvent('log', `Importing ${payloadToImport.length} products to Supabase`);
+    const targetUrl = `${sb.url.replace(/\/$/, '')}/rest/v1/products`;
+    const importResp = await fetch(targetUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: sb.anonKey,
+        Authorization: `Bearer ${sb.anonKey}`,
+        Prefer: 'return=representation'
+      },
+      body: JSON.stringify(payloadToImport)
+    });
+
+    const importText = await importResp.text();
+    let importResult; try { importResult = JSON.parse(importText); } catch(e) { importResult = importText; }
+
+    if (!importResp.ok) {
+      sendEvent('error', `Import failed: ${JSON.stringify(importResult)}`);
+      response.end();
+      return;
+    }
+
+    const inserted = Array.isArray(importResult) ? importResult.length : 0;
+    sendEvent('progress', { pct: 100 });
+    sendEvent('log', `Import complete — inserted ${inserted} products`);
+    sendEvent('done', { inserted });
+    response.end();
+  } catch (error) {
+    console.error('SSE sync error', error);
+    sendEvent('error', error.message || 'Unknown server error');
+    response.end();
   }
 }
 
@@ -636,11 +595,6 @@ const server = http.createServer(async (request, response) => {
 
   if (request.url && request.url.startsWith('/api/admin/create-admin')) {
     await handleAdminCreateAdmin(request, response);
-    return;
-  }
-
-  if (request.url && request.url.startsWith('/api/admin/cj-sync')) {
-    await handleAdminCJSync(request, response);
     return;
   }
 

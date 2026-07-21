@@ -448,6 +448,30 @@ class SupabaseService {
     }
   }
 
+  async getProductVariants(productId) {
+    try {
+      const sb = await this.getClient();
+      if (sb.from) {
+        const { data, error } = await sb.from('products')
+          .select('*')
+          .or(`product_id.eq.${productId},id.eq.${productId}`)
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        return { success: true, products: data || [] };
+      }
+
+      const response = await fetch(
+        `${this.supabaseUrl}/rest/v1/products?product_id=eq.${productId}&select=*`,
+        { headers: this.headers }
+      );
+      const data = await response.json();
+      return { success: true, products: Array.isArray(data) ? data : [] };
+    } catch (error) {
+      console.error('Get product variants error:', error);
+      return { success: false, products: [], error: error.message };
+    }
+  }
+
   async createOrder(orderData) {
     try {
       const sb = await this.getClient();

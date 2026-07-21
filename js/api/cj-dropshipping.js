@@ -1,418 +1,482 @@
-// ===== CJ DROPSHIPPING API INTEGRATION =====
-// This module handles all CJ Dropshipping API operations
-// NOTE: All API calls should be made through your backend (Supabase Edge Functions)
-// to keep the API key secure
+// ===== CJ DROPSHIPPING API v2 (Improved Integration) =====
+// This is a direct client-side integration with CJ Dropshipping API
+// For production, consider using Supabase Edge Functions as a proxy to keep API key secure
 
 class CJDropshippingAPI {
   constructor() {
-    this.baseUrl = (typeof env !== 'undefined' ? env.get('VITE_CJ_API_URL') : '') || 'https://developers.cjdropshipping.com/api2.0/v1';
-    this.backendBase = '/api/cj';
-    this.apiKey = '';
-    this.storeId = '';
+    this.baseUrl = 'https://developers.cjdropshipping.com/api2.0/v1';
+    this.apiKey = null;
+    this.storeId = null;
+    this.initialized = false;
+    this.rateLimitDelay = 500; // ms between requests
+    this.lastRequestTime = 0;
   }
-
-  async getApiKey() {
-    if (this.apiKey) return this.apiKey;
-    if (typeof env !== 'undefined' && env.get) {
-      if (!env.isLoaded && typeof env.load === 'function') {
-        await env.load();
-      }
-      const envKey = env.get('VITE_CJ_API_KEY') || '';
-      if (envKey) {
-        this.apiKey = envKey;
-        return envKey;
-      }
-    }
-    if (window.ENV_CONFIG?.VITE_CJ_API_KEY) {
-      this.apiKey = window.ENV_CONFIG.VITE_CJ_API_KEY;
-      return this.apiKey;
-    }
-    return this.apiKey;
-  }
-
-  async getStoreIdValue() {
-    const envStoreId = (typeof env !== 'undefined' && env.get) ? env.get('VITE_CJ_STORE_ID') : '';
-    const storeId = envStoreId || this.storeId || window.CJ_STORE_ID || '';
-    return storeId.toString();
-  }
-
-  async buildUrl(path) {
-    const url = new URL(path, window.location.origin);
-    const storeId = await this.getStoreIdValue();
-    if (storeId) {
-      url.searchParams.set('storeId', storeId);
-    }
-    return url.toString();
-  }
-
-  async buildPayload(payload = {}) {
-    const body = { ...payload };
-    const storeId = await this.getStoreIdValue();
-    if (storeId) {
-      body.storeId = storeId;
-      body.store_id = storeId;
-    }
-    return body;
-  }
-
-  async request(path, options = {}) {
-    const url = path.startsWith('http') ? path : await this.buildUrl(path);
-    const apiKey = await this.getApiKey();
-    const isProxyRequest = path.startsWith('/api/cj') || url.startsWith(`${window.location.origin}/api/cj`);
-    const headers = {
-      'Content-Type': 'application/json',
-      ...(options.headers || {})
-    };
-    if (!isProxyRequest && apiKey) {
-      headers.Authorization = `Bearer ${apiKey}`;
-      headers['X-API-Key'] = apiKey;
-    }
-    Object.keys(headers).forEach((key) => {
-      if (headers[key] === undefined || headers[key] === null || headers[key] === '') {
-        delete headers[key];
-      }
-    });
-    const init = {
-      method: options.method || 'GET',
-      headers
-    };
-
-    if (options.body !== undefined && options.body !== null) {
-      const bodyValue = typeof options.body === 'string' ? options.body : JSON.stringify(await this.buildPayload(options.body));
-      init.body = bodyValue;
-    }
-
-    let response;
-    try {
-      response = await fetch(url, init);
-    } catch (error) {
-      throw new Error(`Network request to CJ failed: ${error.message}`);
-    }
-
-    const text = await response.text();
-    let result = null;
-    try {
-      result = text ? JSON.parse(text) : null;
-    } catch (error) {
-      // leave result as null if response is not JSON
-    }
-
-    if (!response.ok) {
-      const errMsg = (result && (result.message || result.error)) || `CJ API responded with status ${response.status}`;
-      throw new Error(errMsg);
-    }
-
-    return result || { success: true, data: options.body };
-  }
-
-
-  // ===== PRODUCT OPERATIONS =====
 
   /**
-   * Search products from CJ Dropshipping catalog
+   * Initialize the API with credentials
+   */
+  async initialize() {
+    if (this.initialized) return true;
+
+    try {
+      // Load env variables
+      if (typeof env !== 'undefined' && env.load && !env.isLoaded) {
+        await env.load();
+      }
+
+      this.apiKey = (typeof env !== 'undefined' && env.get) 
+        ? env.get('VITE_CJ_API_KEY') 
+        : '';
+      this.storeId = (typeof env !== 'undefined' && env.get) 
+        ? env.get('VITE_CJ_STORE_ID') 
+        : '';
+
+      if (!this.apiKey) {
+        console.warn('⚠️ CJ API Key not configured');
+        return false;
+      }
+
+      console.log('✓ CJ Dropshipping API initialized');
+      this.initialized = true;
+      return true;
+    } catch (error) {
+      console.error('Failed to initialize CJ API:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Respect rate limiting
+   */
+  async _rateLimit() {
+    const now = Date.now();
+    const elapsed = now - this.lastRequestTime;
+    if (elapsed < this.rateLimitDelay) {
+      await new Promise(resolve => setTimeout(resolve, this.rateLimitDelay - elapsed));
+    }
+    this.lastRequestTime = Date.now();
+  }
+
+  /**
+   * Make API request to CJ
+   */
+  async _request(endpoint, method = 'GET', payload = null) {
+    await this._rateLimit();
+
+    if (!this.apiKey) {
+      throw new Error('CJ API not initialized');
+    }
+
+    const url = new URL(endpoint, this.baseUrl).toString();
+    
+    const headers = {
+      'Authorization': `Bearer ${this.apiKey}`,
+      'X-Api-Key': this.apiKey,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    };
+
+    const options = {
+      method,
+      headers,
+      credentials: 'omit' // Don't send cookies
+    };
+
+    if (payload) {
+      // Add store ID to payload automatically
+      const body = { ...payload };
+      if (this.storeId) {
+        body.store_id = this.storeId;
+        body.storeId = this.storeId;
+      }
+      options.body = JSON.stringify(body);
+    }
+
+    try {
+      const response = await fetch(url, options);
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const errorMsg = data.message || data.error || `HTTP ${response.status}`;
+        console.error(`CJ API Error: ${endpoint}`, errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('CJ API request failed:', error);
+      throw error;
+    }
+  }
+
+  // ===== PRODUCT SEARCH =====
+
+  /**
+   * Search products
    * @param {string} keyword - Search keyword
-   * @param {number} pageNo - Page number for pagination
+   * @param {number} page - Page number (1-based)
    * @param {number} pageSize - Items per page
    */
-  async searchProducts(keyword, page = 1, limit = 50) {
+  async searchProducts(keyword = 'electronics', page = 1, pageSize = 20) {
     try {
-      return await this.request('/api/cj/products/search', {
-        method: 'POST',
-        body: {
-          keyword,
-          page,
-          limit
+      await this.initialize();
+
+      const payload = {
+        keyword,
+        pageNo: page,
+        pageSize,
+        sortOrder: 'normal'
+      };
+
+      // Try direct product search endpoint
+      try {
+        const result = await this._request('/v1/product/search', 'POST', payload);
+        
+        // CJ returns data in different formats depending on endpoint
+        let products = [];
+        if (result.data && Array.isArray(result.data.products)) {
+          products = result.data.products;
+        } else if (Array.isArray(result.data)) {
+          products = result.data;
+        } else if (result.products) {
+          products = result.products;
         }
-      });
+
+        return {
+          success: true,
+          products: products.map(p => this._normalizeProduct(p)),
+          total: result.total || result.totalCount || products.length,
+          page,
+          pageSize
+        };
+      } catch (error) {
+        // Fallback: Use catalog endpoint
+        console.log('Search failed, trying catalog endpoint...');
+        return await this._getCatalogProducts(keyword, page, pageSize);
+      }
     } catch (error) {
-      console.error('CJ search error:', error);
+      console.error('Product search error:', error);
       throw error;
     }
   }
 
   /**
-   * Get product details from CJ Dropshipping
-   * @param {string} productId - CJ product ID
+   * Get catalog products (fallback search)
+   */
+  async _getCatalogProducts(category = 'electronics', page = 1, pageSize = 20) {
+    try {
+      const payload = {
+        category,
+        pageNo: page,
+        pageSize
+      };
+
+      const result = await this._request('/v1/product/list', 'POST', payload);
+      
+      let products = [];
+      if (result.data && Array.isArray(result.data)) {
+        products = result.data;
+      } else if (Array.isArray(result)) {
+        products = result;
+      }
+
+      return {
+        success: true,
+        products: products.map(p => this._normalizeProduct(p)),
+        total: result.total || products.length,
+        page,
+        pageSize
+      };
+    } catch (error) {
+      console.error('Catalog fetch error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get product details
    */
   async getProductDetails(productId) {
     try {
-      return await this.request(`/api/cj/products/${productId}`, {
-        method: 'GET'
-      });
+      await this.initialize();
+
+      const result = await this._request(`/v1/product/${productId}`, 'GET');
+      
+      const product = result.data || result;
+      return {
+        success: true,
+        product: this._normalizeProduct(product)
+      };
     } catch (error) {
-      console.error('CJ get product error:', error);
+      console.error('Get product details error:', error);
       throw error;
     }
   }
 
   /**
-   * Get product variants (sizes, colors, etc.)
-   * @param {string} productId - CJ product ID
+   * Normalize product data from CJ to standard format
    */
-  async getProductVariants(productId) {
+  _normalizeProduct(p) {
+    return {
+      id: p.id || p.productId || p.product_id || '',
+      name: p.productTitle || p.title || p.name || 'Untitled',
+      description: p.productDescription || p.description || '',
+      category: p.category || p.categoryName || 'general',
+      
+      // Pricing (CJ prices usually in USD)
+      price: Number(p.salePrice || p.price || 0) * 100, // Convert to cents
+      originalPrice: Number(p.listPrice || p.originalPrice || p.price || 0) * 100,
+      currency: 'USD',
+      
+      // Images
+      image: p.thumbnail || p.thumbImage || p.mainImage || 
+             (Array.isArray(p.images) && p.images[0]) || '',
+      images: Array.isArray(p.images) ? p.images : 
+              (p.image ? [p.image] : []),
+      
+      // Ratings
+      rating: Number(p.rating || p.stars || 4.5),
+      reviews: Number(p.reviewCount || p.reviews || 0),
+      
+      // Stock
+      stock: Number(p.stock || p.quantity || 0),
+      inStock: (p.stock || p.quantity || 0) > 0,
+      
+      // Supplier
+      supplier: 'CJ Dropshipping',
+      supplierId: p.supplierId || p.supplier_id || '',
+      
+      // Variants
+      variants: Array.isArray(p.variants) ? p.variants : [],
+      
+      // Additional
+      sku: p.sku || '',
+      weight: p.weight || 0,
+      shippingTime: p.shippingTime || 'Standard',
+      url: p.detailUrl || ''
+    };
+  }
+
+  // ===== CATEGORIES =====
+
+  async getCategories() {
     try {
-      return await this.request(`/api/cj/products/${productId}/variants`, {
-        method: 'GET'
-      });
+      await this.initialize();
+
+      const result = await this._request('/v1/category/list', 'GET');
+      
+      let categories = [];
+      if (result.data && Array.isArray(result.data)) {
+        categories = result.data;
+      } else if (Array.isArray(result)) {
+        categories = result;
+      }
+
+      return {
+        success: true,
+        categories: categories.map(c => ({
+          id: c.id || c.categoryId,
+          name: c.name || c.categoryName,
+          description: c.description || ''
+        }))
+      };
     } catch (error) {
-      console.error('CJ get variants error:', error);
+      console.error('Get categories error:', error);
+      return { success: false, categories: [], error: error.message };
+    }
+  }
+
+  // ===== SHIPPING =====
+
+  async calculateShipping(productId, destination, quantity = 1) {
+    try {
+      await this.initialize();
+
+      const payload = {
+        productId,
+        destination,
+        quantity
+      };
+
+      const result = await this._request('/v1/shipping/calculate', 'POST', payload);
+      
+      return {
+        success: true,
+        shipping: result.data || result
+      };
+    } catch (error) {
+      console.error('Calculate shipping error:', error);
       throw error;
     }
   }
 
-  /**
-   * Get product images
-   * @param {string} productId - CJ product ID
-   */
-  async getProductImages(productId) {
+  async getShippingMethods(destination = 'US') {
     try {
-      return await this.request(`/api/cj/products/${productId}/images`, {
-        method: 'GET'
-      });
+      await this.initialize();
+
+      const result = await this._request(`/v1/shipping/methods?destination=${destination}`, 'GET');
+      
+      let methods = [];
+      if (result.data && Array.isArray(result.data)) {
+        methods = result.data;
+      } else if (Array.isArray(result)) {
+        methods = result;
+      }
+
+      return {
+        success: true,
+        methods: methods.map(m => ({
+          id: m.id || m.methodId,
+          name: m.name || m.methodName,
+          cost: Number(m.cost || 0) * 100,
+          estimatedDays: m.estimatedDays || 7,
+          description: m.description || ''
+        }))
+      };
     } catch (error) {
-      console.error('CJ get images error:', error);
-      throw error;
-    }
-  }
-
-  // ===== INVENTORY & STOCK =====
-
-  /**
-   * Check product stock/inventory
-   * @param {string} productId - CJ product ID
-   */
-  async checkStock(productId) {
-    try {
-      return await this.request(`/api/cj/products/${productId}/stock`, {
-        method: 'GET'
-      });
-    } catch (error) {
-      console.error('CJ check stock error:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Sync inventory across multiple products
-   */
-  async syncInventory(productIds) {
-    try {
-      return await this.request('/api/cj/inventory/sync', {
-        method: 'POST',
-        body: { productIds }
-      });
-    } catch (error) {
-      console.error('CJ inventory sync error:', error);
-      throw error;
-    }
-  }
-
-  // ===== SHIPPING & RATES =====
-
-  /**
-   * Calculate shipping rates for a product
-   * @param {object} shippingInfo - Contains destination, weight, etc.
-   */
-  async calculateShippingRate(shippingInfo) {
-    try {
-      return await this.request('/api/cj/shipping/calculate', {
-        method: 'POST',
-        body: shippingInfo
-      });
-    } catch (error) {
-      console.error('CJ shipping calculation error:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get available shipping methods
-   * @param {string} country - Destination country code
-   */
-  async getShippingMethods(country) {
-    try {
-      return await this.request(`/api/cj/shipping/methods?country=${country}`, {
-        method: 'GET'
-      });
-    } catch (error) {
-      console.error('CJ get shipping methods error:', error);
-      throw error;
+      console.error('Get shipping methods error:', error);
+      return { success: false, methods: [], error: error.message };
     }
   }
 
   // ===== ORDERS =====
 
-  /**
-   * Create order with CJ Dropshipping
-   * @param {object} orderData - Order details
-   */
   async createOrder(orderData) {
     try {
-      return await this.request('/api/cj/orders/create', {
-        method: 'POST',
-        body: orderData
-      });
+      await this.initialize();
+
+      // Build CJ order format
+      const payload = {
+        orderNo: orderData.orderNo || `WD-${Date.now()}`,
+        recipient: {
+          name: orderData.customerName || '',
+          phone: orderData.phone || '',
+          email: orderData.email || '',
+          address: orderData.address || '',
+          city: orderData.city || '',
+          state: orderData.state || '',
+          postalCode: orderData.postalCode || '',
+          country: orderData.country || ''
+        },
+        products: (orderData.items || []).map(item => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        remark: orderData.notes || '',
+        shippingMethod: orderData.shippingMethod || ''
+      };
+
+      const result = await this._request('/v1/order/create', 'POST', payload);
+      
+      return {
+        success: true,
+        cjOrderId: result.cjOrderId || result.order_id || result.id,
+        data: result
+      };
     } catch (error) {
-      console.error('CJ order creation error:', error);
+      console.error('Create order error:', error);
       throw error;
     }
   }
 
-  /**
-   * Get order details from CJ
-   * @param {string} cjOrderId - CJ Order ID
-   */
-  async getOrderDetails(cjOrderId) {
+  async getOrder(cjOrderId) {
     try {
-      return await this.request(`/api/cj/orders/${cjOrderId}`, {
-        method: 'GET'
-      });
+      await this.initialize();
+
+      const result = await this._request(`/v1/order/${cjOrderId}`, 'GET');
+      
+      return {
+        success: true,
+        order: result.data || result
+      };
     } catch (error) {
-      console.error('CJ get order error:', error);
+      console.error('Get order error:', error);
       throw error;
     }
   }
 
-  /**
-   * Get order status
-   * @param {string} cjOrderId - CJ Order ID
-   */
   async getOrderStatus(cjOrderId) {
     try {
-      return await this.request(`/api/cj/orders/${cjOrderId}/status`, {
-        method: 'GET'
-      });
+      const order = await this.getOrder(cjOrderId);
+      return {
+        success: true,
+        status: order.order?.status || 'unknown',
+        tracking: order.order?.tracking || null
+      };
     } catch (error) {
-      console.error('CJ get order status error:', error);
+      console.error('Get order status error:', error);
       throw error;
     }
   }
 
   // ===== TRACKING =====
 
-  /**
-   * Get tracking information for an order
-   * @param {string} cjOrderId - CJ Order ID
-   */
   async getTrackingInfo(cjOrderId) {
     try {
-      return await this.request(`/api/cj/orders/${cjOrderId}/tracking`, {
-        method: 'GET'
-      });
+      await this.initialize();
+
+      const result = await this._request(`/v1/order/${cjOrderId}/tracking`, 'GET');
+      
+      return {
+        success: true,
+        tracking: result.data || result
+      };
     } catch (error) {
-      console.error('CJ tracking error:', error);
+      console.error('Get tracking info error:', error);
       throw error;
     }
   }
 
-  // ===== PRICING =====
+  // ===== SYNC & UTILITIES =====
 
-  /**
-   * Get product pricing
-   * @param {string} productId - CJ product ID
-   */
-  async getPricing(productId) {
+  async syncInventory(productIds = []) {
     try {
-      return await this.request(`/api/cj/products/${productId}/pricing`, {
-        method: 'GET'
-      });
+      await this.initialize();
+
+      const payload = { productIds };
+      const result = await this._request('/v1/inventory/sync', 'POST', payload);
+      
+      return {
+        success: true,
+        data: result
+      };
     } catch (error) {
-      console.error('CJ pricing error:', error);
-      throw error;
+      console.error('Inventory sync error:', error);
+      return { success: false, error: error.message };
     }
   }
 
   /**
-   * Get bulk pricing for multiple products
+   * Test API connection
    */
-  async getBulkPricing(productIds) {
+  async testConnection() {
     try {
-      return await this.request('/api/cj/products/pricing/bulk', {
-        method: 'POST',
-        body: { productIds }
-      });
+      await this.initialize();
+      
+      // Try a simple request
+      const categories = await this.getCategories();
+      return {
+        success: categories.success,
+        message: categories.success ? 'CJ API connection successful' : 'Connection failed'
+      };
     } catch (error) {
-      console.error('CJ bulk pricing error:', error);
-      throw error;
-    }
-  }
-
-  // ===== CATEGORIES & BROWSE =====
-
-  /**
-   * Get product categories
-   */
-  async getCategories() {
-    try {
-      return await this.request('/api/cj/categories', {
-        method: 'GET'
-      });
-    } catch (error) {
-      console.error('CJ categories error:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get trending products
-   */
-  async getTrendingProducts(limit = 10) {
-    try {
-      return await this.request(`/api/cj/products/trending?limit=${limit}`, {
-        method: 'GET'
-      });
-    } catch (error) {
-      console.error('CJ trending products error:', error);
-      throw error;
+      return {
+        success: false,
+        message: `Connection failed: ${error.message}`
+      };
     }
   }
 }
 
-// Initialize CJ Dropshipping client
+// Initialize global instance
 const cjAPI = new CJDropshippingAPI();
 
-// Helper function to import products to store
-async function importProductToCatalog(cjProductId) {
-  try {
-    const productDetails = await cjAPI.getProductDetails(cjProductId);
-    const images = await cjAPI.getProductImages(cjProductId);
-    const variants = await cjAPI.getProductVariants(cjProductId);
-    const pricing = await cjAPI.getPricing(cjProductId);
-
-    const importedProduct = {
-      cj_product_id: cjProductId,
-      name: productDetails.name,
-      description: productDetails.description,
-      category: productDetails.category,
-      images: images,
-      variants: variants,
-      price: pricing.retail_price,
-      cost: pricing.wholesale_price,
-      supplier: 'CJ Dropshipping',
-      created_at: new Date().toISOString()
-    };
-
-    // Save to Wimp-Drop database using Supabase client
-    const sb = (typeof supabaseService !== 'undefined') ? await supabaseService.getClient() : null;
-    if (!sb || !sb.from) {
-      throw new Error('Database client is not available. Ensure Supabase is initialized.');
-    }
-
-    const { data, error } = await sb.from('products').insert(importedProduct).select().single();
-    if (error) {
-      throw error;
-    }
-
-    showNotification('Product imported successfully!', 'success');
-    return data;
-  } catch (error) {
-    console.error('Product import error:', error);
-    showNotification('Failed to import product', 'error');
-    throw error;
-  }
-}
-
-// Export for use
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { CJDropshippingAPI, cjAPI };
+// Auto-initialize on first access
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    cjAPI.initialize().catch(e => console.warn('CJ API init:', e));
+  });
+} else {
+  cjAPI.initialize().catch(e => console.warn('CJ API init:', e));
 }

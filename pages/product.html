@@ -1,46 +1,47 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details - Wimp-Drop</title>
-    <link rel="stylesheet" href="../css/styles.css">
-    <link rel="stylesheet" href="../css/mobile-app.css" id="mobile-app-style" media="(max-width:899px)">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/luxury-theme.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div id="notification-container"></div>
-    
+
     <header>
         <div class="header-container">
             <div class="logo">
                 <a href="../index.html" class="link-reset">Wimp<span>-Drop</span></a>
             </div>
-            
+
             <nav>
                 <a href="../index.html">Home</a>
                 <a href="shop.html">Shop</a>
                 <a href="about.html">About</a>
                 <a href="contact.html">Contact</a>
             </nav>
-            
+
             <div class="header-actions">
                 <button class="icon-btn" title="Wishlist">
                     ❤️
                     <span class="badge hidden" data-wishlist-badge>0</span>
                 </button>
-                
+
                 <button class="icon-btn" onclick="window.location.href='cart.html'" title="Shopping Cart">
                     🛒
                     <span class="badge hidden" data-cart-badge>0</span>
                 </button>
-                
+
                 <div data-auth-section></div>
             </div>
         </div>
     </header>
-    
-    <!-- Breadcrumb -->
+
     <div class="breadcrumb-bar">
         <div class="container">
             <a href="../index.html" class="breadcrumb-link">Home</a>
@@ -50,195 +51,109 @@
             <span id="product-breadcrumb" class="breadcrumb-current">Product</span>
         </div>
     </div>
-    
-    <section class="section">
+
+    <section class="section product-hero-section">
         <div class="container">
             <div class="product-two-column">
-                <!-- Product Images -->
-                <div>
-                    <div id="main-image" class="product-image-wrapper">
-                        <img id="product-main-image" src="" alt="Product" class="product-main-img">
+                <div class="product-gallery-shell">
+                    <div class="product-image-stage" id="product-image-stage">
+                        <div class="gallery-hint">Hover to zoom</div>
+                        <img id="product-main-image" src="" alt="Selected product" class="product-main-img">
                     </div>
-                    
-                    <div class="grid grid-4 thumbnail-gallery" id="thumbnail-gallery">
-                        <!-- Thumbnails will be populated here -->
-                    </div>
+                    <div class="thumbnail-gallery" id="thumbnail-gallery"></div>
+                    <div class="gallery-dots" id="gallery-dots"></div>
                 </div>
-                
-                <!-- Product Details -->
-                <div>
+
+                <div class="product-buy-shell">
                     <div class="product-category" id="product-category">Electronics</div>
                     <h1 id="product-name" class="product-title">Product Name</h1>
-                    
-                    <!-- Rating -->
-                            <div class="product-rating-row">
-                        <span class="stars" id="product-stars">★★★★★</span>
-                        <span class="rating-count" id="product-rating-count">(256 reviews)</span>
-                        <a href="#reviews" class="product-review-link">See all reviews</a>
+
+                    <div class="product-meta-row">
+                        <div class="product-rating-row">
+                            <span class="stars" id="product-stars">☆☆☆☆☆</span>
+                            <span class="rating-count" id="product-rating-count">(0 reviews)</span>
+                        </div>
+                        <span class="product-stock-pill" id="stock-pill">In stock</span>
                     </div>
-                    
-                    <!-- Price -->
+
                     <div class="product-price-panel">
                         <div class="price-row">
                             <span class="price-current" id="product-price">$0.00</span>
                             <span class="product-original-price" id="product-original-price">$0.00</span>
-                            <span class="discount-pill" id="product-discount">Save 30%</span>
+                            <span class="discount-pill" id="product-discount">Save 0%</span>
                         </div>
                         <p class="supplier-note">Supplier: <strong id="product-supplier">CJ Dropshipping</strong></p>
                     </div>
-                    
-                    <!-- Description -->
-                    <div class="product-description-block">
-                        <p id="product-description" class="product-description">
-                            Product description will appear here
-                        </p>
-                    </div>
-                    
-                    <!-- Variants -->
+
                     <div class="product-variant-section">
-                        <div id="variants-container"></div>
+                        <div class="variant-picker-label">Choose your variant</div>
+                        <div id="variants-container" class="variant-options"></div>
+                        <div id="selected-variant-summary" class="variant-summary"></div>
                     </div>
-                    
-                    <!-- Stock Status -->
-                    <div class="stock-panel">
-                        <div class="stock-header">
-                            <span>Availability:</span>
-                            <span id="stock-status">In Stock</span>
-                        </div>
-                        <div class="stock-track">
-                            <div id="stock-bar" class="stock-bar"></div>
-                        </div>
-                        <p class="stock-note">Only <span id="stock-count">42</span> items left - order soon!</p>
-                    </div>
-                    
-                    <!-- Add to Cart Section -->
-                    <div class="product-actions">
+
+                    <div class="buy-box-stack">
+                        <div class="stock-line" id="stock-line">Checking availability…</div>
+                        <div class="shipping-line" id="shipping-line">Ships from Global — est. delivery 7–14 days</div>
+
                         <div class="quantity-selector">
-                            <button class="quantity-btn" onclick="decreaseQuantity()">−</button>
+                            <button class="quantity-btn" type="button" onclick="decreaseQuantity()">−</button>
                             <input type="number" id="quantity" value="1" min="1" max="100" class="quantity-input">
-                            <button class="quantity-btn" onclick="increaseQuantity()">+</button>
+                            <button class="quantity-btn" type="button" onclick="increaseQuantity()">+</button>
                         </div>
-                        
-                        <button class="btn btn-primary btn-large btn-block" onclick="addProductToCart()">
-                            🛒 Add to Cart
-                        </button>
-                        
-                        <button class="btn btn-outline btn-large btn-block" onclick="toggleProductWishlist()" id="wishlist-btn">
-                            ♡ Add to Wishlist
-                        </button>
-                    </div>
-                    
-                    <!-- Shipping Info -->
-                    <div class="info-card">
-                        <div class="info-row">
-                            <span class="feature-symbol">🚚</span>
-                            <div>
-                                <p class="info-card-heading">Free shipping on orders over $50,000.00</p>
-                                <p class="stock-note">Standard delivery: 7-14 days</p>
+
+                        <div class="product-actions buy-box-actions">
+                            <button class="btn btn-primary btn-large btn-block" type="button" onclick="addProductToCart()" id="add-to-cart-btn">Add to cart</button>
+                            <button class="btn btn-outline btn-large btn-block" type="button" onclick="buyProductNow()" id="buy-now-btn">Buy now</button>
+                            <button class="btn btn-outline btn-large btn-block" type="button" onclick="toggleProductWishlist()" id="wishlist-btn">♡ Save</button>
+                        </div>
+
+                        <div class="trust-strip">
+                            <div class="trust-pill">
+                                <strong>Secure checkout</strong>
+                                <span>Encrypted payments & order tracking</span>
+                            </div>
+                            <div class="trust-pill">
+                                <strong>Easy returns</strong>
+                                <span>30-day return window on eligible items</span>
+                            </div>
+                            <div class="trust-pill">
+                                <strong>Origin aware</strong>
+                                <span id="trust-origin-pill">Ships from Global</span>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Product Details Tabs -->
-                    <div class="product-tabs-panel">
-                        <div class="tabs-bar">
-                            <button class="tab-button active" onclick="switchProductTab('details', event)">Details</button>
-                            <button class="tab-button" onclick="switchProductTab('specs', event)">Specifications</button>
-                            <button class="tab-button" onclick="switchProductTab('shipping', event)">Shipping Info</button>
-                        </div>
-                        
-                        <div id="details-tab" class="product-tab active">
-                            <p id="full-description" class="product-tab-content">Full product description and details</p>
-                        </div>
-                        
-                        <div id="specs-tab" class="product-tab">
-                            <table class="spec-table">
-                                <tbody id="specs-table">
-                                    <tr class="spec-row">
-                                        <td class="spec-key">Weight:</td>
-                                        <td class="spec-value">Loading...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        <div id="shipping-tab" class="product-tab">
-                            <p class="product-tab-content">Shipped directly from our suppliers to your address. Tracking information will be provided.</p>
-                        </div>
-                    </div>
                 </div>
+            </div>
+
+            <div class="product-details-grid">
+                <article class="product-detail-card">
+                    <h2>About this item</h2>
+                    <p id="product-description" class="product-description">Description loading…</p>
+                </article>
+                <article class="product-detail-card">
+                    <h2>Specs & details</h2>
+                    <table class="spec-table">
+                        <tbody id="specs-table"></tbody>
+                    </table>
+                </article>
             </div>
         </div>
     </section>
-    
-    <!-- Reviews Section -->
-    <section class="section section-light" id="reviews">
-        <div class="container">
-            <h2 class="section-title">Customer Reviews</h2>
-            
-            <div class="review-layout">
-                <!-- Review Summary -->
-                <div class="review-summary">
-                    <div class="review-score">4.5</div>
-                    <div class="review-stars">★★★★☆</div>
-                    <p class="review-meta">Based on 256 reviews</p>
-                    
-                    <div class="review-score-list">
-                        <div class="review-score-row">
-                            <span>5 ★</span>
-                            <div class="review-bar"><div class="review-bar-fill review-bar-fill--60"></div></div>
-                            <span class="review-meta">142</span>
-                        </div>
-                        <div class="review-score-row">
-                            <span>4 ★</span>
-                            <div class="review-bar"><div class="review-bar-fill review-bar-fill--35"></div></div>
-                            <span class="review-meta">82</span>
-                        </div>
-                        <div class="review-score-row">
-                            <span>3 ★</span>
-                            <div class="review-bar"><div class="review-bar-fill review-bar-fill--20"></div></div>
-                            <span class="review-meta">24</span>
-                        </div>
-                        <div class="review-score-row">
-                            <span>1-2 ★</span>
-                            <div class="review-bar"><div class="review-bar-fill review-bar-fill--5"></div></div>
-                            <span class="review-meta">8</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Individual Reviews -->
-                <div id="reviews-container">
-                    <div class="review-card">
-                        <div class="review-card-meta">
-                            <div>
-                                <strong>Great product!</strong>
-                                <div class="review-stars">★★★★★</div>
-                            </div>
-                            <span class="review-meta">2 days ago</span>
-                        </div>
-                        <p class="review-card-text">This product exceeded my expectations. Fast shipping and great quality. Highly recommend!</p>
-                        <div class="reviewer-note">By <strong>Sarah M.</strong> - Verified Purchase</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="review-load">
-                <button class="btn btn-secondary">Load More Reviews</button>
-            </div>
-        </div>
-    </section>
-    
-    <!-- Related Products -->
+
     <section class="section">
         <div class="container">
-            <h2 class="section-title">Related Products</h2>
-            <div class="grid grid-4" id="related-products">
-                <!-- Related products will be loaded here -->
+            <div class="section-head">
+                <div>
+                    <h2 class="section-title">You may also like</h2>
+                    <p class="section-copy">Same premium cards, no hidden cost data, and stock signals derived from the live catalog.</p>
+                </div>
             </div>
+            <div class="related-rail" id="related-products"></div>
         </div>
     </section>
-    
+
+    <div class="mobile-buy-bar" id="mobile-buy-bar"></div>
+
     <footer>
         <div class="footer-content">
             <div class="footer-section">
@@ -256,196 +171,451 @@
         </div>
     </footer>
 
-    
     <script>
         let currentProduct = null;
         let currentProductId = null;
-        
-        // Get product ID from URL
+        let currentProductVariants = [];
+        let selectedVariantIndex = 0;
+        let selectedGalleryIndex = 0;
+        let galleryImages = [];
+
         function getProductIdFromURL() {
             const params = new URLSearchParams(window.location.search);
             return params.get('id');
         }
-        
-        // Load product details
+
+        function normalizeSupabaseVariant(raw, fallbackProductId = '') {
+            const title = raw.title || raw.name || raw.product_title || 'Untitled product';
+            const productId = raw.product_id || raw.productId || raw.id || fallbackProductId || '';
+            const image = raw.image_url || raw.image || raw.thumbnail || raw.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop';
+            const price = Number(raw.price || raw.sale_price || raw.current_price || 0);
+            const originalPrice = Number(raw.base_price || raw.original_price || raw.list_price || raw.compare_at_price || raw.price || 0);
+            const stock = Number(raw.stock || raw.quantity || raw.inventory || 0);
+            const status = raw.status || raw.product_status || 'On Sale';
+            const shippingFrom = raw.shipping_from || raw.shippingFrom || raw.origin || 'Global';
+            const dimensionsMm = raw.dimensions_mm || raw.dimensions || '';
+            const weightG = raw.weight_g || raw.weight || '';
+            const sku = raw.sku || raw.variant_sku || raw.item_sku || '';
+            const variantLabel = raw.variant || raw.variant_name || raw.title || raw.name || 'Standard';
+            const inStock = stock > 0 && status === 'On Sale';
+
+            return {
+                id: raw.id || raw.product_id || raw.variant_id || sku || '',
+                product_id: productId,
+                title,
+                name: title,
+                variant: variantLabel,
+                sku,
+                category: raw.category || raw.category_name || 'General',
+                price,
+                originalPrice,
+                image,
+                supplier: raw.supplier || raw.brand || 'CJ Dropshipping',
+                stock,
+                status,
+                inStock,
+                shippingFrom,
+                dimensionsMm,
+                weightG,
+                description: raw.description || raw.product_description || '',
+                rating: Number(raw.rating || 4.5),
+                reviews: Number(raw.reviews || raw.reviews_count || 0)
+            };
+        }
+
         async function loadProductDetails() {
             const productId = getProductIdFromURL();
             if (!productId) {
                 window.location.href = 'shop.html';
                 return;
             }
-            
+
             currentProductId = productId;
-            
-            // First, try to find in AppState products (loaded from Supabase)
-            currentProduct = AppState.products.find(p => p.id == productId);
-            
-            // If not found locally, try Supabase
-            if (!currentProduct && typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
-                const result = await supabaseService.getProduct(productId);
-                if (result.success && result.product) {
-                    currentProduct = result.product;
+            currentProductVariants = [];
+            selectedVariantIndex = 0;
+            selectedGalleryIndex = 0;
+
+            let initialProduct = null;
+            if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
+                try {
+                    const directResult = await supabaseService.getProduct(productId);
+                    if (directResult.success && directResult.product) {
+                        initialProduct = directResult.product;
+                    }
+                } catch (error) {
+                    console.warn('Supabase product lookup failed', error);
                 }
             }
 
-            // Fallback to CJ Dropshipping API if product is not in Supabase
-            if (!currentProduct && typeof cjAPI !== 'undefined') {
+            if (initialProduct) {
+                const lookupId = initialProduct.product_id || initialProduct.productId || productId;
+                if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
+                    try {
+                        const result = await supabaseService.getProductVariants(lookupId);
+                        if (result.success && result.products?.length) {
+                            currentProductVariants = result.products.map((row) => normalizeSupabaseVariant(row, lookupId));
+                        }
+                    } catch (error) {
+                        console.warn('Supabase product variant lookup failed', error);
+                    }
+                }
+            }
+
+            if (!currentProductVariants.length) {
+                const directMatch = Array.isArray(AppState.products)
+                    ? AppState.products.filter((p) => String(p.id) === String(productId) || String(p.product_id || p.id) === String(productId))
+                    : [];
+                if (directMatch.length) {
+                    currentProductVariants = directMatch.map((row) => normalizeSupabaseVariant(row, productId));
+                }
+            }
+
+            if (!currentProductVariants.length && typeof cjAPI !== 'undefined') {
                 try {
                     const cjProduct = await cjAPI.getProductDetails(productId);
                     if (cjProduct) {
-                        currentProduct = normalizeCJProduct(cjProduct);
+                        currentProductVariants = [normalizeCJProduct(cjProduct)];
                     }
                 } catch (error) {
                     console.warn('CJ product fallback failed', error);
                 }
             }
-            
-            if (!currentProduct) {
+
+            if (!currentProductVariants.length) {
                 showNotification('Product not found', 'error');
                 setTimeout(() => {
                     window.location.href = 'shop.html';
                 }, 1500);
                 return;
             }
-            
-            // Populate product details
+
+            const matchedIndex = currentProductVariants.findIndex((variant) => String(variant.id) === String(productId));
+            if (matchedIndex >= 0) {
+                selectedVariantIndex = matchedIndex;
+            }
+
             populateProductPage();
             updateWishlistButton();
+            loadRelatedProducts();
         }
-        
+
         function populateProductPage() {
-            if (!currentProduct) return;
-            
-            document.getElementById('product-name').textContent = currentProduct.name;
-            document.getElementById('product-category').textContent = currentProduct.category || 'Electronics';
-            document.getElementById('product-description').textContent = currentProduct.description || '';
-            document.getElementById('product-price').textContent = formatCurrency(currentProduct.price);
-            document.getElementById('product-original-price').textContent = formatCurrency(currentProduct.original_price || currentProduct.originalPrice || 0);
-            document.getElementById('product-supplier').textContent = currentProduct.supplier || 'CJ Dropshipping';
-            
-            // Set main image
-            const mainImage = currentProduct.image || (currentProduct.images && currentProduct.images[0]) || 'https://via.placeholder.com/500';
-            document.getElementById('product-main-image').src = mainImage;
-            document.getElementById('product-breadcrumb').textContent = currentProduct.name;
-            
-            // Rating
-            const rating = currentProduct.rating || 4.5;
-            const ratingStars = '★'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating));
-            document.getElementById('product-stars').textContent = ratingStars;
-            document.getElementById('product-rating-count').textContent = `(${currentProduct.reviews_count || currentProduct.reviews || 0} reviews)`;
-            
-            // Stock
-            const stock = currentProduct.stock || 42;
-            const stockPercent = Math.min(100, (stock / 50) * 100);
-            document.getElementById('stock-bar').style.width = stockPercent + '%';
-            document.getElementById('stock-count').textContent = stock;
-            document.getElementById('stock-status').textContent = stock > 0 ? 'In Stock' : 'Out of Stock';
-            document.getElementById('stock-status').style.color = stock > 0 ? '#28a745' : '#dc3545';
-            
-            // Discount
-            const originalPrice = currentProduct.original_price || currentProduct.originalPrice || currentProduct.price;
-            const discount = Math.round(((originalPrice - currentProduct.price) / originalPrice) * 100);
-            document.getElementById('product-discount').textContent = `Save ${discount}%`;
-            
-            // Variants
-            const variantsContainer = document.getElementById('variants-container');
-            if (variantsContainer) {
-                if (Array.isArray(currentProduct.variants) && currentProduct.variants.length > 0) {
-                    variantsContainer.innerHTML = currentProduct.variants.map(variant => `
-                        <div class="form-group">
-                            <label>${variant.name || 'Option'}</label>
-                            <select class="variant-select">
-                                ${variant.options?.map(option => `<option value="${option}">${option}</option>`).join('')}
-                            </select>
-                        </div>
-                    `).join('');
-                } else {
-                    variantsContainer.innerHTML = '';
-                }
+            if (!currentProductVariants.length) return;
+
+            currentProduct = currentProductVariants[selectedVariantIndex] || currentProductVariants[0];
+            const variant = currentProduct;
+            const breadcrumb = document.getElementById('product-breadcrumb');
+            if (breadcrumb) breadcrumb.textContent = variant.title;
+
+            document.getElementById('product-name').textContent = variant.title;
+            document.getElementById('product-category').textContent = variant.category || 'Electronics';
+            document.getElementById('product-description').textContent = buildDescriptionCopy(variant.title);
+            document.getElementById('product-price').textContent = formatCurrency(variant.price);
+            document.getElementById('product-original-price').textContent = formatCurrency(variant.originalPrice || variant.price);
+            document.getElementById('product-supplier').textContent = variant.supplier || 'CJ Dropshipping';
+            document.getElementById('product-stars').textContent = buildStars(variant.rating || 4.5);
+            document.getElementById('product-rating-count').textContent = `(${variant.reviews || 0} reviews)`;
+
+            const stockPill = document.getElementById('stock-pill');
+            if (stockPill) {
+                stockPill.textContent = variant.inStock ? 'In stock' : 'Out of stock';
+                stockPill.classList.toggle('is-low', variant.stock > 0 && variant.stock <= 5);
             }
 
-            // Thumbnail gallery
-            const thumbnails = currentProduct.images || (currentProduct.image ? [currentProduct.image] : []);
+            document.getElementById('stock-line').textContent = buildStockLine(variant);
+            document.getElementById('shipping-line').textContent = buildShippingLine(variant.shippingFrom);
+            document.getElementById('trust-origin-pill').textContent = `Ships from ${variant.shippingFrom || 'Global'}`;
+            document.getElementById('selected-variant-summary').textContent = `${variant.variant}${variant.sku ? ` • ${variant.sku}` : ''}`;
+
+            const addButton = document.getElementById('add-to-cart-btn');
+            const buyButton = document.getElementById('buy-now-btn');
+            if (addButton) {
+                addButton.disabled = !variant.inStock;
+                addButton.textContent = variant.inStock ? 'Add to cart' : 'Out of stock';
+            }
+            if (buyButton) {
+                buyButton.disabled = !variant.inStock;
+                buyButton.textContent = variant.inStock ? 'Buy now' : 'Out of stock';
+            }
+
+            const discount = variant.originalPrice > variant.price ? Math.round(((variant.originalPrice - variant.price) / variant.originalPrice) * 100) : 0;
+            const discountEl = document.getElementById('product-discount');
+            if (discountEl) {
+                discountEl.textContent = discount > 0 ? `Save ${discount}%` : 'Best value';
+            }
+
+            renderVariantPicker();
+            renderGallery();
+            renderSpecsTable(variant);
+            updateStickyBar();
+        }
+
+        function buildDescriptionCopy(title) {
+            return `${title} is built to feel dependable and premium in equal measure. The live catalog view keeps availability and shipping details current, while the variant picker makes it easy to compare options.`;
+        }
+
+        function buildStars(rating) {
+            return '★'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating));
+        }
+
+        function buildStockLine(variant) {
+            if (!variant.inStock) {
+                return 'Out of stock right now — check back soon for fresh inventory.';
+            }
+            if (variant.stock <= 5) {
+                return `Only ${variant.stock} left in stock — order soon.`;
+            }
+            return `${variant.stock} units available for immediate dispatch.`;
+        }
+
+        function buildShippingLine(origin) {
+            return `Ships from ${origin || 'Global'} — est. delivery 7–14 days`;
+        }
+
+        function renderVariantPicker() {
+            const container = document.getElementById('variants-container');
+            if (!container) return;
+            container.innerHTML = currentProductVariants.map((variant, index) => `
+                <button class="variant-option ${index === selectedVariantIndex ? 'active' : ''}" type="button" onclick="selectVariant(${index})">
+                    <span class="variant-option-title">${variant.variant || 'Standard'}</span>
+                    <span class="variant-option-meta">${variant.sku || 'Select SKU'}</span>
+                </button>
+            `).join('');
+        }
+
+        function selectVariant(index) {
+            selectedVariantIndex = index;
+            selectedGalleryIndex = 0;
+            populateProductPage();
+        }
+
+        function renderGallery() {
             const galleryContainer = document.getElementById('thumbnail-gallery');
-            galleryContainer.innerHTML = thumbnails.map((img, idx) => `
-                <div class="thumbnail-item" data-thumb-index="${idx}">
-                    <img src="${img}" alt="Thumbnail ${idx + 1}" class="thumbnail-img">
-                </div>
+            const dotsContainer = document.getElementById('gallery-dots');
+            const mainImage = document.getElementById('product-main-image');
+            if (!galleryContainer || !dotsContainer || !mainImage) return;
+
+            galleryImages = currentProductVariants.map((variant) => variant.image).filter(Boolean);
+            if (!galleryImages.length) {
+                galleryImages = [currentProduct?.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop'];
+            }
+            if (selectedGalleryIndex >= galleryImages.length) {
+                selectedGalleryIndex = 0;
+            }
+
+            mainImage.src = galleryImages[selectedGalleryIndex] || currentProduct?.image || '';
+            mainImage.alt = currentProduct?.title || 'Product image';
+
+            galleryContainer.innerHTML = galleryImages.map((img, index) => `
+                <button class="thumbnail-item ${index === selectedGalleryIndex ? 'active' : ''}" type="button" data-thumb-index="${index}" onclick="setGalleryImage(${index})">
+                    <img src="${img}" alt="Gallery view ${index + 1}">
+                </button>
             `).join('');
 
-            // Attach click handlers to thumbnails (avoid inline onclick)
-            document.querySelectorAll('.thumbnail-item').forEach(item => {
-                item.addEventListener('click', (e) => {
-                    const img = item.querySelector('img')?.src;
-                    if (img) document.getElementById('product-main-image').src = img;
-                    document.querySelectorAll('.thumbnail-item').forEach(t => t.classList.remove('active'));
-                    item.classList.add('active');
-                });
-            });
+            dotsContainer.innerHTML = galleryImages.map((_, index) => `
+                <button class="gallery-dot ${index === selectedGalleryIndex ? 'active' : ''}" type="button" data-index="${index}" onclick="setGalleryImage(${index})"></button>
+            `).join('');
+
+            attachSwipeGallery();
         }
-        
+
+        function setGalleryImage(index) {
+            selectedGalleryIndex = index;
+            const mainImage = document.getElementById('product-main-image');
+            if (mainImage && galleryImages[index]) {
+                mainImage.src = galleryImages[index];
+            }
+            document.querySelectorAll('.thumbnail-item').forEach((item) => item.classList.toggle('active', Number(item.dataset.thumbIndex) === index));
+            document.querySelectorAll('.gallery-dot').forEach((dot) => dot.classList.toggle('active', Number(dot.dataset.index || 0) === index));
+        }
+
+        function attachSwipeGallery() {
+            const stage = document.getElementById('product-image-stage');
+            if (!stage) return;
+            let touchStartX = 0;
+            stage.onTouchStart = (event) => {
+                touchStartX = event.touches[0].clientX;
+            };
+            stage.onTouchEnd = (event) => {
+                const delta = event.changedTouches[0].clientX - touchStartX;
+                if (Math.abs(delta) < 50) return;
+                const nextIndex = delta < 0 ? (selectedGalleryIndex + 1) % galleryImages.length : (selectedGalleryIndex - 1 + galleryImages.length) % galleryImages.length;
+                setGalleryImage(nextIndex);
+            };
+        }
+
+        function renderSpecsTable(variant) {
+            const specsBody = document.getElementById('specs-table');
+            if (!specsBody) return;
+            specsBody.innerHTML = `
+                <tr class="spec-row">
+                    <td class="spec-key">Package size</td>
+                    <td class="spec-value">${variant.dimensionsMm || 'Information available on request'}</td>
+                </tr>
+                <tr class="spec-row">
+                    <td class="spec-key">Package weight</td>
+                    <td class="spec-value">${variant.weightG ? `${variant.weightG} g` : 'Information available on request'}</td>
+                </tr>
+                <tr class="spec-row">
+                    <td class="spec-key">SKU</td>
+                    <td class="spec-value">${variant.sku || 'Pending'}</td>
+                </tr>
+                <tr class="spec-row">
+                    <td class="spec-key">Shipping origin</td>
+                    <td class="spec-value">${variant.shippingFrom || 'Global'}</td>
+                </tr>
+            `;
+        }
+
         function increaseQuantity() {
             const input = document.getElementById('quantity');
-            input.value = parseInt(input.value) + 1;
+            if (!input) return;
+            input.value = parseInt(input.value || 1, 10) + 1;
         }
-        
+
         function decreaseQuantity() {
             const input = document.getElementById('quantity');
-            if (parseInt(input.value) > 1) {
-                input.value = parseInt(input.value) - 1;
-            }
+            if (!input) return;
+            const current = parseInt(input.value || 1, 10);
+            input.value = current > 1 ? current - 1 : 1;
         }
-        
+
         function addProductToCart() {
-            const quantity = parseInt(document.getElementById('quantity').value);
-            addToCart(currentProductId, quantity);
+            const quantity = parseInt(document.getElementById('quantity').value || 1, 10);
+            if (!currentProduct?.id) return;
+            addToCart(currentProduct.id, quantity);
             document.getElementById('quantity').value = 1;
+            showNotification('Added to cart', 'success');
         }
-        
+
+        function buyProductNow() {
+            addProductToCart();
+            setTimeout(() => {
+                window.location.href = 'cart.html';
+            }, 400);
+        }
+
         function updateWishlistButton() {
             const btn = document.getElementById('wishlist-btn');
-            if (isInWishlist(currentProductId)) {
+            if (!btn) return;
+            const activeId = currentProduct?.id || currentProductId;
+            if (isInWishlist(activeId)) {
                 btn.classList.add('active');
-                btn.innerHTML = '❤️ In Wishlist';
+                btn.innerHTML = '♥ Saved';
             } else {
                 btn.classList.remove('active');
-                btn.innerHTML = '♡ Add to Wishlist';
+                btn.innerHTML = '♡ Save';
             }
         }
 
         function normalizeCJProduct(data) {
+            const fallbackId = getProductIdFromURL();
+            const title = data.name || data.productName || 'CJ Product';
+            const image = data.image || data.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop';
+            const price = Number(data.price || data.retail_price || data.product_price || 0);
+            const originalPrice = Number(data.original_price || data.market_price || data.price || data.retail_price || 0);
+            const stock = Number(data.stock || data.inventory || 0);
+            const status = data.status || 'On Sale';
             return {
-                id: data.id || data.product_id || getProductIdFromURL(),
-                name: data.name || data.productName || 'CJ Product',
-                description: data.description || data.long_description || data.short_description || '',
-                price: Number(data.price || data.retail_price || data.product_price || 0),
-                original_price: Number(data.original_price || data.market_price || data.price || data.retail_price || 0),
-                images: data.images || data.image_list || data.image ? [data.image] : ['https://via.placeholder.com/500'],
+                id: data.id || data.product_id || fallbackId,
+                product_id: data.product_id || data.id || fallbackId,
+                title,
+                name: title,
+                variant: data.variant || 'Standard',
+                sku: data.sku || '',
                 category: data.category || data.category_name || 'General',
+                price,
+                originalPrice,
+                image,
                 supplier: 'CJ Dropshipping',
-                rating: Number(data.rating || 4.2),
-                reviews_count: Number(data.reviews_count || data.review_count || 0),
-                stock: Number(data.stock || data.inventory || 0),
-                variants: data.variants || []
+                stock,
+                status,
+                inStock: stock > 0 && status === 'On Sale',
+                shippingFrom: data.shipping_from || data.shippingFrom || 'Global',
+                dimensionsMm: data.dimensions_mm || '',
+                weightG: data.weight_g || '',
+                description: data.description || data.long_description || data.short_description || ''
             };
         }
-        
+
         function toggleProductWishlist() {
-            toggleWishlist(currentProductId);
+            const activeId = currentProduct?.id || currentProductId;
+            toggleWishlist(activeId);
             updateWishlistButton();
         }
-        
-        function switchProductTab(tabName, event) {
-            document.querySelectorAll('.product-tab').forEach(tab => tab.classList.remove('active'));
-            document.getElementById(tabName + '-tab').classList.add('active');
-            
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            if (event?.target) {
-                event.target.classList.add('active');
-            }
+
+        function updateStickyBar() {
+            const bar = document.getElementById('mobile-buy-bar');
+            if (!bar) return;
+            const variant = currentProduct || currentProductVariants[0];
+            bar.innerHTML = `
+                <div>
+                    <strong>${variant?.title || 'Product'}</strong>
+                    <span>${formatCurrency(variant?.price || 0)}</span>
+                </div>
+                <button class="btn btn-primary btn-small" type="button" onclick="addProductToCart()" ${variant?.inStock ? '' : 'disabled'}>${variant?.inStock ? 'Add to cart' : 'Out of stock'}</button>
+            `;
         }
-        
-        // Initialize on load
+
+        async function loadRelatedProducts() {
+            const container = document.getElementById('related-products');
+            if (!container) return;
+
+            let rows = [];
+            if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
+                try {
+                    const res = await supabaseService.getProducts({ limit: 8 });
+                    if (res.success) rows = res.products || [];
+                } catch (error) {
+                    console.warn('Related products lookup failed', error);
+                }
+            }
+            if (!rows.length) {
+                rows = AppState.products || [];
+            }
+
+            const related = rows
+                .map((row) => normalizeSupabaseVariant(row, currentProductId))
+                .filter((row) => row && String(row.id) !== String(currentProduct?.id || '') && String(row.product_id || row.id) !== String(currentProduct?.product_id || currentProduct?.id || ''))
+                .slice(0, 4);
+
+            container.innerHTML = related.length ? related.map(renderRelatedProductCard).join('') : '<div class="empty-state">No related products available yet.</div>';
+        }
+
+        function renderRelatedProductCard(product) {
+            const pid = product.id || product.product_id || product.sku || product.title;
+            const pidUrl = encodeURIComponent(pid);
+            const hasDiscount = Number(product.originalPrice || 0) > Number(product.price || 0);
+            const discountPercent = hasDiscount ? Math.round((1 - (Number(product.price || 0) / Math.max(Number(product.originalPrice || 1), 1))) * 100) : 0;
+            return `
+                <article class="product-group-card">
+                    ${hasDiscount ? `<div class="discount-badge">-${discountPercent}%</div>` : ''}
+                    <div class="product-image">
+                        <a href="product.html?id=${pidUrl}" class="product-link">
+                            <img src="${product.image}" alt="${product.title}" class="product-image-inner">
+                        </a>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-category">${product.category || 'Featured'}</div>
+                        <h3 class="product-name"><a href="product.html?id=${pidUrl}">${product.title}</a></h3>
+                        <div class="product-meta">
+                            <span class="product-status ${product.inStock ? 'in-stock' : 'out-stock'}">${product.inStock ? 'Available' : 'Limited'}</span>
+                            <span class="product-origin">${product.shippingFrom || 'Global'}</span>
+                        </div>
+                        <div class="product-price">
+                            <span class="price-current">${formatCurrency(product.price)}</span>
+                            ${hasDiscount ? `<span class="price-original">${formatCurrency(product.originalPrice)}</span>` : ''}
+                        </div>
+                        <div class="product-actions">
+                            <button class="btn btn-primary btn-small" type="button" onclick="addToCart('${pid}', 1)">Add to cart</button>
+                            <button class="btn btn-outline btn-small" type="button" onclick="window.location.href='product.html?id=${pidUrl}'">View</button>
+                        </div>
+                    </div>
+                </article>
+            `;
+        }
+
+        window.populateProductPage = populateProductPage;
         document.addEventListener('DOMContentLoaded', loadProductDetails);
     </script>
     <script src="../js/api/cj-dropshipping.js"></script>
@@ -453,5 +623,6 @@
     <script src="../js/supabase.js"></script>
     <script src="../js/flutterwave.js"></script>
     <script src="../js/main.js"></script>
+    <script src="../js/luxury-ui.js"></script>
 </body>
 </html>

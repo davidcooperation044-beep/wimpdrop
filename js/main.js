@@ -60,6 +60,13 @@ const AppState = {
     priceRange: [0, 1000],
     sortBy: 'newest'
   },
+  shopFilters: {
+    origins: [],
+    priceMax: 100000,
+    sortBy: 'newest',
+    search: '',
+    selectedVariants: {}
+  },
   products: [],
   orders: [],
   appliedPromo: null,
@@ -112,6 +119,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize Supabase client if credentials are present
   if (typeof supabaseService !== 'undefined' && CONFIG.supabaseUrl) {
     await supabaseService.initialize(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+  }
+
+  // Listen for server-sent events for admin log streaming (non-admin pages ignore)
+  try {
+    if (window.location.pathname.endsWith('/pages/admin.html') || window.location.pathname.endsWith('/admin.html')) {
+      const evt = new EventSource('/api/admin/cj-sync-stream');
+      evt.addEventListener('log', (ev) => { try { console.log('[SSE]', JSON.parse(ev.data).message || ev.data); } catch(e){ console.log('[SSE]', ev.data); } });
+      evt.addEventListener('progress', (ev) => { try { const d = JSON.parse(ev.data); console.log('[SSE progress]', d.pct); } catch(e){} });
+    }
+  } catch (e) {
+    // ignore if SSE not available
   }
 
   // Initialize Flutterwave after config load
@@ -348,9 +366,9 @@ function initializeApp() {
   AppState.cart = Storage.getCart();
   AppState.wishlist = Storage.getWishlist();
   
-  // Initialize any visible product lists
+  // Initialize any visible product lists or homepage rails
   const productList = document.getElementById('product-list');
-  if (productList) {
+  if (productList || isHomePage()) {
     loadProducts();
   }
 }
@@ -394,9 +412,453 @@ function setupEventListeners() {
       e.target.classList.remove('active');
     }
   });
+
+  // Shop page filters and mobile sheet controls
+  setupShopPage();
 }
 
-// ===== CART MANAGEMENT ===== 
+function isShopPage() {
+  return !!document.querySelector('.shop-product-grid');
+}
+
+function isHomePage() {
+  const path = window.location.pathname;
+  return path === '/' || path.endsWith('/index.html') || path.endsWith('/home.html');
+}
+
+function setupShopPage() {
+  if (!isShopPage() || window.shopPageSetupDone) return;
+  window.shopPageSetupDone = true;
+
+  const shopSearch = document.getElementById('shop-search');
+  const originFilters = document.getElementById('origin-filters');
+  const sheetOriginFilters = document.getElementById('sheet-origin-filters');
+  const priceRange = document.getElementById('price-range');
+  const sheetPriceRange = document.getElementById('sheet-price-range');
+  const priceValue = document.getElementById('price-range-value');
+  const sheetPriceValue = document.getElementById('sheet-price-value');
+  const sortSelect = document.getElementById('sort-select');
+  const sortPills = Array.from(document.querySelectorAll('.sort-pill'));
+  const clearFilters = document.getElementById('clear-filters');
+  const openSheet = document.getElementById('open-sheet');
+  const closeSheet = document.getElementById('close-sheet');
+  const applySheet = document.getElementById('apply-sheet');
+  const shopChips = document.getElementById('product-chips');
+
+  if (shopSearch) {
+    shopSearch.addEventListener('input', debounce(handleShopSearch, 250));
+  }
+
+  if (priceRange) {
+    priceRange.addEventListener('input', (event) => {
+      const value = Number(event.target.value);
+      AppState.shopFilters.priceMax = value;
+      if (priceValue) priceValue.textContent = formatCurrency(value);
+      if (sheetPriceRange) sheetPriceRange.value = value;
+      if (sheetPriceValue) sheetPriceValue.textContent = formatCurrency(value);
+      applyShopFilters();
+    });
+  }
+
+  if (sheetPriceRange) {
+    sheetPriceRange.addEventListener('input', (event) => {
+      const value = Number(event.target.value);
+      AppState.shopFilters.priceMax = value;
+      if (sheetPriceValue) sheetPriceValue.textContent = formatCurrency(value);
+      if (priceRange) priceRange.value = value;
+      if (priceValue) priceValue.textContent = formatCurrency(value);
+    });
+  }
+
+  if (sortSelect) {
+    sortSelect.addEventListener('change', (event) => {
+      AppState.shopFilters.sortBy = event.target.value;
+      updateSortPillState(event.target.value);
+      applyShopFilters();
+    });
+  }
+
+  sortPills.forEach((pill) => {
+    pill.addEventListener('click', () => {
+      const sortBy = pill.dataset.sort || 'newest';
+      AppState.shopFilters.sortBy = sortBy;
+      if (sortSelect) sortSelect.value = sortBy;
+      updateSortPillState(sortBy);
+      applyShopFilters();
+    });
+  });
+
+  if (clearFilters) {
+    clearFilters.addEventListener('click', clearShopFilters);
+  }
+
+  if (openSheet) {
+    openSheet.addEventListener('click', () => {
+      const sheet = document.getElementById('sheet-filters');
+      if (sheet) sheet.classList.remove('hidden');
+    });
+  }
+
+  if (closeSheet) {
+    closeSheet.addEventListener('click', () => {
+      const sheet = document.getElementById('sheet-filters');
+      if (sheet) sheet.classList.add('hidden');
+    });
+  }
+
+  if (applySheet) {
+    applySheet.addEventListener('click', () => {
+      const sheet = document.getElementById('sheet-filters');
+      if (sheet) sheet.classList.add('hidden');
+      syncOriginSelections();
+      applyShopFilters();
+    });
+  }
+
+  renderShopFilters(AppState.products);
+  applyShopFilters();
+}
+
+function updateSortPillState(selectedSort) {
+  document.querySelectorAll('.sort-pill').forEach((pill) => {
+    pill.classList.toggle('active', pill.dataset.sort === selectedSort);
+  });
+}
+
+function syncOriginSelections() {
+  const choices = Array.from(document.querySelectorAll('#sheet-origin-filters input[type="checkbox"]'))
+    .filter(el => el.checked)
+    .map(el => el.value);
+
+  AppState.shopFilters.origins = choices;
+  document.querySelectorAll('#origin-filters input[type="checkbox"]').forEach((checkbox) => {
+    checkbox.checked = choices.includes(checkbox.value);
+  });
+}
+
+function clearShopFilters() {
+  AppState.shopFilters.origins = [];
+  AppState.shopFilters.priceMax = Number(document.getElementById('price-range')?.max || 100000);
+  AppState.shopFilters.sortBy = 'newest';
+  AppState.shopFilters.search = '';
+  AppState.shopFilters.selectedVariants = {};
+
+  const shopSearch = document.getElementById('shop-search');
+  const priceRange = document.getElementById('price-range');
+  const sheetPriceRange = document.getElementById('sheet-price-range');
+  const priceValue = document.getElementById('price-range-value');
+  const sheetPriceValue = document.getElementById('sheet-price-value');
+  const sortSelect = document.getElementById('sort-select');
+
+  if (shopSearch) shopSearch.value = '';
+  if (priceRange) priceRange.value = AppState.shopFilters.priceMax;
+  if (sheetPriceRange) sheetPriceRange.value = AppState.shopFilters.priceMax;
+  if (priceValue) priceValue.textContent = formatCurrency(AppState.shopFilters.priceMax);
+  if (sheetPriceValue) sheetPriceValue.textContent = formatCurrency(AppState.shopFilters.priceMax);
+  if (sortSelect) sortSelect.value = 'newest';
+
+  document.querySelectorAll('#origin-filters input[type="checkbox"], #sheet-origin-filters input[type="checkbox"]').forEach((checkbox) => {
+    checkbox.checked = false;
+  });
+
+  updateSortPillState('newest');
+  applyShopFilters();
+}
+
+function renderShopFilters(products) {
+  if (!isShopPage()) return;
+  const origins = Array.from(new Set(products.map(p => (p.origin || 'Global') || 'Global'))).filter(Boolean);
+  const priceMax = Math.max(100, Math.ceil((Math.max(...products.map(p => Number(p.price) || 0), AppState.shopFilters.priceMax || 0) || 100) / 100) * 100);
+  const currentPrice = typeof AppState.shopFilters.priceMax === 'number' ? AppState.shopFilters.priceMax : priceMax;
+  AppState.shopFilters.priceMax = currentPrice;
+
+  const originContainer = document.getElementById('origin-filters');
+  const sheetOriginContainer = document.getElementById('sheet-origin-filters');
+  const priceRange = document.getElementById('price-range');
+  const sheetPriceRange = document.getElementById('sheet-price-range');
+  const priceValue = document.getElementById('price-range-value');
+  const sheetPriceValue = document.getElementById('sheet-price-value');
+  const sortSelect = document.getElementById('sort-select');
+
+  if (originContainer) originContainer.innerHTML = origins.map(origin => `
+    <label class="filter-chip">
+      <input type="checkbox" value="${origin}" onchange="handleOriginChange(event)">
+      <span>${origin}</span>
+    </label>
+  `).join('');
+  if (sheetOriginContainer) sheetOriginContainer.innerHTML = originContainer?.innerHTML || '';
+
+  if (priceRange) {
+    priceRange.max = priceMax;
+    priceRange.value = AppState.shopFilters.priceMax || priceMax;
+  }
+  if (sheetPriceRange) {
+    sheetPriceRange.max = priceMax;
+    sheetPriceRange.value = AppState.shopFilters.priceMax || priceMax;
+  }
+  if (priceValue) priceValue.textContent = formatCurrency(priceMax);
+  if (sheetPriceValue) sheetPriceValue.textContent = formatCurrency(priceMax);
+
+  if (sortSelect) {
+    sortSelect.innerHTML = `
+      <option value="newest">Newest</option>
+      <option value="price-low">Price: Low to High</option>
+      <option value="price-high">Price: High to Low</option>
+      <option value="rating">Top Rated</option>
+      <option value="stock">Stock Availability</option>
+    `;
+    sortSelect.value = AppState.shopFilters.sortBy;
+  }
+
+  updateSortPillState(AppState.shopFilters.sortBy);
+  buildFilterChips();
+}
+
+function handleOriginChange(event) {
+  const checkbox = event.target;
+  if (!checkbox) return;
+  const allCheckboxes = Array.from(document.querySelectorAll('#origin-filters input[type="checkbox"], #sheet-origin-filters input[type="checkbox"]'));
+  const selected = allCheckboxes.filter(el => el.checked).map(el => el.value);
+  AppState.shopFilters.origins = selected;
+  allCheckboxes.forEach(el => {
+    if (Array.from(selected).includes(el.value)) el.checked = true;
+  });
+  applyShopFilters();
+}
+
+function handleShopSearch(event) {
+  AppState.shopFilters.search = event.target.value.trim();
+  applyShopFilters();
+}
+
+function applyShopFilters() {
+  if (!isShopPage()) return;
+  let filtered = [...AppState.products];
+
+  if (AppState.shopFilters.search) {
+    const query = AppState.shopFilters.search.toLowerCase();
+    filtered = filtered.filter((p) => {
+      return [p.name, p.origin, p.category, p.sku, p.description].some(field => (field || '').toString().toLowerCase().includes(query));
+    });
+  }
+
+  if (AppState.shopFilters.origins.length) {
+    filtered = filtered.filter(p => AppState.shopFilters.origins.includes(p.origin || 'Global'));
+  }
+
+  if (AppState.shopFilters.priceMax) {
+    filtered = filtered.filter(p => Number(p.price || 0) <= AppState.shopFilters.priceMax);
+  }
+
+  switch (AppState.shopFilters.sortBy) {
+    case 'price-low':
+      filtered.sort((a, b) => (a.price || 0) - (b.price || 0));
+      break;
+    case 'price-high':
+      filtered.sort((a, b) => (b.price || 0) - (a.price || 0));
+      break;
+    case 'rating':
+      filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      break;
+    case 'stock':
+      filtered.sort((a, b) => (b.inStock ? 0 : 1) - (a.inStock ? 0 : 1));
+      break;
+    default:
+      filtered.sort((a, b) => (new Date(b.created_at || b.added_at || Date.now()) - new Date(a.created_at || a.added_at || Date.now())));
+      break;
+  }
+
+  renderProducts(filtered);
+  buildFilterChips();
+  const resultCountElem = document.getElementById('result-count');
+  if (resultCountElem) {
+    resultCountElem.textContent = `Showing ${filtered.length} product groups`;
+  }
+}
+
+function buildFilterChips() {
+  const chipRow = document.getElementById('product-chips');
+  if (!chipRow || !isShopPage()) return;
+  const chips = [];
+
+  if (AppState.shopFilters.search) {
+    chips.push({ label: `Search: ${AppState.shopFilters.search}`, type: 'search' });
+  }
+  if (AppState.shopFilters.origins.length) {
+    AppState.shopFilters.origins.forEach(origin => chips.push({ label: origin, type: 'origin' }));
+  }
+  if (AppState.shopFilters.priceMax && AppState.shopFilters.priceMax < Number(document.getElementById('price-range')?.max || 100000)) {
+    chips.push({ label: `Under ${formatCurrency(AppState.shopFilters.priceMax)}`, type: 'price' });
+  }
+
+  chipRow.innerHTML = chips.map(chip => `
+    <button class="chip" type="button" onclick="removeShopChip('${chip.type}', '${chip.label.replace(/'/g, "\\'")}')">
+      ${chip.label} <span>×</span>
+    </button>
+  `).join('');
+}
+
+function removeShopChip(type, label) {
+  if (type === 'search') {
+    AppState.shopFilters.search = '';
+    const shopSearch = document.getElementById('shop-search');
+    if (shopSearch) shopSearch.value = '';
+  }
+
+  if (type === 'origin') {
+    AppState.shopFilters.origins = AppState.shopFilters.origins.filter(value => value !== label);
+    document.querySelectorAll('#origin-filters input[type="checkbox"], #sheet-origin-filters input[type="checkbox"]').forEach((checkbox) => {
+      if (checkbox.value === label) checkbox.checked = false;
+    });
+  }
+
+  if (type === 'price') {
+    AppState.shopFilters.priceMax = Number(document.getElementById('price-range')?.max || 100000);
+    const priceRange = document.getElementById('price-range');
+    const sheetPriceRange = document.getElementById('sheet-price-range');
+    if (priceRange) priceRange.value = AppState.shopFilters.priceMax;
+    if (sheetPriceRange) sheetPriceRange.value = AppState.shopFilters.priceMax;
+    document.getElementById('price-range-value').textContent = formatCurrency(AppState.shopFilters.priceMax);
+    document.getElementById('sheet-price-value').textContent = formatCurrency(AppState.shopFilters.priceMax);
+  }
+
+  applyShopFilters();
+}
+
+function normalizeProduct(raw) {
+  return {
+    id: raw.id || raw.product_id || raw.variant_id || raw.sku || '',
+    product_id: raw.product_id || raw.productId || raw.id || raw.sku || '',
+    name: raw.name || raw.title || raw.productTitle || 'Untitled product',
+    category: raw.category || raw.category_name || raw.categoryName || 'General',
+    price: Number(raw.price || raw.sale_price || raw.salePrice || raw.current_price || 0),
+    originalPrice: Number(raw.original_price || raw.originalPrice || raw.list_price || raw.listPrice || raw.compare_at_price || raw.price || 0),
+    image: raw.thumbnail || raw.image || raw.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop',
+    rating: Number(raw.rating || raw.stars || 4.5),
+    reviews: Number(raw.reviews || raw.review_count || raw.reviewCount || 0),
+    supplier: raw.supplier || raw.brand || raw.source || 'CJ Dropshipping',
+    description: raw.description || raw.productDescription || '',
+    stock: Number(raw.stock || raw.quantity || raw.inventory || 0),
+    inStock: (raw.status || raw.product_status || raw.stock_status || 'active') !== 'Out of Stock' && ((raw.stock || raw.quantity || raw.inventory || 0) > 0),
+    status: raw.status || raw.product_status || raw.stock_status || 'active',
+    origin: raw.origin || raw.shipping_origin || raw.supplier_country || raw.country || 'Global',
+    variants: Array.isArray(raw.variants) ? raw.variants : [],
+    sku: raw.sku || raw.variant_sku || raw.item_sku || '',
+    shippingTime: raw.shippingTime || raw.lead_time || 'Standard',
+    url: raw.url || raw.detailUrl || raw.product_url || raw.link || ''
+  };
+}
+
+function groupProductsByProductId(products) {
+  return products.reduce((groups, product) => {
+    const key = product.product_id || product.id || product.sku || product.name;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(product);
+    return groups;
+  }, {});
+}
+
+function renderProductGroupCard(group) {
+  const repr = group[0];
+  const groupKey = repr.product_id || repr.id || repr.sku || repr.name;
+  const selectedVariantId = AppState.shopFilters.selectedVariants[groupKey];
+  const selected = group.find(p => p.id === selectedVariantId) || repr;
+  const hasDiscount = group.some(p => p.originalPrice && p.originalPrice > p.price);
+  const validOriginals = group.map(p => p.originalPrice || p.price || 0).filter(Boolean);
+  const lowPrice = Math.min(...group.map(p => p.price || 0));
+  const highPrice = Math.max(...group.map(p => p.price || 0));
+  const stockStatus = group.some(p => p.inStock) ? 'Available' : 'Out of stock';
+  const discountPercent = hasDiscount && validOriginals.length ? Math.round((1 - (lowPrice / Math.max(...validOriginals))) * 100) : 0;
+  const variantButtons = group.slice(0, 5).map((variant) => {
+    const label = variant.sku || variant.name || 'Variant';
+    const active = selected.id === variant.id;
+    return `<button class="variant-pill${active ? ' active' : ''}" type="button" onclick="selectShopVariant('${repr.product_id || repr.id}', '${variant.id}')">${label}</button>`;
+  }).join('');
+
+  return `
+    <article class="product-group-card">
+      ${hasDiscount ? `<div class="discount-badge">-${discountPercent}%</div>` : ''}
+      <div class="product-image">
+        <a href="product.html?id=${encodeURIComponent(selected.id)}" class="product-link">
+          <img src="${selected.image}" alt="${selected.name}" class="product-image-inner">
+        </a>
+      </div>
+      <div class="product-info">
+        <div class="product-category">${selected.category}</div>
+        <h3 class="product-name"><a href="product.html?id=${encodeURIComponent(selected.id)}">${selected.name}</a></h3>
+        <div class="product-meta">
+          <span class="product-status ${selected.inStock ? 'in-stock' : 'out-stock'}">${stockStatus}</span>
+          <span class="product-origin">${selected.origin}</span>
+        </div>
+        <div class="product-price">
+          <span class="price-current">${formatCurrency(lowPrice)}</span>
+          ${lowPrice !== highPrice ? `<span class="price-range">${formatCurrency(lowPrice)} - ${formatCurrency(highPrice)}</span>` : ''}
+          ${hasDiscount ? `<span class="price-original">${formatCurrency(Math.max(...validOriginals))}</span>` : ''}
+        </div>
+        <div class="variant-list">${variantButtons}</div>
+        <div class="product-actions">
+          <button class="btn btn-primary btn-small" onclick="addToCart('${selected.id}')" ${selected.inStock ? '' : 'disabled'}>Add to cart</button>
+          <button class="btn btn-outline btn-small" onclick="quickView('${selected.id}')">Quick view</button>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function selectShopVariant(groupKey, variantId) {
+  AppState.shopFilters.selectedVariants[groupKey] = variantId;
+  applyShopFilters();
+}
+
+function renderProducts(products) {
+  const productList = document.getElementById('product-list');
+  if (!productList) return;
+
+  if (isShopPage()) {
+    const grouped = groupProductsByProductId(products);
+    const cards = Object.values(grouped).map(group => renderProductGroupCard(group));
+    productList.innerHTML = cards.join('');
+    return;
+  }
+
+  productList.innerHTML = products.map(product => {
+    const pid = product.id;
+    const pidUrl = encodeURIComponent(pid);
+    const pidJson = JSON.stringify(pid);
+    const stars = '★'.repeat(Math.floor(product.rating)) + '☆'.repeat(5 - Math.floor(product.rating));
+    const hasDiscount = product.originalPrice && product.originalPrice > product.price;
+    const discountPercent = hasDiscount ? Math.round((1 - (product.price / product.originalPrice)) * 100) : 0;
+    return `
+    <div class="product-card">
+      ${hasDiscount ? `<div class="discount-badge">-${discountPercent}%</div>` : ''}
+      <div class="supplier-badge">${product.supplier || ''}</div>
+      <div class="product-image">
+        <a href="product.html?id=${pidUrl}" class="product-link">
+          <img src="${product.image}" alt="${product.name}" class="product-image-inner">
+        </a>
+      </div>
+      <div class="product-info">
+        <div class="product-category">${product.category}</div>
+        <h3 class="product-name"><a href="product.html?id=${pidUrl}" style="text-decoration: none; color: inherit; cursor: pointer;">${product.name}</a></h3>
+        <div class="product-rating">
+          <span class="stars">${stars}</span>
+          <span class="rating-count">${product.rating} (${product.reviews})</span>
+        </div>
+        <div class="product-price">
+          <span class="price-current">${formatCurrency(product.price)}</span>
+          <span class="price-original">${formatCurrency(product.originalPrice)}</span>
+        </div>
+        <div class="product-actions">
+          <button class="btn btn-primary btn-small flex-1" onclick="addToCart(${pidJson})">Add to Cart</button>
+          <button class="btn btn-primary btn-small" onclick="buyNow(${pidJson})">Buy Now</button>
+          <button class="btn btn-outline btn-small" onclick="toggleWishlist(${pidJson})" title="Add to Wishlist">♡</button>
+          <button class="btn btn-outline btn-small" onclick="quickView(${pidJson})" title="Quick view">👁</button>
+        </div>
+      </div>
+    </div>
+  `;
+  }).join('');
+}
 
 function addToCart(productId, quantity = 1) {
   const product = AppState.products.find(p => p.id === productId);
@@ -465,14 +927,31 @@ function animateAddToCart(productId) {
   }
 }
 
+function showHomepageSkeletons() {
+  const containers = ['home-hero-carousel', 'home-categories', 'home-deals-rail', 'home-new-arrivals'];
+  containers.forEach((id) => {
+    const container = document.getElementById(id);
+    if (!container) return;
+    if (id === 'home-hero-carousel') {
+      container.innerHTML = '<div class="hero-slide active"><div class="hero-slide-card"><div class="hero-slide-copy"><div class="skeleton text" style="width:60%;height:18px;margin-bottom:12px"></div><div class="skeleton text" style="width:90%;height:12px;margin-bottom:6px"></div><div class="skeleton text" style="width:70%;height:12px"></div></div></div></div>';
+      return;
+    }
+    if (id === 'home-categories') {
+      container.innerHTML = ['Electronics','Fashion','Home'].map((label) => `<div class="home-category-chip skeleton"><span>${label}</span></div>`).join('');
+      return;
+    }
+    container.innerHTML = Array.from({ length: 4 }, () => '<div class="product-group-card skeleton" style="min-height: 320px"></div>').join('');
+  });
+}
+
 function showProductSkeletons(count = 6) {
   const productList = document.getElementById('product-list');
   if (!productList) return;
   productList.innerHTML = '';
   for (let i=0;i<count;i++){
     const el = document.createElement('div');
-    el.className = 'product-card skeleton';
-    el.innerHTML = `<div class="skeleton img"></div><div style="padding:10px"><div class="skeleton text" style="width:80%"></div><div class="skeleton text" style="width:60%; margin-top:8px"></div></div>`;
+    el.className = 'product-group-card skeleton';
+    el.innerHTML = `<div class="skeleton img" style="height:220px;"></div><div style="padding:20px"><div class="skeleton text" style="width:70%; height:18px; margin-bottom:12px"></div><div class="skeleton text" style="width:50%; height:18px; margin-bottom:12px"></div><div class="skeleton text" style="width:90%; height:12px; margin-bottom:6px"></div><div class="skeleton text" style="width:80%; height:12px;"></div></div>`;
     productList.appendChild(el);
   }
 }
@@ -481,6 +960,8 @@ function removeFromCart(productId) {
   AppState.cart = AppState.cart.filter(item => item.id !== productId);
   Storage.setCart(AppState.cart);
   updateCartBadge();
+  if (typeof window.renderCartItems === 'function') window.renderCartItems();
+  if (typeof window.updateOrderSummary === 'function') window.updateOrderSummary();
 }
 
 function updateCartQuantity(productId, quantity) {
@@ -489,6 +970,8 @@ function updateCartQuantity(productId, quantity) {
     item.quantity = Math.max(1, quantity);
     Storage.setCart(AppState.cart);
     updateCartBadge();
+    if (typeof window.renderCartItems === 'function') window.renderCartItems();
+    if (typeof window.updateOrderSummary === 'function') window.updateOrderSummary();
   }
 }
 
@@ -577,10 +1060,14 @@ function updateWishlistBadge() {
 async function loadProducts(filters = {}) {
   try {
     const productList = document.getElementById('product-list');
-    if (!productList) return;
+    if (!productList && !isHomePage()) return;
 
     // show skeletons while loading
-    showProductSkeletons(12);
+    if (isHomePage()) {
+      showHomepageSkeletons();
+    } else {
+      showProductSkeletons(12);
+    }
 
     // Pagination and filters from URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -655,6 +1142,9 @@ async function loadProducts(filters = {}) {
 
     AppState.products = products;
     renderProducts(products);
+    if (typeof window.renderWatchlist === 'function') window.renderWatchlist();
+    if (typeof window.renderCartItems === 'function') window.renderCartItems();
+    if (typeof window.updateOrderSummary === 'function') window.updateOrderSummary();
 
     // Render pagination
     renderPagination(totalCount, page, perPage);
@@ -670,15 +1160,26 @@ async function loadProducts(filters = {}) {
 }
 
 function renderProducts(products) {
+  if (isHomePage()) {
+    renderHomepageSections(products);
+    return;
+  }
+
   const productList = document.getElementById('product-list');
   if (!productList) return;
+
+  if (isShopPage()) {
+    const grouped = groupProductsByProductId(products);
+    const cards = Object.values(grouped).map(group => renderProductGroupCard(group));
+    productList.innerHTML = cards.join('');
+    return;
+  }
   
   productList.innerHTML = products.map(product => {
     const pid = product.id;
     const pidUrl = encodeURIComponent(pid);
     const pidJson = JSON.stringify(pid);
     const stars = '★'.repeat(Math.floor(product.rating)) + '☆'.repeat(5 - Math.floor(product.rating));
-    // compute discount if originalPrice present
     const hasDiscount = product.originalPrice && product.originalPrice > product.price;
     const discountPercent = hasDiscount ? Math.round((1 - (product.price / product.originalPrice)) * 100) : 0;
     return `
@@ -711,6 +1212,158 @@ function renderProducts(products) {
     </div>
   `;
   }).join('');
+}
+
+function renderHomepageSections(products) {
+  const heroContainer = document.getElementById('home-hero-carousel');
+  const heroDots = document.getElementById('home-hero-dots');
+  const categoriesContainer = document.getElementById('home-categories');
+  const dealsContainer = document.getElementById('home-deals-rail');
+  const arrivalsContainer = document.getElementById('home-new-arrivals');
+  const trustOrigin = document.getElementById('trust-origin');
+
+  const normalizedProducts = products.map(product => normalizeProduct(product));
+  const featuredProducts = normalizedProducts.slice(0, 4);
+  const categories = [...normalizedProducts].reduce((acc, product) => {
+    const label = inferCategoryLabel(product);
+    acc[label] = (acc[label] || 0) + 1;
+    return acc;
+  }, {});
+
+  const deals = [...normalizedProducts]
+    .filter(product => Number(product.originalPrice || 0) > Number(product.price || 0))
+    .sort((a, b) => {
+      const discountA = (Number(a.originalPrice || 0) - Number(a.price || 0)) / Math.max(Number(a.originalPrice || 1), 1);
+      const discountB = (Number(b.originalPrice || 0) - Number(b.price || 0)) / Math.max(Number(b.originalPrice || 1), 1);
+      return discountB - discountA;
+    })
+    .slice(0, 4);
+
+  const arrivals = [...normalizedProducts]
+    .sort((a, b) => new Date(b.created_at || b.createdAt || 0) - new Date(a.created_at || a.createdAt || 0))
+    .slice(0, 4);
+
+  if (heroContainer) {
+    heroContainer.innerHTML = featuredProducts.length ? featuredProducts.map((product, index) => `
+      <div class="hero-slide ${index === 0 ? 'active' : ''}">
+        <div class="hero-slide-card">
+          <div class="hero-slide-copy">
+            <span class="hero-slide-label">${product.category}</span>
+            <h3>${product.name}</h3>
+            <p>${product.description || 'Live inventory and origin-aware shipping details are surfaced directly from the catalog.'}</p>
+            <div class="hero-slide-meta">
+              <span>${product.origin || 'Global'}</span>
+              <span>${product.inStock ? 'In stock' : 'Limited stock'}</span>
+            </div>
+          </div>
+          <div class="hero-slide-visual">
+            <img src="${product.image}" alt="${product.name}">
+          </div>
+        </div>
+      </div>
+    `).join('') : '<div class="hero-slide active"><div class="hero-slide-card"><div class="hero-slide-copy"><h3>Curated catalog loading</h3><p>Products will appear as soon as the storefront data is available.</p></div></div></div>';
+
+    if (heroDots) {
+      heroDots.innerHTML = featuredProducts.length ? featuredProducts.map((_, index) => `<button class="hero-dot ${index === 0 ? 'active' : ''}" type="button" data-slide-index="${index}"></button>`).join('') : '';
+      heroDots.querySelectorAll('.hero-dot').forEach((dot) => {
+        dot.addEventListener('click', () => {
+          const index = Number(dot.dataset.slideIndex || 0);
+          const slides = heroContainer.querySelectorAll('.hero-slide');
+          slides.forEach((slide, slideIndex) => slide.classList.toggle('active', slideIndex === index));
+          heroDots.querySelectorAll('.hero-dot').forEach((dotButton, dotIndex) => dotButton.classList.toggle('active', dotIndex === index));
+        });
+      });
+    }
+
+    const slides = heroContainer.querySelectorAll('.hero-slide');
+    if (slides.length > 1) {
+      clearInterval(window.homeHeroTimer);
+      window.homeHeroTimer = setInterval(() => {
+        const current = Number(heroContainer.dataset.activeIndex || 0);
+        const next = (current + 1) % slides.length;
+        heroContainer.dataset.activeIndex = String(next);
+        slides.forEach((slide, slideIndex) => slide.classList.toggle('active', slideIndex === next));
+        heroDots.querySelectorAll('.hero-dot').forEach((dotButton, dotIndex) => dotButton.classList.toggle('active', dotIndex === next));
+      }, 4500);
+    }
+  }
+
+  if (categoriesContainer) {
+    const categoryCards = Object.entries(categories)
+      .slice(0, 6)
+      .map(([label, count]) => `
+        <a href="pages/shop.html?search=${encodeURIComponent(label.toLowerCase())}" class="home-category-chip">
+          <span>${label}</span>
+          <small>${count} live picks</small>
+        </a>
+      `)
+      .join('');
+    categoriesContainer.innerHTML = categoryCards || '<div class="empty-state">Catalog categories will appear here once products are available.</div>';
+  }
+
+  if (dealsContainer) {
+    dealsContainer.innerHTML = deals.length ? deals.map(product => renderHomeProductCard(product)).join('') : '<div class="empty-state">No current deals were detected from the product metadata.</div>';
+  }
+
+  if (arrivalsContainer) {
+    arrivalsContainer.innerHTML = arrivals.length ? arrivals.map(product => renderHomeProductCard(product)).join('') : '<div class="empty-state">New arrivals will appear here once live catalog data is available.</div>';
+  }
+
+  if (trustOrigin) {
+    const origin = normalizedProducts.find(product => product.origin)?.origin || 'Global';
+    trustOrigin.textContent = `Ships from ${origin}`;
+  }
+}
+
+function inferCategoryLabel(product) {
+  const haystack = `${product.name} ${product.category} ${product.description}`.toLowerCase();
+  if (/(earbud|headphone|speaker|phone|camera|laptop|tablet|monitor|charger|console|keyboard|mouse|watch|smart)/.test(haystack)) {
+    return 'Electronics';
+  }
+  if (/(jacket|shoe|bag|watch|shirt|dress|sunglass|hat|belt|fashion|accessory)/.test(haystack)) {
+    return 'Fashion';
+  }
+  if (/(lamp|chair|sofa|bed|mug|kitchen|home|decor|storage|organizer|tool)/.test(haystack)) {
+    return 'Home';
+  }
+  if (/(beauty|skin|cosmetic|perfume|cream|serum|makeup)/.test(haystack)) {
+    return 'Beauty';
+  }
+  return 'Essentials';
+}
+
+function renderHomeProductCard(product) {
+  const pid = product.id || product.product_id || product.sku || product.name;
+  const pidUrl = encodeURIComponent(pid);
+  const hasDiscount = Number(product.originalPrice || 0) > Number(product.price || 0);
+  const discountPercent = hasDiscount ? Math.round((1 - (Number(product.price || 0) / Math.max(Number(product.originalPrice || 1), 1))) * 100) : 0;
+
+  return `
+    <article class="product-group-card home-product-card">
+      ${hasDiscount ? `<div class="discount-badge">-${discountPercent}%</div>` : ''}
+      <div class="product-image">
+        <a href="product.html?id=${pidUrl}" class="product-link">
+          <img src="${product.image}" alt="${product.name}" class="product-image-inner">
+        </a>
+      </div>
+      <div class="product-info">
+        <div class="product-category">${product.category || 'Featured'}</div>
+        <h3 class="product-name"><a href="product.html?id=${pidUrl}">${product.name}</a></h3>
+        <div class="product-meta">
+          <span class="product-status ${product.inStock ? 'in-stock' : 'out-stock'}">${product.inStock ? 'Available' : 'Limited'}</span>
+          <span class="product-origin">${product.origin || 'Global'}</span>
+        </div>
+        <div class="product-price">
+          <span class="price-current">${formatCurrency(product.price)}</span>
+          ${hasDiscount ? `<span class="price-original">${formatCurrency(product.originalPrice)}</span>` : ''}
+        </div>
+        <div class="product-actions">
+          <button class="btn btn-primary btn-small" onclick="addToCart('${pid}')">${product.inStock ? 'Add to cart' : 'Notify me'}</button>
+          <button class="btn btn-outline btn-small" onclick="quickView('${pid}')">Quick view</button>
+        </div>
+      </div>
+    </article>
+  `;
 }
 
 function buyNow(productId) {
@@ -1056,6 +1709,7 @@ function toggleWishlist(productId) {
     addToWishlist(productId);
   }
   updateWishlistBadge();
+  if (typeof window.renderWatchlist === 'function') window.renderWatchlist();
 }
 
 async function handleSearch(e) {

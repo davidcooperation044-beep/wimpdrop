@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watchlist - Wimp-Drop</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/luxury-theme.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="notification-container"></div>
+
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <a href="../index.html" style="color: inherit; text-decoration: none;">Wimp<span>-Drop</span></a>
+            </div>
+
+            <nav>
+                <a href="../index.html">Home</a>
+                <a href="shop.html">Shop</a>
+                <a href="about.html">About</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+
+            <div class="header-actions">
+                <a href="watchlist.html" class="icon-btn" title="Wishlist">♡
+                    <span class="badge" data-wishlist-badge style="display: none;">0</span>
+                </a>
+                <a href="cart.html" class="icon-btn" title="Shopping Cart">🛒
+                    <span class="badge" data-cart-badge style="display: none;">0</span>
+                </a>
+                <div data-auth-section>
+                    <a href="login.html" class="btn btn-outline btn-small">Login</a>
+                    <a href="register.html" class="btn btn-primary btn-small">Sign Up</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="section">
+        <div class="container">
+            <div class="section-heading section-heading-center" style="margin-bottom: 2rem;">
+                <span class="hero-badge">Saved for later</span>
+                <h1>Watchlist</h1>
+                <p>Keep your favorite arrivals close while you compare delivery timelines and price points.</p>
+            </div>
+
+            <div class="cart-shell">
+                <div class="cart-stack">
+                    <div class="cart-card">
+                        <div class="cart-card-header">
+                            <div>
+                                <h2 style="margin: 0; font-size: 1.2rem;">Favorites</h2>
+                                <p id="watchlist-copy" style="margin: 0.25rem 0 0; color: var(--text-secondary);">0 saved items</p>
+                            </div>
+                            <a href="shop.html" class="btn btn-outline btn-small">Browse catalog</a>
+                        </div>
+                        <div id="watchlist-items"></div>
+                    </div>
+                </div>
+
+                <aside class="summary-card">
+                    <h3>Why save items?</h3>
+                    <div class="summary-note">Your watchlist updates instantly when you save or remove products, and it stays aligned with your cart for quick checkout later.</div>
+                    <div class="summary-row"><span>Saved items</span><strong id="saved-count">0</strong></div>
+                    <div class="summary-row"><span>Ready to buy</span><strong id="available-count">0</strong></div>
+                    <a href="cart.html" class="btn btn-primary btn-block">Go to cart</a>
+                </aside>
+            </div>
+        </div>
+    </section>
+
+    <div class="checkout-sticky">
+        <div class="container" style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+            <div>
+                <strong id="mobile-watchlist-count">0 saved</strong>
+                <div style="color: var(--text-secondary); font-size: 0.9rem;">Tap to keep shopping</div>
+            </div>
+            <a href="shop.html" class="btn btn-primary btn-small">Continue browsing</a>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                    <li><a href="terms.html">Terms of Service</a></li>
+                    <li><a href="disclaimer.html">Disclaimer</a></li>
+                    <li><a href="security.html">Security</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Wimp-Drop. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function renderWatchlist() {
+            const container = document.getElementById('watchlist-items');
+            const copy = document.getElementById('watchlist-copy');
+            const savedCount = document.getElementById('saved-count');
+            const availableCount = document.getElementById('available-count');
+            const mobileCount = document.getElementById('mobile-watchlist-count');
+
+            if (!container) return;
+
+            const savedProducts = AppState.products.filter(product => AppState.wishlist.includes(product.id));
+            const available = savedProducts.filter(product => Number(product.stock || (product.inStock ? 1 : 0)) > 0);
+
+            if (!savedProducts.length) {
+                container.innerHTML = `
+                    <div class="empty-state" style="text-align: center;">
+                        <h3 style="margin-bottom: 0.5rem;">Nothing saved yet</h3>
+                        <p style="margin-bottom: 1rem;">Heart a few products and your favorite drops will stay here until you are ready to buy.</p>
+                        <a href="shop.html" class="btn btn-primary">Discover products</a>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="wishlist-grid">
+                        ${savedProducts.map(product => `
+                            <article class="wishlist-card">
+                                <div class="product-image">
+                                    <a href="product.html?id=${encodeURIComponent(product.id)}" class="product-link">
+                                        <img src="${product.image}" alt="${product.name}">
+                                    </a>
+                                </div>
+                                <div class="product-info">
+                                    <div class="wishlist-meta">
+                                        <span class="wishlist-pill">${product.category || 'Featured'}</span>
+                                        <button class="icon-btn" onclick="toggleWishlist('${product.id}')" title="Remove from watchlist">♡</button>
+                                    </div>
+                                    <h3 class="product-name" style="margin: 0; min-height: auto;">${product.name}</h3>
+                                    <div class="product-price">
+                                        <span class="price-current">${formatCurrency(product.price)}</span>
+                                    </div>
+                                    <div class="product-actions">
+                                        <button class="btn btn-primary btn-small" onclick="addToCart('${product.id}')">Add to cart</button>
+                                        <a class="btn btn-outline btn-small" href="product.html?id=${encodeURIComponent(product.id)}">View</a>
+                                    </div>
+                                </div>
+                            </article>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            if (copy) copy.textContent = `${savedProducts.length} saved item${savedProducts.length === 1 ? '' : 's'}`;
+            if (savedCount) savedCount.textContent = String(savedProducts.length);
+            if (availableCount) availableCount.textContent = String(available.length);
+            if (mobileCount) mobileCount.textContent = `${savedProducts.length} saved`;
+        }
+
+        window.renderWatchlist = renderWatchlist;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                renderWatchlist();
+            }, 50);
+        });
+    </script>
+
+    <script src="../js/env.js"></script>
+    <script src="../js/supabase.js"></script>
+    <script src="../js/flutterwave.js"></script>
+    <script src="../js/api/cj-dropshipping.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/luxury-ui.js"></script>
+</body>
+</html>

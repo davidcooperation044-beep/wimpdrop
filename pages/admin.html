@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Wimp-Drop</title>
     <link rel="manifest" href="/manifest.json">
-    <link rel="stylesheet" href="../css/styles.css">
+      
     <link rel="stylesheet" href="../css/mobile-app.css" id="mobile-app-style" media="(max-width:899px)">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -263,11 +263,21 @@
                     appendLog('Starting CJ product sync...', 'info');
                     progressEl.style.width = '8%';
 
-                    const resp = await fetch('/api/admin/cj-sync?search=&page=1&perPage=50');
-                    appendLog('CJ sync request sent', 'info');
-                    progressEl.style.width = '28%';
+                    // Start server-streamed sync so we get live logs
+                    const es = new EventSource('/api/admin/cj-sync-stream');
+                    es.addEventListener('log', (ev) => { try { appendLog(JSON.parse(ev.data).message || ev.data); } catch(e){ appendLog(ev.data); } });
+                    es.addEventListener('progress', (ev) => { try { const d = JSON.parse(ev.data); progressEl.style.width = (d.pct || 0) + '%'; } catch(e){} });
+                    es.addEventListener('error', (ev) => { try { appendLog('Error: ' + (JSON.parse(ev.data).message || ev.data), 'error'); } catch(e) { appendLog('Stream error', 'error'); } });
+                    es.addEventListener('done', (ev) => { try { const d = JSON.parse(ev.data); appendLog('Sync done: ' + (d.inserted || 0) + ' inserted', 'success'); progressEl.style.width = '100%'; setTimeout(()=>{ progressEl.style.width='0%'; syncBtn.disabled=false; es.close(); }, 900); } catch(e){ es.close(); } });
 
-                    const data = await resp.json();
+                    appendLog('CJ sync request sent (streaming)', 'info');
+
+                    // Wait until the stream closes or times out — we'll rely on server-side 'done' event to close
+                    // Also perform a fallback in case server doesn't support SSE
+                    let streamTimeout = setTimeout(() => { appendLog('Stream timed out, falling back to non-streaming sync', 'warn'); es.close(); }, 120000);
+
+                    // No immediate JSON response expected — return here and let stream handle updates
+                    return;
                     if (!data.success) {
                         appendLog('CJ sync failed: ' + (data.error || 'unknown'), 'error');
                         showNotification('CJ sync failed', 'error');

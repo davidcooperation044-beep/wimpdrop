@@ -1,11 +1,13 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shop - Wimp-Drop</title>
-    <link rel="stylesheet" href="../css/styles.css">
-    <link rel="stylesheet" href="../css/mobile-app.css" id="mobile-app-style" media="(max-width:899px)">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/luxury-theme.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -28,12 +30,12 @@
                 <input type="text" placeholder="Search products..." data-search class="search-input">
                 
                 <button class="icon-btn" title="Wishlist">
-                    ❤️
+                    â¤ï¸
                     <span class="badge hidden" data-wishlist-badge>0</span>
                 </button>
                 
                 <button class="icon-btn" onclick="window.location.href='cart.html'" title="Shopping Cart">
-                    🛒
+                    ðŸ›’
                     <span class="badge hidden" data-cart-badge>0</span>
                 </button>
                 
@@ -45,102 +47,118 @@
         </div>
     </header>
     
-    <section class="section">
+    <section class="section shop-section">
         <div class="container">
-            <h1 class="section-title">Our Store</h1>
-            <p class="section-description">Discover our curated collection of premium products</p>
-            
-            <div class="page-layout--columns">
-                <!-- Filters Sidebar -->
-                <aside class="sidebar-filter">
-                    <div class="panel-card">
-                        <h3 class="panel-heading">Filters</h3>
-                        
-                        <!-- Category Filter -->
-                        <div class="filter-group">
-                            <h4 class="filter-heading">Category</h4>
-                            <div class="filter-column">
-                                <label class="filter-label">
-                                    <input type="radio" name="category" value="all" checked onchange="filterProducts()">
-                                    All Products
-                                </label>
-                                <label class="filter-label">
-                                    <input type="radio" name="category" value="electronics" onchange="filterProducts()">
-                                    Electronics
-                                </label>
-                                <label class="filter-label">
-                                    <input type="radio" name="category" value="fashion" onchange="filterProducts()">
-                                    Fashion
-                                </label>
-                                <label class="filter-label">
-                                    <input type="radio" name="category" value="home" onchange="filterProducts()">
-                                    Home & Living
-                                </label>
+            <div class="shop-header">
+                <div>
+                    <h1 class="shop-heading">Deal-ready products</h1>
+                    <p class="shop-intro">A dense storefront view of sourced products with origin filters, variant pickers, and true deal badges.</p>
+                </div>
+                <div class="shop-search-wrap">
+                    <label for="shop-search" class="sr-only">Search products</label>
+                    <input id="shop-search" type="search" placeholder="Search title, variant, origin..." class="shop-search" autocomplete="off">
+                </div>
+            </div>
+
+            <div class="shop-chip-row" id="product-chips"></div>
+
+            <div class="shop-layout">
+                <aside class="shop-sidebar">
+                    <div class="panel-card panel-dense">
+                        <div class="panel-head">
+                            <div>
+                                <h3>Filters</h3>
+                                <p class="panel-subtitle">Narrow results by origin and price.</p>
+                            </div>
+                            <button id="clear-filters" class="btn btn-outline btn-small">Clear</button>
+                        </div>
+
+                        <div class="filter-section">
+                            <h4 class="filter-heading">Shipping origin</h4>
+                            <div id="origin-filters" class="filter-list"></div>
+                        </div>
+
+                        <div class="filter-section">
+                            <div class="filter-row">
+                                <div>
+                                    <h4 class="filter-heading">Max price</h4>
+                                    <p class="filter-note">Hide higher-priced listings.</p>
+                                </div>
+                                <span id="price-range-value" class="price-range-value">$0</span>
+                            </div>
+                            <input id="price-range" type="range" min="0" max="100000" step="100" value="100000" class="price-slider">
+                            <div class="price-ticks">
+                                <span>$0</span>
+                                <span id="price-range-max">$100k</span>
                             </div>
                         </div>
-                        
-                        <!-- Price Filter -->
-                        <div class="filter-group">
-                            <h4 class="filter-heading">Price Range</h4>
-                            <input type="range" min="0" max="1000" value="1000" class="range-full" onchange="filterProducts()">
-                            <div class="space-between">
-                                <span>$0.00</span>
-                                <span>$<span id="max-price">1000</span></span>
+
+                        <div class="filter-section">
+                            <h4 class="filter-heading">Sort results</h4>
+                            <div class="sort-pill-wrap" id="sort-pills">
+                                <button class="sort-pill active" data-sort="newest">Newest</button>
+                                <button class="sort-pill" data-sort="price-low">Price ↓</button>
+                                <button class="sort-pill" data-sort="price-high">Price ↑</button>
                             </div>
                         </div>
-                        
-                        <!-- Sort -->
-                        <div class="filter-group">
-                            <h4 class="filter-heading">Sort By</h4>
-                            <select onchange="filterProducts()" class="form-select">
-                                <option value="newest">Newest</option>
-                                <option value="popular">Most Popular</option>
-                                <option value="price-low">Price: Low to High</option>
-                                <option value="price-high">Price: High to Low</option>
-                                <option value="rating">Highest Rated</option>
-                            </select>
-                        </div>
-                        
-                        <button class="btn btn-secondary btn-block" onclick="resetFilters()">Reset Filters</button>
                     </div>
                 </aside>
-                
-                <!-- Products Grid -->
-                <div class="flex-full">
-                    <div class="toolbar-row">
-                        <p id="result-count" class="result-count">Showing 12 products</p>
-                        <div class="toolbar-controls">
-                            <div class="view-toggle">
-                                <button class="view-btn active" data-view="grid">Grid</button>
-                                <button class="view-btn" data-view="list">List</button>
-                            </div>
-                            <div class="sort-controls">
-                                <label for="sort-select" class="sr-only">Sort</label>
-                                <select id="sort-select" onchange="filterProducts()" class="form-select">
-                                    <option value="newest">Newest</option>
-                                    <option value="popular">Most Popular</option>
-                                    <option value="price-low">Price: Low to High</option>
-                                    <option value="price-high">Price: High to Low</option>
-                                    <option value="rating">Highest Rated</option>
-                                </select>
+
+                <main class="shop-content">
+                    <div class="shop-toolbar">
+                        <div>
+                            <p class="result-note" id="result-count">Showing 0 product groups</p>
+                        </div>
+                        <div class="toolbar-actions">
+                            <button id="open-sheet" class="btn btn-outline btn-small shop-sheet-open">Filters</button>
+                            <div class="toolbar-sort">
+                                <label for="sort-select" class="toolbar-label">Sort</label>
+                                <select id="sort-select" class="form-select compact"></select>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="grid grid-3" id="product-list">
-                        <!-- Products loaded by JavaScript -->
-                        <div class="skeleton skeleton-tall"></div>
-                        <div class="skeleton skeleton-tall"></div>
-                        <div class="skeleton skeleton-tall"></div>
-                        <div class="skeleton skeleton-tall"></div>
-                        <div class="skeleton skeleton-tall"></div>
-                        <div class="skeleton skeleton-tall"></div>
+
+                    <div class="shop-product-grid" id="product-list">
+                        <div class="skeleton skeleton-card"></div>
+                        <div class="skeleton skeleton-card"></div>
+                        <div class="skeleton skeleton-card"></div>
+                        <div class="skeleton skeleton-card"></div>
                     </div>
+                </main>
+            </div>
+
+            <div class="shop-bottom-sheet hidden" id="sheet-filters">
+                <div class="sheet-bar">
+                    <div>
+                        <strong>Filters</strong>
+                        <p>Swipe down to close</p>
+                    </div>
+                    <button id="close-sheet" class="btn btn-outline btn-small">Close</button>
+                </div>
+                <div class="sheet-content">
+                    <div class="filter-section">
+                        <h4 class="filter-heading">Shipping origin</h4>
+                        <div id="sheet-origin-filters" class="filter-list"></div>
+                    </div>
+                    <div class="filter-section">
+                        <div class="filter-row">
+                            <div>
+                                <h4 class="filter-heading">Max price</h4>
+                            </div>
+                            <span id="sheet-price-value" class="price-range-value">$0</span>
+                        </div>
+                        <input id="sheet-price-range" type="range" min="0" max="100000" step="100" value="100000" class="price-slider">
+                        <div class="price-ticks">
+                            <span>$0</span>
+                            <span id="sheet-price-max">$100k</span>
+                        </div>
+                    </div>
+                    <button id="apply-sheet" class="btn btn-primary btn-large">Apply filters</button>
                 </div>
             </div>
         </div>
     </section>
-    
+
     <!-- Pagination -->
     <section class="section">
         <div class="pagination-row" id="pagination-container">
@@ -169,56 +187,12 @@
         </div>
     </footer>
 
-    
-    <script>
-        function filterProducts() {
-            const category = document.querySelector('input[name="category"]:checked').value;
-            const maxPrice = document.querySelector('input[type="range"]').value;
-            const sortBy = document.querySelector('select').value;
-            
-            document.getElementById('max-price').textContent = maxPrice;
-            
-            let filtered = AppState.products;
-            
-            if (category !== 'all') {
-                filtered = filtered.filter(p => p.category === category);
-            }
-            
-            filtered = filtered.filter(p => p.price <= maxPrice);
-            
-            switch(sortBy) {
-                case 'price-low':
-                    filtered.sort((a, b) => a.price - b.price);
-                    break;
-                case 'price-high':
-                    filtered.sort((a, b) => b.price - a.price);
-                    break;
-                case 'rating':
-                    filtered.sort((a, b) => b.rating - a.rating);
-                    break;
-                case 'popular':
-                    filtered.sort((a, b) => b.reviews - a.reviews);
-                    break;
-            }
-            
-            renderProducts(filtered);
-            const resultCountElem = document.getElementById('result-count');
-            if (resultCountElem) {
-                resultCountElem.textContent = `Showing ${filtered.length} products`;
-            }
-        }
-        
-        function resetFilters() {
-            document.querySelector('input[name="category"][value="all"]').checked = true;
-            document.querySelector('input[type="range"]').value = 1000;
-            document.querySelector('select').value = 'newest';
-            document.getElementById('max-price').textContent = '1000';
-            filterProducts();
-        }
-    </script>
     <script src="../js/env.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/flutterwave.js"></script>
+    <script src="../js/api/cj-dropshipping.js"></script>
     <script src="../js/main.js"></script>
+    <script src="../js/luxury-ui.js"></script>
 </body>
 </html>
+
