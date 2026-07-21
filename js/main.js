@@ -35,9 +35,6 @@ async function initializeConfig() {
       supabaseUrl: env.get('VITE_SUPABASE_URL'),
       supabaseKey: env.get('VITE_SUPABASE_ANON_KEY'),
       flutterwaveKey: env.get('VITE_FLUTTERWAVE_PUBLIC_KEY'),
-      cjApiKey: env.get('VITE_CJ_API_KEY'),
-      cjApiUrl: env.get('VITE_CJ_API_URL', 'https://developers.cjdropshipping.com/api2.0/v1'),
-      cjStoreId: env.get('VITE_CJ_STORE_ID'),
       appName: env.get('VITE_APP_NAME', 'Wimp-Drop'),
       isDevelopment: env.get('VITE_ENVIRONMENT') === 'development',
       debugMode: env.get('VITE_DEBUG_MODE', false)
@@ -119,17 +116,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize Supabase client if credentials are present
   if (typeof supabaseService !== 'undefined' && CONFIG.supabaseUrl) {
     await supabaseService.initialize(CONFIG.supabaseUrl, CONFIG.supabaseKey);
-  }
-
-  // Listen for server-sent events for admin log streaming (non-admin pages ignore)
-  try {
-    if (window.location.pathname.endsWith('/pages/admin.html') || window.location.pathname.endsWith('/admin.html')) {
-      const evt = new EventSource('/api/admin/cj-sync-stream');
-      evt.addEventListener('log', (ev) => { try { console.log('[SSE]', JSON.parse(ev.data).message || ev.data); } catch(e){ console.log('[SSE]', ev.data); } });
-      evt.addEventListener('progress', (ev) => { try { const d = JSON.parse(ev.data); console.log('[SSE progress]', d.pct); } catch(e){} });
-    }
-  } catch (e) {
-    // ignore if SSE not available
   }
 
   // Initialize Flutterwave after config load
@@ -736,7 +722,7 @@ function normalizeProduct(raw) {
     image: raw.thumbnail || raw.image || raw.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop',
     rating: Number(raw.rating || raw.stars || 4.5),
     reviews: Number(raw.reviews || raw.review_count || raw.reviewCount || 0),
-    supplier: raw.supplier || raw.brand || raw.source || 'CJ Dropshipping',
+    supplier: raw.supplier || raw.brand || raw.source || 'Wimp-Drop Catalog',
     description: raw.description || raw.productDescription || '',
     stock: Number(raw.stock || raw.quantity || raw.inventory || 0),
     inStock: (raw.status || raw.product_status || raw.stock_status || 'active') !== 'Out of Stock' && ((raw.stock || raw.quantity || raw.inventory || 0) > 0),
@@ -1078,42 +1064,8 @@ async function loadProducts(filters = {}) {
     let products = [];
     let totalCount = 0;
 
-    // Try CJ Dropshipping API first
-    if (typeof cjAPI !== 'undefined' && cjAPI) {
-      try {
-        const search = urlParams.get('search') || 'electronics';
-        const result = await cjAPI.searchProducts(search, page, perPage);
-        const cjProducts = Array.isArray(result?.products)
-          ? result.products
-          : Array.isArray(result?.data)
-            ? result.data
-            : Array.isArray(result?.result)
-              ? result.result
-              : [];
-
-        if (cjProducts.length) {
-          products = cjProducts.map(p => ({
-            id: p.id || p.productId || p.product_id,
-            name: p.name || p.productTitle || p.productName,
-            category: p.category || p.category_name || 'electronics',
-            price: Number(p.price || p.salePrice || p.sale_price || 0) * 100,
-            originalPrice: Number(p.originalPrice || p.listPrice || p.price || p.market_price || 0) * 100,
-            image: p.thumbnail || p.image || p.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop',
-            rating: Number(p.rating || 4.5),
-            reviews: Number(p.reviews || p.reviewCount || p.review_count || 0),
-            supplier: 'CJ Dropshipping',
-            description: p.description || p.productDescription || p.product_description || ''
-          }));
-          totalCount = result.totalCount || result.total_count || result.total || products.length;
-        }
-      } catch (cjError) {
-        console.warn('CJ API error:', cjError);
-        products = [];
-      }
-    }
-
-    // Try Supabase if products not loaded from CJ
-    if (products.length === 0 && typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
+    // Load products exclusively from Supabase
+    if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
       const queryFilters = { limit: perPage, offset };
       const category = urlParams.get('category');
       const search = urlParams.get('search');
@@ -1131,11 +1083,15 @@ async function loadProducts(filters = {}) {
           image: p.thumbnail || p.image || (p.images && p.images[0]) || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop',
           rating: Number(p.rating) || 4.5,
           reviews: Number(p.reviews_count) || 0,
-          supplier: p.supplier || 'CJ Dropshipping',
+          supplier: p.supplier || 'Wimp-Drop Catalog',
           description: p.description || ''
         }));
         totalCount = res.count || products.length;
+      } else {
+        products = [];
       }
+    } else {
+      products = [];
     }
 
     // Fallback: Use mock products if no real products loaded
@@ -1581,56 +1537,7 @@ function handlePaymentCallback(response) {
   }
 }
 
-// ===== CJ DROPSHIPPING API ===== 
-
-async function searchCJProducts(keyword) {
-  try {
-    if (typeof cjAPI !== 'undefined') {
-      const result = await cjAPI.searchProducts(keyword, 1, 12);
-      return Array.isArray(result?.products)
-        ? result.products
-        : Array.isArray(result?.data)
-          ? result.data
-          : Array.isArray(result?.result)
-            ? result.result
-            : [];
-    }
-
-    const response = await fetch('/api/cj/products/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keyword, page: 1, limit: 12 })
-    });
-
-    const data = await response.json();
-    return Array.isArray(data?.products)
-      ? data.products
-      : Array.isArray(data?.data)
-        ? data.data
-        : Array.isArray(data?.result)
-          ? data.result
-          : [];
-
-  } catch (error) {
-    console.error('CJ search error:', error);
-    return [];
-  }
-}
-
-async function createCJOrder(cartItems, shippingInfo) {
-  try {
-    const response = await fetch('/api/cj/orders/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: cartItems, shipping: shippingInfo })
-    });
-    const data = await response.json();
-    return data.order || data.data || null;
-  } catch (error) {
-    console.error('Order creation error:', error);
-    return null;
-  }
-}
+// Product sourcing now comes directly from the Supabase `products` table.
 
 // ===== ORDERS MANAGEMENT ===== 
 
@@ -1647,13 +1554,13 @@ async function getOrderHistory() {
 
 async function trackOrder(orderId) {
   try {
-    // TODO: Get tracking info from CJ Dropshipping API
+    // TODO: Integrate tracking with Supabase order records or shipping provider.
     console.log('Tracking order:', orderId);
     return {
       orderId,
       status: 'shipped',
-      trackingNumber: 'CJ123456789',
-      carrier: 'DHL'
+      trackingNumber: 'TRACK123456789',
+      carrier: 'Local Carrier'
     };
   } catch (error) {
     console.error('Tracking error:', error);
@@ -1735,7 +1642,7 @@ async function handleSearch(e) {
           image: p.thumbnail || p.image || (p.images && p.images[0]) || 'https://via.placeholder.com/400',
           rating: Number(p.rating) || 4.5,
           reviews: Number(p.reviews_count) || 0,
-          supplier: p.supplier || 'CJ Dropshipping',
+          supplier: p.supplier || 'Wimp-Drop Catalog',
           description: p.description || ''
         }));
 

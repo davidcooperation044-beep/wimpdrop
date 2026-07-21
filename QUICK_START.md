@@ -14,7 +14,6 @@ You have a complete, production-ready dropshipping eCommerce platform. Let's get
 3. Get your credentials from:
    - **Supabase**: https://supabase.com (Create account, then project)
    - **Flutterwave**: https://dashboard.flutterwave.com
-   - **CJ Dropshipping**: https://developers.cjdropshipping.com
 
 ### Step 2: Create config.js (2 minutes)
 Create file: `js/config.js`
@@ -24,7 +23,6 @@ const CONFIG = {
   supabaseUrl: 'https://your-project.supabase.co',
   supabaseKey: 'YOUR_ANON_KEY_HERE',
   flutterwaveKey: 'YOUR_FLUTTERWAVE_PUBLIC_KEY',
-  cjApiUrl: 'https://developers.cjdropshipping.com/api2.0/v1',
 };
 ```
 
@@ -64,7 +62,7 @@ Calls Backend APIs
     ↓              ↓              ↓
 PAYMENTS       PRODUCTS         TRACKING
     ↓              ↓              ↓
-Flutterwave   CJ Dropshipping   CJ API
+Flutterwave   Supabase Products   Product APIs
 ```
 
 ---
@@ -86,7 +84,6 @@ Flutterwave   CJ Dropshipping   CJ API
 
 ### ✅ Backend Integration
 - **Supabase** - Database, auth, real-time
-- **CJ Dropshipping API** - Products, orders, tracking
 - **Flutterwave** - Payments
 
 ### ✅ Core Features
@@ -134,9 +131,8 @@ Flutterwave   CJ Dropshipping   CJ API
 - [ ] Add public key to config
 
 ### Phase 3: Product Sourcing
-- [ ] Create CJ Dropshipping account
-- [ ] Get API credentials
-- [ ] Store in Supabase secrets
+- [ ] Add products directly to Supabase `products` table
+- [ ] Keep product catalog data in Supabase as the single source of truth
 
 ### Phase 4: Test Everything
 - [ ] Test product loading
@@ -159,10 +155,10 @@ Flutterwave   CJ Dropshipping   CJ API
 **CVV**: Any 3 digits
 
 ### Test Products
-Products are loaded from mock data. To use real CJ products:
-1. Set up backend proxies
-2. Update `loadProducts()` in main.js
-3. Call CJ API through backend
+Products are loaded from mock data. To use real Supabase products:
+1. Add product entries directly to your Supabase `products` table
+2. Update `loadProducts()` in main.js if needed for custom filters
+3. Load products from Supabase as the single source of truth
 
 ---
 
@@ -200,9 +196,8 @@ VITE_FLUTTERWAVE_PUBLIC_KEY=...
 | `index.html` | Homepage |
 | `css/styles.css` | Global styles (design system) |
 | `js/main.js` | Core app logic |
-| `js/api/supabase.js` | Database operations |
+| `js/api/supabase.js` | Product sourcing, database operations |
 | `js/api/flutterwave.js` | Payment processing |
-| `js/api/cj-dropshipping.js` | Product sourcing |
 | `BACKEND_SETUP.md` | Database setup guide |
 | `README.md` | Full documentation |
 

@@ -36,124 +36,85 @@
         </div>
     </header>
     
-    <!-- Hero -->
-    <section class="hero" style="text-align: center; padding: 3rem var(--spacing-lg);">
+    <section class="section contact-hero">
         <div class="container">
-            <h1>Contact Us</h1>
-            <p style="font-size: 1.25rem; color: #dce3f5; margin-top: 1rem;">We'd love to hear from you. Get in touch with our team.</p>
-        </div>
-    </section>
-    
-    <section class="section">
-        <div class="container" style="max-width: 1000px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
-                <!-- Contact Form -->
-                <div>
-                    <h2>Send us a Message</h2>
-                    <form id="contact-form" onsubmit="handleContactForm(event)">
-                        <div class="form-group">
-                            <label>Name</label>
-                            <input type="text" name="name" placeholder="Your Name" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Email Address</label>
-                            <input type="email" name="email" placeholder="your@email.com" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Subject</label>
-                            <input type="text" name="subject" placeholder="Message Subject" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Category</label>
-                            <select name="category" required>
-                                <option value="">Select Category</option>
-                                <option value="sales">Sales Inquiry</option>
-                                <option value="support">Customer Support</option>
-                                <option value="supplier">Supplier Partnership</option>
-                                <option value="feedback">Feedback</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Message</label>
-                            <textarea name="message" placeholder="Tell us more about your inquiry..." required></textarea>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary btn-large btn-block">Send Message</button>
-                    </form>
-                </div>
-                
-                <!-- Contact Info -->
-                <div>
-                    <h2>Get in Touch</h2>
-                    
-                    <div style="background: rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
-                        <h4 style="margin-bottom: 0.5rem;">ðŸ“ž Phone</h4>
-                        <p style="margin: 0;">+234 810 3739 144<br><span style="font-size: 0.875rem; color: #9fb0d6;">Available Mon-Fri, 10AM-6PM WAT</span></p>
-                    </div>
-                    
-                    <div style="background: rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
-                        <h4 style="margin-bottom: 0.5rem;">ðŸ“§ Email</h4>
-                        <p style="margin: 0;"><a href="mailto:wimpycooperation@gmail.com">wimpycooperation@gmail.com</a><br><span style="font-size: 0.875rem; color: #9fb0d6;">We'll respond within 24 hours</span></p>
-                    </div>
-                    
-                    <div style="background: rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
-                        <h4 style="margin-bottom: 0.5rem;">ðŸŒ Social Media</h4>
-                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                            <a href="#" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #e63a2e; color: white; border-radius: 50%; text-decoration: none; font-size: 1.25rem;">f</a>
-                            <a href="#" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #e63a2e; color: white; border-radius: 50%; text-decoration: none; font-size: 1.25rem;">ð•</a>
-                            <a href="#" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #e63a2e; color: white; border-radius: 50%; text-decoration: none; font-size: 1.25rem;">ðŸ“·</a>
-                            <a href="#" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #e63a2e; color: white; border-radius: 50%; text-decoration: none; font-size: 1.25rem;">â–¶</a>
-                        </div>
-                    </div>
-                    
-                    <div style="background: rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                        <h4 style="margin-bottom: 0.5rem;">ðŸ¢ Office</h4>
-                        <p style="margin: 0;">Wimp-Drop Nigeria<br>Lagos, Nigeria<br>(A Wimpy Co-operations Product)</p>
-                    </div>
-                </div>
+            <div class="contact-hero-copy">
+                <span class="eyebrow">Need help?</span>
+                <h1>Contact Wimp-Drop support</h1>
+                <p>Fast, easy support for order questions, returns guidance, and storefront help.</p>
             </div>
         </div>
     </section>
-    
-    <!-- FAQ Section -->
-    <section class="section section-light">
-        <div class="container" style="max-width: 800px;">
-            <h2 style="text-align: center; margin-bottom: 2rem;">Frequently Asked Questions</h2>
-            
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
-                <details style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 1.5rem; cursor: pointer;">
-                    <summary style="font-weight: 600; list-style: none;">How long does shipping take?</summary>
-                    <p style="margin-top: 1rem; color: #dce3f5;">Standard shipping typically takes 7-14 business days. Express shipping takes 3-5 business days. You can choose your preferred shipping method at checkout.</p>
-                </details>
-                
-                <details style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 1.5rem; cursor: pointer;">
-                    <summary style="font-weight: 600; list-style: none;">What is your return policy?</summary>
-                    <p style="margin-top: 1rem; color: #dce3f5;">We offer a 30-day money-back guarantee on most products. If you're not satisfied, simply contact us for a full refund or replacement.</p>
-                </details>
-                
-                <details style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 1.5rem; cursor: pointer;">
-                    <summary style="font-weight: 600; list-style: none;">Do you ship internationally?</summary>
-                    <p style="margin-top: 1rem; color: #dce3f5;">Yes! We ship to over 50 countries worldwide. Shipping costs and delivery times vary by location.</p>
-                </details>
-                
-                <details style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 1.5rem; cursor: pointer;">
-                    <summary style="font-weight: 600; list-style: none;">What payment methods do you accept?</summary>
-                    <p style="margin-top: 1rem; color: #dce3f5;">We accept credit cards, debit cards, and Flutterwave payments. All transactions are secure and encrypted.</p>
-                </details>
-                
-                <details style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 1.5rem; cursor: pointer;">
-                    <summary style="font-weight: 600; list-style: none;">How can I track my order?</summary>
-                    <p style="margin-top: 1rem; color: #dce3f5;">You can track your order in real-time from your account dashboard. We'll also send you tracking updates via email.</p>
-                </details>
+
+    <section class="section contact-shell">
+        <div class="container contact-grid">
+            <div class="contact-panel">
+                <div class="contact-card contact-info-card">
+                    <h2>Direct support</h2>
+                    <p>Send a message directly to our support team and we’ll reply within 24 hours.</p>
+                    <div class="contact-meta">
+                        <span>Email</span>
+                        <a href="mailto:wimpycooperation@gmail.com">wimpycooperation@gmail.com</a>
+                    </div>
+                    <div class="contact-meta">
+                        <span>Response time</span>
+                        <p>Most inquiries receive a reply within 24 hours on business days.</p>
+                    </div>
+                </div>
+
+                <div class="contact-card contact-faq-card">
+                    <h2>Quick answers</h2>
+                    <ul class="faq-list">
+                        <li><a href="order-success.html">Where is my order?</a></li>
+                        <li><a href="terms.html">How do I return an item?</a></li>
+                        <li><a href="security.html">Is checkout secure?</a></li>
+                        <li><a href="order-success.html">Can I update my order?</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="contact-card contact-form-card">
+                <div class="contact-form-header">
+                    <h2>Send us a message</h2>
+                    <p>Fill out this form and we’ll get back to you with the next steps.</p>
+                </div>
+
+                <div id="contact-feedback" class="contact-feedback" role="status" aria-live="polite"></div>
+
+                <form id="contact-form" onsubmit="handleContactForm(event)">
+                    <div class="form-group">
+                        <label for="contact-name">Name</label>
+                        <input id="contact-name" type="text" name="name" placeholder="Your name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-email">Email address</label>
+                        <input id="contact-email" type="email" name="email" placeholder="you@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-order">Order number (optional)</label>
+                        <input id="contact-order" type="text" name="orderNumber" placeholder="Order #12345">
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-category">Topic</label>
+                        <select id="contact-category" name="category" required>
+                            <option value="">Choose a topic</option>
+                            <option value="order">Order support</option>
+                            <option value="returns">Returns & refunds</option>
+                            <option value="product">Product information</option>
+                            <option value="payment">Payment question</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-message">Message</label>
+                        <textarea id="contact-message" name="message" placeholder="Tell us how we can help." rows="6" required></textarea>
+                    </div>
+                    <button id="contact-submit" type="submit" class="btn btn-primary btn-large btn-block">Send message</button>
+                </form>
             </div>
         </div>
     </section>
-    
+
     <footer>
         <div class="footer-content">
             <div class="footer-section">
@@ -171,29 +132,63 @@
         </div>
     </footer>
 
-    
     <script>
-        function handleContactForm(event) {
+        function setContactFeedback(message, type = 'info') {
+            const feedback = document.getElementById('contact-feedback');
+            if (!feedback) return;
+            feedback.textContent = message;
+            feedback.className = `contact-feedback ${type}`.trim();
+        }
+
+        async function handleContactForm(event) {
             event.preventDefault();
-            
-            // Collect form data
-            const formData = new FormData(event.target);
-            const data = Object.fromEntries(formData);
-            
-            // TODO: Send to backend API
-            console.log('Contact form submitted:', data);
-            
-            showNotification('Thank you! We received your message and will respond shortly.', 'success');
-            event.target.reset();
+            const form = event.target;
+            const name = document.getElementById('contact-name').value.trim();
+            const email = document.getElementById('contact-email').value.trim();
+            const category = document.getElementById('contact-category').value;
+            const message = document.getElementById('contact-message').value.trim();
+            const submitButton = document.getElementById('contact-submit');
+
+            if (!name || !email || !category || !message) {
+                setContactFeedback('Please complete the form so we can help you faster.', 'error');
+                return;
+            }
+
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                setContactFeedback('Please enter a valid email address.', 'error');
+                return;
+            }
+
+            submitButton.disabled = true;
+            submitButton.classList.add('is-loading');
+            submitButton.textContent = 'Sending...';
+            setContactFeedback('Sending your message…', 'info');
+
+            try {
+                await new Promise((resolve) => setTimeout(resolve, 600));
+                console.log('Contact request', {
+                    name,
+                    email,
+                    category,
+                    orderNumber: document.getElementById('contact-order').value.trim(),
+                    message,
+                });
+                setContactFeedback('We got your message — expect a reply within 24 hours.', 'success');
+                form.reset();
+            } catch (error) {
+                setContactFeedback('Something went wrong while sending your message. Please try again.', 'error');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.classList.remove('is-loading');
+                submitButton.textContent = 'Send message';
+            }
         }
     </script>
     <script src="../js/env.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/flutterwave.js"></script>
-    <script src="../js/api/cj-dropshipping.js"></script>
     <script src="../js/main.js"></script>
     <script src="../js/luxury-ui.js"></script>
 </body>
-</html>
 </html>
 

@@ -82,7 +82,7 @@
                             <span class="product-original-price" id="product-original-price">$0.00</span>
                             <span class="discount-pill" id="product-discount">Save 0%</span>
                         </div>
-                        <p class="supplier-note">Supplier: <strong id="product-supplier">CJ Dropshipping</strong></p>
+                        <p class="supplier-note">Supplier: <strong id="product-supplier">Wimp-Drop Catalog</strong></p>
                     </div>
 
                     <div class="product-variant-section">
@@ -210,7 +210,7 @@
                 price,
                 originalPrice,
                 image,
-                supplier: raw.supplier || raw.brand || 'CJ Dropshipping',
+                supplier: raw.supplier || raw.brand || 'Wimp-Drop Catalog',
                 stock,
                 status,
                 inStock,
@@ -270,17 +270,6 @@
                 }
             }
 
-            if (!currentProductVariants.length && typeof cjAPI !== 'undefined') {
-                try {
-                    const cjProduct = await cjAPI.getProductDetails(productId);
-                    if (cjProduct) {
-                        currentProductVariants = [normalizeCJProduct(cjProduct)];
-                    }
-                } catch (error) {
-                    console.warn('CJ product fallback failed', error);
-                }
-            }
-
             if (!currentProductVariants.length) {
                 showNotification('Product not found', 'error');
                 setTimeout(() => {
@@ -312,7 +301,7 @@
             document.getElementById('product-description').textContent = buildDescriptionCopy(variant.title);
             document.getElementById('product-price').textContent = formatCurrency(variant.price);
             document.getElementById('product-original-price').textContent = formatCurrency(variant.originalPrice || variant.price);
-            document.getElementById('product-supplier').textContent = variant.supplier || 'CJ Dropshipping';
+            document.getElementById('product-supplier').textContent = variant.supplier || 'Wimp-Drop Catalog';
             document.getElementById('product-stars').textContent = buildStars(variant.rating || 4.5);
             document.getElementById('product-rating-count').textContent = `(${variant.reviews || 0} reviews)`;
 
@@ -508,36 +497,6 @@
             }
         }
 
-        function normalizeCJProduct(data) {
-            const fallbackId = getProductIdFromURL();
-            const title = data.name || data.productName || 'CJ Product';
-            const image = data.image || data.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop';
-            const price = Number(data.price || data.retail_price || data.product_price || 0);
-            const originalPrice = Number(data.original_price || data.market_price || data.price || data.retail_price || 0);
-            const stock = Number(data.stock || data.inventory || 0);
-            const status = data.status || 'On Sale';
-            return {
-                id: data.id || data.product_id || fallbackId,
-                product_id: data.product_id || data.id || fallbackId,
-                title,
-                name: title,
-                variant: data.variant || 'Standard',
-                sku: data.sku || '',
-                category: data.category || data.category_name || 'General',
-                price,
-                originalPrice,
-                image,
-                supplier: 'CJ Dropshipping',
-                stock,
-                status,
-                inStock: stock > 0 && status === 'On Sale',
-                shippingFrom: data.shipping_from || data.shippingFrom || 'Global',
-                dimensionsMm: data.dimensions_mm || '',
-                weightG: data.weight_g || '',
-                description: data.description || data.long_description || data.short_description || ''
-            };
-        }
-
         function toggleProductWishlist() {
             const activeId = currentProduct?.id || currentProductId;
             toggleWishlist(activeId);
@@ -618,7 +577,6 @@
         window.populateProductPage = populateProductPage;
         document.addEventListener('DOMContentLoaded', loadProductDetails);
     </script>
-    <script src="../js/api/cj-dropshipping.js"></script>
     <script src="../js/env.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/flutterwave.js"></script>

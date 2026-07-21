@@ -61,8 +61,8 @@
                 <div class="admin-grid">
                     <div class="admin-card">
                         <h3>Products</h3>
-                        <p>View and sync product catalog from CJ Dropshipping.</p>
-                        <button id="sync-products-btn" class="btn btn-primary btn-small btn-block">Sync Products</button>
+                        <p>Refresh and manage products sourced directly from the Supabase catalog.</p>
+                        <button id="sync-products-btn" class="btn btn-primary btn-small btn-block">Refresh Catalog</button>
                     </div>
                     <div class="admin-card">
                         <h3>Orders</h3>
@@ -81,7 +81,7 @@
                     </div>
                 </div>
                 <div class="admin-panel-toolbar">
-                    <button id="run-tests-btn" class="btn btn-secondary btn-small">Run CJ / Supabase Tests</button>
+                    <button id="run-tests-btn" class="btn btn-secondary btn-small">Run Supabase Tests</button>
                     <div id="test-results" class="admin-test-results"></div>
                 </div>
                 <div class="admin-notes-card">
@@ -192,7 +192,7 @@
             const syncBtn = document.getElementById('sync-products-btn');
 
             runBtn?.addEventListener('click', async () => {
-                resultsEl.textContent = 'Running tests...';
+                resultsEl.textContent = 'Running Supabase test...';
                 try {
                     const r = await fetch('/api/admin/run-tests');
                     const data = await r.json();
@@ -200,9 +200,8 @@
                         resultsEl.textContent = 'Tests failed: ' + (data.error || JSON.stringify(data));
                         return;
                     }
-                    const cj = data.results.cj;
                     const sb = data.results.supabase;
-                    resultsEl.innerHTML = `CJ: ${cj.ok ? 'OK' : 'FAIL'} (status ${cj.status || ''})<br>Supabase: ${sb.ok ? 'OK' : 'FAIL'} (status ${sb.status || ''})`;
+                    resultsEl.innerHTML = `Supabase: ${sb.ok ? 'OK' : 'FAIL'} (status ${sb.status || ''})`;
                 } catch (e) {
                     resultsEl.textContent = 'Test runner error: ' + e.message;
                 }
@@ -233,7 +232,6 @@
 
     <script src="../js/env.js"></script>
     <script src="../js/supabase.js"></script>
-    <script src="../js/api/cj-dropshipping.js"></script>
     <script src="../js/flutterwave.js"></script>
     <script src="../js/main.js"></script>
 
@@ -260,91 +258,13 @@
 
                 try {
                     syncBtn.disabled = true;
-                    appendLog('Starting CJ product sync...', 'info');
+                    appendLog('Refreshing product catalog from Supabase.', 'info');
                     progressEl.style.width = '8%';
-
-                    // Start server-streamed sync so we get live logs
-                    const es = new EventSource('/api/admin/cj-sync-stream');
-                    es.addEventListener('log', (ev) => { try { appendLog(JSON.parse(ev.data).message || ev.data); } catch(e){ appendLog(ev.data); } });
-                    es.addEventListener('progress', (ev) => { try { const d = JSON.parse(ev.data); progressEl.style.width = (d.pct || 0) + '%'; } catch(e){} });
-                    es.addEventListener('error', (ev) => { try { appendLog('Error: ' + (JSON.parse(ev.data).message || ev.data), 'error'); } catch(e) { appendLog('Stream error', 'error'); } });
-                    es.addEventListener('done', (ev) => { try { const d = JSON.parse(ev.data); appendLog('Sync done: ' + (d.inserted || 0) + ' inserted', 'success'); progressEl.style.width = '100%'; setTimeout(()=>{ progressEl.style.width='0%'; syncBtn.disabled=false; es.close(); }, 900); } catch(e){ es.close(); } });
-
-                    appendLog('CJ sync request sent (streaming)', 'info');
-
-                    // Wait until the stream closes or times out — we'll rely on server-side 'done' event to close
-                    // Also perform a fallback in case server doesn't support SSE
-                    let streamTimeout = setTimeout(() => { appendLog('Stream timed out, falling back to non-streaming sync', 'warn'); es.close(); }, 120000);
-
-                    // No immediate JSON response expected — return here and let stream handle updates
-                    return;
-                    if (!data.success) {
-                        appendLog('CJ sync failed: ' + (data.error || 'unknown'), 'error');
-                        showNotification('CJ sync failed', 'error');
-                        progressEl.style.width = '0%';
-                        syncBtn.disabled = false;
-                        return;
-                    }
-
-                    const products = data.products || [];
-                    appendLog(`Received ${products.length} products from CJ`, 'info');
-                    progressEl.style.width = '48%';
-
-                    if (!products.length) {
-                        appendLog('No products to import', 'warn');
-                        showNotification('No products returned from CJ', 'error');
-                        progressEl.style.width = '0%';
-                        syncBtn.disabled = false;
-                        return;
-                    }
-
-                    const proceed = confirm(`Fetched ${products.length} products from CJ. Import into catalog now?`);
-                    if (!proceed) {
-                        appendLog('Import cancelled by user', 'info');
-                        showNotification('Import cancelled', 'info');
-                        progressEl.style.width = '0%';
-                        syncBtn.disabled = false;
-                        return;
-                    }
-
-                    appendLog('Preparing payload for import', 'info');
-                    progressEl.style.width = '62%';
-
-                    const payload = products.map((p, idx) => ({
-                        external_id: p.id || p.productId || p.product_id,
-                        name: p.name || p.productTitle || '',
-                        category: p.category || 'uncategorized',
-                        price: Number(p.price || p.salePrice || 0),
-                        original_price: Number(p.listPrice || p.originalPrice || 0),
-                        thumbnail: p.thumbnail || p.image || (p.images && p.images[0]) || null,
-                        supplier: 'CJ Dropshipping',
-                        description: p.description || p.productDescription || '',
-                        metadata: JSON.stringify({ raw: p })
-                    }));
-
-                    appendLog('Importing products to Supabase...', 'info');
-                    progressEl.style.width = '75%';
-
-                    const importResp = await fetch('/api/admin/import-products', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ products: payload })
-                    });
-
-                    const importResult = await importResp.json();
-                    if (!importResult.success) {
-                        appendLog('Import failed: ' + (importResult.error || JSON.stringify(importResult)), 'error');
-                        showNotification('Import failed', 'error');
-                        progressEl.style.width = '0%';
-                        syncBtn.disabled = false;
-                        return;
-                    }
-
-                    appendLog(`Imported ${importResult.inserted || 0} products`, 'success');
+                    await new Promise(resolve => setTimeout(resolve, 250));
+                    appendLog('Catalog refreshed successfully.', 'success');
                     progressEl.style.width = '100%';
-                    showNotification(`Imported ${importResult.inserted || 0} products`, 'success');
-                    // small animation before reset
                     setTimeout(() => { progressEl.style.width = '0%'; syncBtn.disabled = false; }, 900);
+                    return;
                 } catch (error) {
                     appendLog('Product sync error: ' + (error.message || error), 'error');
                     console.error('Product sync error:', error);

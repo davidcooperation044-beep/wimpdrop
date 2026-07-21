@@ -81,12 +81,9 @@ cp .env.example .env.local
   - Public Key → `VITE_FLUTTERWAVE_PUBLIC_KEY`
   - (Also get Secret Key for backend later)
 
-**CJ Dropshipping** (Product Sourcing)
-- Visit: https://developers.cjdropshipping.com
-- Sign up / Log in
-- Create API credentials
-- Copy:
-  - API Key → `VITE_CJ_API_KEY`
+**Product Sourcing** (Supabase)
+- Add products manually to the Supabase `products` table
+- Keep product catalog data in Supabase as the single source of truth
 
 ### 3️⃣ Add Credentials to .env.local
 
@@ -95,7 +92,6 @@ Edit `.env.local`:
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-actual-anon-key
 VITE_FLUTTERWAVE_PUBLIC_KEY=your-actual-public-key
-VITE_CJ_API_KEY=your-actual-api-key
 ```
 
 ### 4️⃣ Test Locally

@@ -10,10 +10,6 @@ const CONFIG = {
   // ===== FLUTTERWAVE CONFIGURATION =====
   flutterwaveKey: 'FLWPUBK-xxxxxxxxxxxxxxxxxxxxx-X',
   
-  // ===== CJ DROPSHIPPING CONFIGURATION =====
-  cjApiUrl: 'https://developers.cjdropshipping.com/api2.0/v1',
-  cjStoreId: '',
-  
   // ===== APP CONFIGURATION =====
   appName: 'Wimp-Drop',
   appVersion: '1.0.0',
@@ -22,7 +18,6 @@ const CONFIG = {
   // ===== API ENDPOINTS =====
   // These are Edge Function endpoints from Supabase
   apiEndpoints: {
-    cjProxy: '/functions/v1/cj-proxy',
     flutterwaveProxy: '/functions/v1/flutterwave-proxy',
     sendEmail: '/functions/v1/send-email',
     syncInventory: '/functions/v1/sync-inventory'

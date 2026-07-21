@@ -90,10 +90,6 @@ function readRequestBody(request) {
   });
 }
 
-async function proxyCJRequest(request, response) {
-  return sendJson(response, 404, { success: false, error: 'CJ proxy has been removed. Please use Zendrop integration.' });
-}
-
 function getSupabaseConfig() {
   const envFile = loadEnvFile();
   return {
@@ -112,7 +108,6 @@ function getAdminCreationSecret() {
   return process.env.ADMIN_CREATION_SECRET || envFile.ADMIN_CREATION_SECRET || '';
 }
 
-// Admin: fetch products from CJ and return summary
 // Admin: import products to Supabase via REST (uses anon key from env.local)
 async function handleAdminImportProducts(request, response) {
   if (request.method !== 'POST') return sendJson(response, 405, { success: false, error: 'Method not allowed' });
@@ -253,96 +248,6 @@ async function handleAdminRunTests(request, response) {
   }
 }
 
-// Admin: stream CJ sync + import progress via Server-Sent Events (SSE)
-async function handleAdminCJSyncStream(request, response) {
-  const cjConfig = getCJConfig();
-  const sb = getSupabaseConfig();
-
-  // SSE headers
-  response.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    Connection: 'keep-alive'
-  });
-  response.write('\n');
-
-  function sendEvent(event, payload) {
-    try {
-      const data = typeof payload === 'string' ? { message: payload } : payload;
-      response.write(`event: ${event}\n`);
-      response.write(`data: ${JSON.stringify(data)}\n\n`);
-    } catch (e) {
-      console.error('SSE send error', e);
-    }
-  }
-
-  sendEvent('log', 'Starting CJ sync (stream)');
-
-  if (!cjConfig.apiKey) {
-    sendEvent('error', 'CJ API key not configured on server');
-    response.end();
-    return;
-  }
-
-  try {
-    sendEvent('progress', { pct: 5 });
-    // Fetch products from CJ
-    const target = new URL(`${cjConfig.apiUrl}/products/search`);
-    target.searchParams.set('keyword', 'electronics');
-    target.searchParams.set('page', '1');
-    target.searchParams.set('limit', '50');
-    if (cjConfig.storeId) target.searchParams.set('storeId', cjConfig.storeId);
-
-    sendEvent('log', 'Querying CJ products...');
-    const upstream = await fetch(target.toString(), { headers: { Authorization: `Bearer ${cjConfig.apiKey}`, 'X-API-Key': cjConfig.apiKey } });
-    const text = await upstream.text();
-    let payload; try { payload = JSON.parse(text); } catch(e) { payload = text; }
-
-    // Fallback to POST if interface not found
-    const interfaceNotFound = payload && (payload.message === 'Interface not found' || payload.result === false);
-    let products = Array.isArray(payload?.products) ? payload.products : (payload?.data || []);
-    if (!upstream.ok || interfaceNotFound) {
-      sendEvent('log', 'GET fallback failed, trying POST fallback');
-      const postTarget = new URL(`${cjConfig.apiUrl}/products/search`);
-      if (cjConfig.storeId) postTarget.searchParams.set('storeId', cjConfig.storeId);
-      const postResp = await fetch(postTarget.toString(), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cjConfig.apiKey}`, 'X-API-Key': cjConfig.apiKey },
-        body: JSON.stringify({ keyword: 'electronics', page: 1, limit: 50 })
-      });
-      const postText = await postResp.text();
-      let postPayload; try { postPayload = JSON.parse(postText); } catch(e) { postPayload = postText; }
-      products = Array.isArray(postPayload?.products) ? postPayload.products : (postPayload?.data || []);
-      sendEvent('log', `POST fallback returned ${products.length} products`);
-    } else {
-      sendEvent('log', `CJ returned ${products.length} products`);
-    }
-
-    sendEvent('progress', { pct: 40 });
-
-    if (!products || !products.length) {
-      sendEvent('error', 'No products returned from CJ');
-      response.end();
-      return;
-    }
-
-    // Prepare payload for Supabase import
-    sendEvent('log', 'Preparing products payload for import');
-    const payloadToImport = products.map(p => ({
-      external_id: p.id || p.productId || p.product_id,
-      name: p.name || p.productTitle || '',
-      category: p.category || 'uncategorized',
-      price: Number(p.price || p.salePrice || 0),
-      original_price: Number(p.listPrice || p.originalPrice || 0),
-      thumbnail: p.thumbnail || p.image || (p.images && p.images[0]) || null,
-      supplier: 'CJ Dropshipping',
-      description: p.description || p.productDescription || '',
-      metadata: JSON.stringify({ raw: p })
-    }));
-
-    sendEvent('progress', { pct: 65 });
-
-    // Import to Supabase
     if (!sb.url || !sb.anonKey) {
       sendEvent('error', 'Supabase URL or anon key missing on server');
       response.end();
@@ -588,11 +493,6 @@ async function handleEmailRequest(request, response) {
 
 const server = http.createServer(async (request, response) => {
   console.log('[HTTP]', request.method, request.url);
-  if (request.url && request.url.startsWith('/api/cj')) {
-    await proxyCJRequest(request, response);
-    return;
-  }
-
   if (request.url && request.url.startsWith('/api/admin/create-admin')) {
     await handleAdminCreateAdmin(request, response);
     return;

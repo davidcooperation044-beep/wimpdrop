@@ -344,7 +344,6 @@ env.getMissing()
 env.get('VITE_SUPABASE_URL')      // Should return URL
 env.get('VITE_SUPABASE_ANON_KEY') // Should return key
 env.get('VITE_FLUTTERWAVE_PUBLIC_KEY')  // Should return key
-env.get('VITE_CJ_API_KEY')        // Should return key
 
 // Any showing empty or "undefined"?
 // That's what you need to fix!

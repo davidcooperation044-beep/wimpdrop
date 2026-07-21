@@ -24,64 +24,82 @@
     </header>
     
     <section class="section auth-page">
-        <div class="container auth-container auth-card-wide">
+        <div class="container auth-shell">
+            <div class="auth-hero-card">
+                <span class="eyebrow">Trusted marketplace access</span>
+                <h1>Create your account</h1>
+                <p>Save favorites, track orders, and check out faster with the same premium storefront experience.</p>
+                <div class="auth-list">
+                    <span class="auth-pill">⚡ Fast checkout</span>
+                    <span class="auth-pill">♡ Saved watchlist</span>
+                    <span class="auth-pill">📦 Order tracking</span>
+                </div>
+                <div class="auth-value-card">
+                    <h3>Ready for premium shopping</h3>
+                    <p>Build your account once and enjoy a smoother path from discovery to delivery.</p>
+                </div>
+            </div>
+
             <div class="auth-card">
                 <div class="auth-card-header text-center">
                     <span class="eyebrow">Create account</span>
-                    <h1>Join Wimp-Drop</h1>
-                    <p>Open a faster, simpler shopping experience with saved preferences and order history.</p>
+                    <h2>Join Wimp-Drop</h2>
+                    <p>Just a few details and you are ready to shop.</p>
                 </div>
-                
+
+                <div id="register-feedback" class="auth-feedback" role="status" aria-live="polite"></div>
+
                 <form id="register-form" onsubmit="handleRegisterForm(event)">
                     <div class="auth-grid-two">
                         <div class="form-group">
-                            <label>First Name</label>
-                            <input type="text" name="firstName" placeholder="John" required>
+                            <label for="register-first-name">First name</label>
+                            <input id="register-first-name" type="text" name="firstName" placeholder="John" required autocomplete="given-name">
                         </div>
-                        
                         <div class="form-group">
-                            <label>Last Name</label>
-                            <input type="text" name="lastName" placeholder="Doe" required>
+                            <label for="register-last-name">Last name</label>
+                            <input id="register-last-name" type="text" name="lastName" placeholder="Doe" required autocomplete="family-name">
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
-                        <label>Email Address</label>
-                        <input type="email" name="email" placeholder="john@example.com" required>
+                        <label for="register-email">Email address</label>
+                        <input id="register-email" type="email" name="email" placeholder="you@example.com" required autocomplete="email">
                     </div>
-                    
+
                     <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" name="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required>
+                        <label for="register-password">Password</label>
+                        <div class="auth-input-wrap">
+                            <input id="register-password" type="password" name="password" placeholder="At least 8 characters" required autocomplete="new-password">
+                            <button class="auth-toggle" type="button" data-toggle-password="register-password">Show</button>
+                        </div>
+                        <div class="auth-meter" aria-hidden="true"><span id="password-meter-fill"></span></div>
+                        <div id="password-strength" class="auth-hint">Use 8+ characters with a mix of letters and numbers.</div>
                     </div>
-                    
+
                     <div class="form-group">
-                        <label>Confirm Password</label>
-                        <input type="password" name="confirmPassword" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required>
+                        <label for="register-confirm-password">Confirm password</label>
+                        <div class="auth-input-wrap">
+                            <input id="register-confirm-password" type="password" name="confirmPassword" placeholder="Repeat your password" required autocomplete="new-password">
+                            <button class="auth-toggle" type="button" data-toggle-password="register-confirm-password">Show</button>
+                        </div>
+                        <div id="password-match" class="auth-hint"></div>
                     </div>
-                    
+
                     <div class="form-group">
-                        <label>Phone Number</label>
-                        <input type="tel" name="phone" placeholder="+1 (555) 000-0000">
-                    </div>
-                    
-                    <div class="form-group checkbox-stack">
                         <label class="checkbox-label">
                             <input type="checkbox" name="terms" required>
-                            <span>I agree to the <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Policy</a></span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="newsletter">
-                            <span>Subscribe to our newsletter for exclusive deals</span>
+                            <span>I agree to the <a href="terms.html" class="text-link">Terms</a> and <a href="privacy.html" class="text-link">Privacy Policy</a>.</span>
                         </label>
                     </div>
-                    
-                    <button type="submit" class="btn btn-primary btn-block btn-large">Create Account</button>
+
+                    <div class="auth-divider"><span>or</span></div>
+                    <button type="button" class="btn btn-outline btn-block oauth-btn" onclick="handleOAuthLogin('google')">Continue with Google</button>
+                    <button id="register-submit" type="submit" class="btn btn-primary btn-block btn-large">Create account</button>
                 </form>
-                
+
                 <p class="auth-footer">
                     Already have an account?
-                    <a href="login.html">Sign in here</a>
+                    <a href="login.html" class="text-link">Sign in</a>
                 </p>
             </div>
         </div>
@@ -113,62 +131,155 @@
         </div>
     </footer>
     <script>
+        function setRegisterFeedback(message, type = 'info') {
+            const feedback = document.getElementById('register-feedback');
+            if (!feedback) return;
+            feedback.textContent = message;
+            feedback.className = `auth-feedback ${type}`.trim();
+        }
+
+        function updatePasswordState() {
+            const password = document.getElementById('register-password').value;
+            const confirm = document.getElementById('register-confirm-password').value;
+            const meter = document.getElementById('password-meter-fill');
+            const hint = document.getElementById('password-strength');
+            const matchHint = document.getElementById('password-match');
+
+            let score = 0;
+            if (password.length >= 8) score += 40;
+            if (/[A-Z]/.test(password)) score += 20;
+            if (/[0-9]/.test(password)) score += 20;
+            if (/[^A-Za-z0-9]/.test(password)) score += 20;
+            const width = Math.min(score, 100);
+            if (meter) meter.style.width = `${width}%`;
+
+            if (!password) {
+                if (hint) hint.textContent = 'Use 8+ characters with a mix of letters and numbers.';
+                hint.className = 'auth-hint';
+            } else if (password.length < 8) {
+                if (hint) {
+                    hint.textContent = 'Add a few more characters to make it stronger.';
+                    hint.className = 'auth-hint error';
+                }
+            } else if (score < 80) {
+                if (hint) {
+                    hint.textContent = 'Great start — add a number or symbol for stronger security.';
+                    hint.className = 'auth-hint success';
+                }
+            } else {
+                if (hint) {
+                    hint.textContent = 'Strong password — you are ready to continue.';
+                    hint.className = 'auth-hint success';
+                }
+            }
+
+            if (!confirm) {
+                if (matchHint) matchHint.textContent = '';
+                matchHint.className = 'auth-hint';
+            } else if (password === confirm) {
+                if (matchHint) {
+                    matchHint.textContent = 'Passwords match.';
+                    matchHint.className = 'auth-hint success';
+                }
+            } else {
+                if (matchHint) {
+                    matchHint.textContent = 'Passwords do not match yet.';
+                    matchHint.className = 'auth-hint error';
+                }
+            }
+        }
+
+        document.querySelectorAll('.auth-toggle').forEach((button) => {
+            button.addEventListener('click', () => {
+                const targetId = button.getAttribute('data-toggle-password');
+                const input = document.getElementById(targetId);
+                if (!input) return;
+                const isPassword = input.type === 'password';
+                input.type = isPassword ? 'text' : 'password';
+                button.textContent = isPassword ? 'Hide' : 'Show';
+            });
+        });
+
+        ['register-password', 'register-confirm-password'].forEach((fieldId) => {
+            const input = document.getElementById(fieldId);
+            if (input) input.addEventListener('input', updatePasswordState);
+        });
+
         async function handleRegisterForm(event) {
             event.preventDefault();
-            await window._supabaseReady;
-            
             const email = document.querySelector('input[name="email"]').value.trim();
             const password = document.querySelector('input[name="password"]').value;
             const confirmPassword = document.querySelector('input[name="confirmPassword"]').value;
             const firstName = document.querySelector('input[name="firstName"]').value.trim();
             const lastName = document.querySelector('input[name="lastName"]').value.trim();
-            const btn = document.querySelector('button[type="submit"]');
+            const terms = document.querySelector('input[name="terms"]');
+            const btn = document.getElementById('register-submit');
 
-            if (password !== confirmPassword) {
-                showNotification('Passwords do not match', 'error');
+            setRegisterFeedback('');
+
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                setRegisterFeedback('Please enter a valid email address.', 'error');
                 return;
             }
 
-            btn.textContent = 'Creating account...';
+            if (password.length < 8) {
+                setRegisterFeedback('Choose a password with at least 8 characters.', 'error');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                setRegisterFeedback('Passwords do not match. Try typing them again.', 'error');
+                return;
+            }
+
+            if (!terms?.checked) {
+                setRegisterFeedback('Please accept the terms to continue.', 'error');
+                return;
+            }
+
+            btn.classList.add('is-loading');
             btn.disabled = true;
+            btn.textContent = 'Creating account...';
 
             try {
                 await window._supabaseReady;
 
-                // Use centralized supabaseService wrapper for consistent error handling
                 if (typeof supabaseService !== 'undefined') {
-                    const result = await supabaseService.signUp(email, password, { full_name: `${firstName} ${lastName}` });
+                    const result = await supabaseService.signUp(email, password, { full_name: `${firstName} ${lastName}`.trim() });
                     if (!result.success) {
                         throw new Error(result.error || 'Registration failed');
                     }
-
-                    showNotification('Account created! Check your email to verify.', 'success');
-                    setTimeout(() => window.location.href = 'login.html', 2000);
-                } else if (window._supabase && window._supabase.auth && window._supabase.auth.signUp) {
-                    const { data, error } = await window._supabase.auth.signUp({
+                } else if (window._supabase?.auth?.signUp) {
+                    const { error } = await window._supabase.auth.signUp({
                         email,
                         password,
-                        options: { data: { full_name: `${firstName} ${lastName}` } }
+                        options: { data: { full_name: `${firstName} ${lastName}`.trim() } }
                     });
                     if (error) throw error;
-                    showNotification('Account created! Check your email to verify.', 'success');
-                    setTimeout(() => window.location.href = 'login.html', 2000);
                 } else {
-                    throw new Error('Auth service not available');
+                    throw new Error('Auth service is not available');
                 }
 
+                setRegisterFeedback('Account created — check your inbox to verify your email.', 'success');
+                setTimeout(() => window.location.href = 'login.html', 1200);
             } catch (error) {
-                const message = (error?.message || error || '').toString();
-                showNotification(message || 'Registration failed', 'error');
-                btn.textContent = 'Create Account';
+                const message = (error?.message || error || '').toString().toLowerCase();
+                const friendly = message.includes('already') || message.includes('registered') || message.includes('exists')
+                    ? "That email's already registered — sign in instead?"
+                    : 'We could not create your account right now. Please try again.';
+                setRegisterFeedback(friendly, 'error');
+            } finally {
+                btn.classList.remove('is-loading');
                 btn.disabled = false;
+                btn.textContent = 'Create account';
             }
         }
+
+        document.addEventListener('DOMContentLoaded', updatePasswordState);
     </script>
     <script src="../js/env.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/flutterwave.js"></script>
-    <script src="../js/api/cj-dropshipping.js"></script>
     <script src="../js/main.js"></script>
     <script src="../js/luxury-ui.js"></script>
 </body>

@@ -43,7 +43,7 @@ The eCommerce platform structure is fully built and ready for environment config
 ### API Integration Modules (Ready to Deploy)
 - [x] **js/api/supabase.js** - Database, auth, orders, products
 - [x] **js/api/flutterwave.js** - Payment processing
-- [x] **js/api/cj-dropshipping.js** - Product sourcing API
+- [x] **js/api/supabase.js** - Product sourcing API
 - [x] Edge Function proxy architecture (for security)
 
 ### Environment & Security
@@ -85,7 +85,7 @@ The eCommerce platform structure is fully built and ready for environment config
 
 ### What You Can Do Right Now
 1. Copy `.env.example` to `.env.local`
-2. Get API credentials from Supabase, Flutterwave, CJ Dropshipping
+2. Get API credentials from Supabase and Flutterwave
 3. Add credentials to `.env.local`
 4. Open app in browser and test locally
 

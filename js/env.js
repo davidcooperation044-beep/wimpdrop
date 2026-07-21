@@ -118,9 +118,6 @@ class EnvConfig {
       'VITE_SUPABASE_URL': 'https://your-project.supabase.co',
       'VITE_SUPABASE_ANON_KEY': '',
       'VITE_FLUTTERWAVE_PUBLIC_KEY': '',
-      'VITE_CJ_API_KEY': '',
-      'VITE_CJ_API_URL': 'https://developers.cjdropshipping.com/api2.0/v1',
-      'VITE_CJ_STORE_ID': '',
       'VITE_APP_NAME': 'Wimp-Drop',
       'VITE_APP_VERSION': '1.0.0',
       'VITE_ENVIRONMENT': 'development',
@@ -166,9 +163,7 @@ class EnvConfig {
     const required = [
       'VITE_SUPABASE_URL',
       'VITE_SUPABASE_ANON_KEY',
-      'VITE_FLUTTERWAVE_PUBLIC_KEY',
-      'VITE_CJ_API_KEY',
-      'VITE_CJ_STORE_ID'
+      'VITE_FLUTTERWAVE_PUBLIC_KEY'
     ];
     
     return required.filter(key => this.isMissing(key));

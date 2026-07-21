@@ -61,14 +61,6 @@ For Vercel/Netlify, set in deployment platform:
 4. Copy:
    - **VITE_FLUTTERWAVE_PUBLIC_KEY** = Public Key (test or live)
 
-### CJ Dropshipping
-1. Go to [developers.cjdropshipping.com](https://developers.cjdropshipping.com)
-2. Sign up / Log in
-3. Create API credentials
-4. Copy:
-   - **VITE_CJ_API_KEY** = API Key
-
----
 
 ## Verify Setup
 
@@ -124,7 +116,6 @@ You need to add those variables to .env.local or set them in the console.
 - `VITE_SUPABASE_URL` - Supabase project URL
 - `VITE_SUPABASE_ANON_KEY` - Supabase anon key
 - `VITE_FLUTTERWAVE_PUBLIC_KEY` - Flutterwave public key
-- `VITE_CJ_API_KEY` - CJ Dropshipping API key
 
 ### Optional
 - `VITE_ENVIRONMENT` - 'development' or 'production' (default: development)

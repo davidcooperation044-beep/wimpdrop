@@ -5,14 +5,14 @@ Wimp-Drop is a full-stack dropshipping eCommerce platform built with:
 - **Frontend**: HTML, CSS, Vanilla JavaScript
 - **Backend**: Supabase (PostgreSQL, Auth, Edge Functions)
 - **Payments**: Flutterwave
-- **Product Sourcing**: CJ Dropshipping API
+- **Product Sourcing**: Supabase `products` table
 
 ## Table of Contents
 1. [Supabase Setup](#supabase-setup)
 2. [Environment Variables](#environment-variables)
 3. [Database Schema](#database-schema)
 4. [Edge Functions](#edge-functions)
-5. [CJ Dropshipping Integration](#cj-dropshipping-integration)
+5. [Product Sourcing](#product-sourcing)
 6. [Flutterwave Integration](#flutterwave-integration)
 7. [Deployment](#deployment)
 
@@ -67,8 +67,7 @@ CREATE TABLE products (
   image_url TEXT,
   images JSONB,
   variants JSONB,
-  cj_product_id TEXT,
-  supplier TEXT DEFAULT 'CJ Dropshipping',
+  supplier TEXT DEFAULT 'Wimp-Drop Catalog',
   stock_quantity INTEGER,
   rating DECIMAL(3,2) DEFAULT 0,
   reviews_count INTEGER DEFAULT 0,
@@ -76,7 +75,6 @@ CREATE TABLE products (
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
   INDEX idx_category (category),
-  INDEX idx_cj_product_id (cj_product_id)
 );
 ```
 
@@ -93,7 +91,6 @@ CREATE TABLE orders (
   shipping_address JSONB,
   billing_address JSONB,
   order_items JSONB,
-  cj_order_id TEXT,
   tracking_number TEXT,
   carrier TEXT,
   notes TEXT,
@@ -103,7 +100,6 @@ CREATE TABLE orders (
   delivered_at TIMESTAMP,
   INDEX idx_user_id (user_id),
   INDEX idx_status (status),
-  INDEX idx_cj_order_id (cj_order_id)
 );
 ```
 
@@ -196,11 +192,11 @@ VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key-here
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 
-# CJ Dropshipping
-CJ_API_KEY=your-cj-api-key
-CJ_API_SECRET=your-cj-api-secret
-
 # Flutterwave
+VITE_FLUTTERWAVE_PUBLIC_KEY=your-flutterwave-public-key
+VITE_FLUTTERWAVE_SECRET_KEY=your-flutterwave-secret-key
+
+# Backend
 VITE_FLUTTERWAVE_PUBLIC_KEY=your-flutterwave-public-key
 FLUTTERWAVE_SECRET_KEY=your-flutterwave-secret-key
 
@@ -209,7 +205,6 @@ BACKEND_URL=http://localhost:3000
 ```
 
 Store sensitive keys in Supabase **Settings > Secrets**:
-- `CJ_API_KEY`
 - `FLUTTERWAVE_SECRET_KEY`
 
 ---
@@ -341,21 +336,9 @@ supabase functions deploy flutterwave-proxy
 
 ---
 
-## CJ Dropshipping Integration
+## Product Sourcing
 
-### API Setup
-1. Get API credentials from [CJ Dropshipping Developer](https://developers.cjdropshipping.com)
-2. Store in Supabase secrets
-3. Use Edge Functions to proxy requests (keep key secure)
-
-### Key Endpoints
-- **Search**: `POST /search`
-- **Get Product**: `GET /product/{id}`
-- **Create Order**: `POST /order/create`
-- **Get Tracking**: `GET /order/{id}/tracking`
-
-### Implementation
-All CJ API calls are made through `/api/cj/*` backend endpoints.
+Product sourcing is handled entirely through the Supabase `products` table. Add, update, and manage product catalog entries directly in Supabase. No CJ Dropshipping proxy is required.
 
 ---
 
