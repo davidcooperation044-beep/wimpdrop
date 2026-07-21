@@ -397,60 +397,72 @@ class SupabaseService {
       const sb = await this.getClient();
       if (sb.from) {
         // SDK path
-const buildQuery = () => {
-        let query = sb.from('products').select('*');
-        if (filters.category) query = query.eq('category', filters.category);
-        if (filters.search) query = query.ilike('name', `%${filters.search}%`);
-        if (filters.priceMax) query = query.lte('price', filters.priceMax);
-        if (filters.limit) query = query.limit(filters.limit);
-        if (filters.offset) query = query.range(filters.offset, filters.offset + (filters.limit || 12) - 1);
-        return query.order(filters.sortBy || 'created_at', { ascending: false });
-      };
+        const buildQuery = () => {
+          let query = sb.from('products').select('*');
+          if (filters.category) query = query.eq('category', filters.category);
+          if (filters.search) query = query.ilike('name', `%${filters.search}%`);
+          if (filters.priceMax) query = query.lte('price', filters.priceMax);
+          if (filters.limit) query = query.limit(filters.limit);
+          if (filters.offset) query = query.range(filters.offset, filters.offset + (filters.limit || 12) - 1);
+          if (filters.sortBy) {
+            const sortField = filters.sortBy === 'newest' ? '"Added Time"' : filters.sortBy;
+            query = query.order(sortField, { ascending: filters.sortAsc !== false });
+          }
+          return query;
 
-      const executeQuery = async (query) => {
-        const { data, error, count } = await query;
-        if (error) throw error;
-        return { data, count };
-      };
+        const executeQuery = async (query) => {
+          const { data, error, count } = await query;
+          if (error) throw error;
+          return { data, count };
+        };
 
-      try {
-        const { data, count } = await executeQuery(buildQuery().eq('is_active', true));
-        return { success: true, products: data || [], count };
-      } catch (error) {
-        if (error.code === '42703' || /column.*is_active/.test(error.message)) {
-          const { data, count } = await executeQuery(buildQuery());
+        try {
+          const { data, count } = await executeQuery(buildQuery().eq('is_active', true));
           return { success: true, products: data || [], count };
+        } catch (error) {
+          if (error.code === '42703' || /column.*is_active/.test(error.message)) {
+            const { data, count } = await executeQuery(buildQuery());
+            return { success: true, products: data || [], count };
+          }
+          if (filters.sortBy && (/column.*created_at/.test(error.message) || /column.*order.*does not exist/.test(error.message))) {
+            const { data, count } = await executeQuery(buildQuery().limit(filters.limit).range(filters.offset, filters.offset + (filters.limit || 12) - 1));
+            return { success: true, products: data || [], count };
+          }
+          throw error;
         }
-        throw error;
       }
-    }
 
-    // REST fallback
-    const buildUrl = (includeActive = true) => {
-      let url = `${this.supabaseUrl}/rest/v1/products?select=*`;
-      if (includeActive) url += '&is_active=eq.true';
-      if (filters.category) url += `&category=eq.${filters.category}`;
-      if (filters.limit) url += `&limit=${filters.limit}`;
-      return url;
-    };
+      // REST fallback
+      const buildUrl = (includeActive = true, includeOrder = !!filters.sortBy) => {
+        let url = `${this.supabaseUrl}/rest/v1/products?select=*`;
+        if (includeActive) url += '&is_active=eq.true';
+        if (filters.category) url += `&category=eq.${filters.category}`;
+        if (filters.limit) url += `&limit=${filters.limit}`;
+        if (filters.offset) url += `&offset=${filters.offset}`;
+        if (includeOrder) url += `&order=${encodeURIComponent(`${filters.sortBy}.desc`)}`;
+        return url;
+      };
 
-    let url = buildUrl(true);
-    let response = await fetch(url, {
-      headers: { ...this.headers, 'Prefer': 'count=exact' }
-    });
+      let url = buildUrl(true, !!filters.sortBy);
+      let response = await fetch(url, {
+        headers: { ...this.headers, 'Prefer': 'count=exact' }
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      if (response.status === 400 && /is_active/.test(errorText)) {
-        response = await fetch(buildUrl(false), {
-          headers: { ...this.headers, 'Prefer': 'count=exact' }
-        });
+      if (!response.ok) {
+        const errorText = await response.text();
+        if (response.status === 400 && /is_active/.test(errorText)) {
+          response = await fetch(buildUrl(false, !!filters.sortBy), {
+            headers: { ...this.headers, 'Prefer': 'count=exact' }
+          });
+        } else if (response.status === 400 && /created_at/.test(errorText)) {
+          response = await fetch(buildUrl(false, false), {
+            headers: { ...this.headers, 'Prefer': 'count=exact' }
+          });
+        }
       }
-    }
 
       const data = await response.json();
       return { success: true, products: Array.isArray(data) ? data : [] };
-
     } catch (error) {
       console.error('Get products error:', error);
       return { success: false, products: [], error: error.message };

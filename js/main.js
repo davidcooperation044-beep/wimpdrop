@@ -650,7 +650,11 @@ function applyShopFilters() {
       filtered.sort((a, b) => (b.inStock ? 0 : 1) - (a.inStock ? 0 : 1));
       break;
     default:
-      filtered.sort((a, b) => (new Date(b.created_at || b.added_at || Date.now()) - new Date(a.created_at || a.added_at || Date.now())));
+      filtered.sort((a, b) => {
+        const aDate = new Date(a.added_at || a."Added Time" || a.created_at || Date.now());
+        const bDate = new Date(b.added_at || b."Added Time" || b.created_at || Date.now());
+        return bDate - aDate;
+      });
       break;
   }
 
