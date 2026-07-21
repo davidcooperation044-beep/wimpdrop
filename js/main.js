@@ -716,24 +716,29 @@ function removeShopChip(type, label) {
 }
 
 function normalizeProduct(raw) {
+  const rawPrice = raw.price || raw.sale_price || raw.salePrice || raw.current_price || raw['Product Base Price ($)'] || raw['Total Cost ($)'] || 0;
+  const rawOriginalPrice = raw.original_price || raw.originalPrice || raw.list_price || raw.listPrice || raw.compare_at_price || raw.price || raw['Product Base Price ($)'] || raw['Total Cost ($)'] || 0;
+  const inventory = Number(raw.stock || raw.quantity || raw.inventory || raw['Available Inventory'] || raw['Inventory'] || 0);
+
   return {
-    id: raw.id || raw.product_id || raw.variant_id || raw.sku || '',
-    product_id: raw.product_id || raw.productId || raw.id || raw.sku || '',
-    name: raw.name || raw.title || raw.productTitle || 'Untitled product',
-    category: raw.category || raw.category_name || raw.categoryName || 'General',
-    price: Number(raw.price || raw.sale_price || raw.salePrice || raw.current_price || 0),
-    originalPrice: Number(raw.original_price || raw.originalPrice || raw.list_price || raw.listPrice || raw.compare_at_price || raw.price || 0),
-    image: raw.thumbnail || raw.image || raw.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop',
+    id: raw.id || raw.product_id || raw.variant_id || raw.sku || raw.SKU || raw['SKU'] || '',
+    product_id: raw.product_id || raw.productId || raw.id || raw.sku || raw.SKU || raw['SKU'] || '',
+    name: raw.name || raw.title || raw.productTitle || raw['Product Title'] || 'Untitled product',
+    category: raw.category || raw.category_name || raw.categoryName || raw['Category'] || 'General',
+    price: Number(rawPrice),
+    originalPrice: Number(rawOriginalPrice),
+    image: raw.thumbnail || raw.image || raw.images?.[0] || raw['Product Image'] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop',
     rating: Number(raw.rating || raw.stars || 4.5),
     reviews: Number(raw.reviews || raw.review_count || raw.reviewCount || 0),
     supplier: raw.supplier || raw.brand || raw.source || 'Wimp-Drop Catalog',
-    description: raw.description || raw.productDescription || '',
-    stock: Number(raw.stock || raw.quantity || raw.inventory || 0),
-    inStock: (raw.status || raw.product_status || raw.stock_status || 'active') !== 'Out of Stock' && ((raw.stock || raw.quantity || raw.inventory || 0) > 0),
-    status: raw.status || raw.product_status || raw.stock_status || 'active',
-    origin: raw.origin || raw.shipping_origin || raw.supplier_country || raw.country || 'Global',
+    description: raw.description || raw.productDescription || raw['Specification'] || raw['Product Status'] || '',
+    stock: inventory,
+    inStock: (raw.status || raw.product_status || raw.stock_status || raw['Product Status'] || 'active') !== 'Out of Stock' && inventory > 0,
+    status: raw.status || raw.product_status || raw.stock_status || raw['Product Status'] || 'active',
+    origin: raw.origin || raw.shipping_origin || raw.supplier_country || raw.country || raw['Shipping From'] || 'Global',
     variants: Array.isArray(raw.variants) ? raw.variants : [],
-    sku: raw.sku || raw.variant_sku || raw.item_sku || '',
+    sku: raw.sku || raw.variant_sku || raw.item_sku || raw.SKU || raw['SKU'] || '',
+    added_at: raw.added_at || raw['Added Time'] || raw['Price Update Time'] || raw['Price Updated'] || '',
     shippingTime: raw.shippingTime || raw.lead_time || 'Standard',
     url: raw.url || raw.detailUrl || raw.product_url || raw.link || ''
   };
@@ -1078,18 +1083,26 @@ async function loadProducts(filters = {}) {
 
       const res = await supabaseService.getProducts(queryFilters);
       if (res.success && res.products) {
-        products = res.products.map(p => ({
-          id: p.id,
-          name: p.name,
-          category: p.category,
-          price: Number(p.price) || 0,
-          originalPrice: Number(p.original_price || p.price) || 0,
-          image: p.thumbnail || p.image || (p.images && p.images[0]) || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop',
-          rating: Number(p.rating) || 4.5,
-          reviews: Number(p.reviews_count) || 0,
-          supplier: p.supplier || 'Wimp-Drop Catalog',
-          description: p.description || ''
-        }));
+        products = res.products.map(raw => {
+          const p = normalizeProduct(raw);
+          return {
+            id: p.id,
+            name: p.name,
+            category: p.category,
+            price: p.price,
+            originalPrice: p.originalPrice,
+            image: p.image,
+            rating: p.rating,
+            reviews: p.reviews,
+            supplier: p.supplier,
+            description: p.description,
+            status: p.status,
+            inStock: p.inStock,
+            origin: p.origin,
+            sku: p.sku,
+            added_at: p.added_at
+          };
+        });
         totalCount = res.count || products.length;
       } else {
         products = [];
