@@ -248,46 +248,6 @@ async function handleAdminRunTests(request, response) {
   }
 }
 
-    if (!sb.url || !sb.anonKey) {
-      sendEvent('error', 'Supabase URL or anon key missing on server');
-      response.end();
-      return;
-    }
-
-    sendEvent('log', `Importing ${payloadToImport.length} products to Supabase`);
-    const targetUrl = `${sb.url.replace(/\/$/, '')}/rest/v1/products`;
-    const importResp = await fetch(targetUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: sb.anonKey,
-        Authorization: `Bearer ${sb.anonKey}`,
-        Prefer: 'return=representation'
-      },
-      body: JSON.stringify(payloadToImport)
-    });
-
-    const importText = await importResp.text();
-    let importResult; try { importResult = JSON.parse(importText); } catch(e) { importResult = importText; }
-
-    if (!importResp.ok) {
-      sendEvent('error', `Import failed: ${JSON.stringify(importResult)}`);
-      response.end();
-      return;
-    }
-
-    const inserted = Array.isArray(importResult) ? importResult.length : 0;
-    sendEvent('progress', { pct: 100 });
-    sendEvent('log', `Import complete — inserted ${inserted} products`);
-    sendEvent('done', { inserted });
-    response.end();
-  } catch (error) {
-    console.error('SSE sync error', error);
-    sendEvent('error', error.message || 'Unknown server error');
-    response.end();
-  }
-}
-
 async function handleEmailRequest(request, response) {
   if (request.method !== 'POST') {
     return sendJson(response, 405, { success: false, error: 'Method not allowed' });
