@@ -1,19 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Privacy Policy - Wimp-Drop</title>
-    <link rel="manifest" href="/manifest.json">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/luxury-theme.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-<body>
-    <div id="notification-container"></div>
-    <header class="site-header">
+from pathlib import Path
+import re
+
+root = Path(__file__).resolve().parent.parent
+header = '''<header class="site-header">
     <div class="header-container">
         <div class="site-nav-main">
             <div class="brand-group">
@@ -67,42 +56,22 @@
             <button class="btn btn-secondary btn-small mobile-search-close" type="button">Close</button>
         </div>
     </div>
-</header>
-    <section class="section">
-        <div class="container">
-            <h1>Privacy Policy</h1>
-            <p>Wimp-Drop is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your personal information.</p>
-            <h2>Information We Collect</h2>
-            <p>We may collect your name, email address, phone number, shipping address, and payment information when you create an account or place an order.</p>
-            <h2>How We Use Your Data</h2>
-            <p>Your data is used to process orders, deliver products, provide customer service, and send promotional updates if you opt in.</p>
-            <h2>Security</h2>
-            <p>We use secure connections and third-party services such as Supabase and Flutterwave to keep your data safe. We never store sensitive card data on our servers.</p>
-            <h2>Cookies</h2>
-            <p>We use cookies to improve your experience on our website, preserve preferences, and support basic functionality.</p>
-            <h2>Contact Us</h2>
-            <p>If you have questions about this policy, please contact support@wimp-drop.com.</p>
-        </div>
-    </section>
-    <footer>
-        <div class="footer-content">
-            <div class="footer-section">
-                <h4>Legal</h4>
-                <ul>
-                    <li><a href="privacy.html">Privacy Policy</a></li>
-                    <li><a href="terms.html">Terms of Service</a></li>
-                    <li><a href="disclaimer.html">Disclaimer</a></li>
-                    <li><a href="security.html">Security</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 Wimp-Drop. All rights reserved.</p>
-        </div>
-    </footer>
-    <script src="../js/env.js"></script>
-    <script src="../js/supabase.js"></script>
-    <script src="../js/flutterwave.js"></script>
-    <script src="../js/main.js"></script>
-</body>
-</html>
+</header>'''
+
+files = [root / 'index.html'] + sorted(root.glob('pages/*.html'))
+pattern = re.compile(r'<header>[\s\S]*?</header>', re.IGNORECASE)
+modified = []
+for path in files:
+    text = path.read_text(encoding='utf-8')
+    m = pattern.search(text)
+    if not m:
+        print('NO HEADER FOUND', path)
+        continue
+    new_text = text[:m.start()] + header + text[m.end():]
+    if new_text != text:
+        path.write_text(new_text, encoding='utf-8')
+        modified.append(str(path))
+
+print('Modified', len(modified), 'files')
+for f in modified:
+    print(f)

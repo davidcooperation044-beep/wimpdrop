@@ -192,6 +192,106 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+function setupEventListeners() {
+  const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+  const navMenuTrigger = document.querySelector('.nav-menu-trigger');
+  const navMenuButton = document.getElementById('nav-menu-button');
+  const siteNavMenu = document.getElementById('site-nav-menu');
+  const searchInput = document.querySelector('[data-search]');
+  const searchSubmit = document.getElementById('site-search-submit');
+  const searchSuggestions = document.getElementById('search-suggestions');
+  const mobileSearchToggle = document.getElementById('mobile-search-toggle');
+  const mobileSearchPanel = document.getElementById('mobile-search-panel');
+  const mobileSearchInput = document.getElementById('mobile-site-search-input');
+  const mobileSearchSubmit = document.getElementById('mobile-search-submit');
+  const mobileSearchSuggestions = document.getElementById('mobile-search-suggestions');
+  const mobileSearchClose = document.querySelector('.mobile-search-close');
+
+  if (navMenuTrigger && siteNavMenu) {
+    navMenuTrigger.addEventListener('click', () => {
+      const isOpen = navMenuTrigger.classList.toggle('open');
+      if (navMenuButton) {
+        navMenuButton.setAttribute('aria-expanded', String(isOpen));
+      }
+    });
+  }
+
+  if (mobileMenuBtn && navMenuTrigger && siteNavMenu) {
+    mobileMenuBtn.addEventListener('click', () => {
+      const isOpen = navMenuTrigger.classList.toggle('open');
+      siteNavMenu.classList.toggle('open', isOpen);
+      if (navMenuButton) {
+        navMenuButton.setAttribute('aria-expanded', String(isOpen));
+      }
+    });
+  }
+
+  const handleSearch = (query) => {
+    if (!query) return;
+    const url = new URL(window.location.href);
+    url.pathname = '/pages/shop.html';
+    url.searchParams.set('search', query);
+    window.location.href = url.toString();
+  };
+
+  if (searchSubmit && searchInput) {
+    searchSubmit.addEventListener('click', () => handleSearch(searchInput.value.trim()));
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        handleSearch(searchInput.value.trim());
+      }
+    });
+  }
+
+  if (mobileSearchToggle && mobileSearchPanel && mobileSearchInput && mobileSearchSubmit) {
+    mobileSearchToggle.addEventListener('click', () => {
+      mobileSearchPanel.classList.add('active');
+      mobileSearchPanel.setAttribute('aria-hidden', 'false');
+      mobileSearchInput.focus();
+    });
+
+    mobileSearchClose.addEventListener('click', () => {
+      mobileSearchPanel.classList.remove('active');
+      mobileSearchPanel.setAttribute('aria-hidden', 'true');
+    });
+
+    mobileSearchSubmit.addEventListener('click', () => {
+      handleSearch(mobileSearchInput.value.trim());
+    });
+
+    mobileSearchInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        handleSearch(mobileSearchInput.value.trim());
+      }
+    });
+  }
+
+  // Mark active navigation links
+  const currentPath = window.location.pathname.replace(/\/+$|\/index\.html$/i, '/');
+  document.querySelectorAll('.site-nav-main .nav-menu a, .site-nav-main .logo, .subnav-links a').forEach((link) => {
+    try {
+      const url = new URL(link.href, window.location.origin);
+      const normalized = url.pathname.replace(/\/+$|\/index\.html$/i, '/');
+      if (normalized === currentPath) {
+        link.classList.add('active');
+      }
+    } catch (error) {
+      // ignore invalid URLs
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal')) {
+      e.target.classList.remove('active');
+    }
+  });
+
+  setupShopPage();
+}
+
 async function initializeCurrencySystem() {
   const detected = detectUserCurrency();
   AppState.currencyRegion = detected.region;
@@ -360,49 +460,6 @@ function initializeApp() {
 }
 
 // Global Event Listeners
-function setupEventListeners() {
-  // Mobile menu toggle
-  const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-  const nav = document.querySelector('nav');
-  
-  if (mobileMenuBtn) {
-    mobileMenuBtn.addEventListener('click', () => {
-      nav.classList.toggle('mobile-active');
-    });
-  }
-
-  // global ripple effect for buttons
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.btn');
-    if (!btn) return;
-    const rect = btn.getBoundingClientRect();
-    const ripple = document.createElement('span');
-    ripple.className = 'ripple';
-    const size = Math.max(rect.width, rect.height) * 1.2;
-    ripple.style.width = ripple.style.height = size + 'px';
-    ripple.style.left = (e.clientX - rect.left - size/2) + 'px';
-    ripple.style.top = (e.clientY - rect.top - size/2) + 'px';
-    btn.appendChild(ripple);
-    setTimeout(() => { try { ripple.remove(); } catch(e){} }, 650);
-  });
-  
-  // Search functionality
-  const searchInput = document.querySelector('[data-search]');
-  if (searchInput) {
-    searchInput.addEventListener('input', debounce(handleSearch, 300));
-  }
-  
-  // Close modals on backdrop click
-  document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('modal')) {
-      e.target.classList.remove('active');
-    }
-  });
-
-  // Shop page filters and mobile sheet controls
-  setupShopPage();
-}
-
 function isShopPage() {
   return !!document.querySelector('.shop-product-grid');
 }

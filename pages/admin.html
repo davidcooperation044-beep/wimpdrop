@@ -5,214 +5,295 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Wimp-Drop</title>
     <link rel="manifest" href="/manifest.json">
-      
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/luxury-theme.css">
     <link rel="stylesheet" href="../css/mobile-app.css" id="mobile-app-style" media="(max-width:899px)">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .admin-shell {
+            display: grid;
+            gap: 2rem;
+        }
+        .admin-grid {
+            display: grid;
+            gap: 2rem;
+            grid-template-columns: minmax(280px, 1fr) minmax(0, 2fr);
+            align-items: start;
+        }
+        .admin-sidebar,
+        .admin-panel-card {
+            padding: 1.75rem;
+            background: rgba(26, 31, 58, 0.88);
+            border: 1px solid rgba(212, 175, 55, 0.16);
+            border-radius: 24px;
+            box-shadow: var(--shadow-xl);
+        }
+        .admin-sidebar h2,
+        .admin-panel-card h2,
+        .admin-panel-card h3 {
+            color: var(--gold);
+            margin-bottom: 1rem;
+        }
+        .admin-sidebar .sidebar-group {
+            display: grid;
+            gap: 1rem;
+        }
+        .admin-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .admin-main {
+            display: grid;
+            gap: 1.5rem;
+        }
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+        .admin-stat {
+            padding: 1rem;
+            border-radius: 20px;
+            background: rgba(212, 175, 55, 0.08);
+            border: 1px solid rgba(212, 175, 55, 0.12);
+        }
+        .admin-stat strong {
+            display: block;
+            font-size: 2rem;
+            margin-bottom: 0.25rem;
+            color: white;
+        }
+        .admin-stat span {
+            color: var(--text-secondary);
+        }
+        .admin-table-wrapper {
+            overflow-x: auto;
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 760px;
+        }
+        .admin-table th,
+        .admin-table td {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-secondary);
+        }
+        .admin-table th {
+            color: var(--gold);
+            font-weight: 700;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .admin-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .admin-product-image {
+            width: 56px;
+            height: 56px;
+            object-fit: cover;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .admin-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .admin-status-pill.active {
+            background: rgba(34, 197, 94, 0.16);
+            color: var(--success);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+        .admin-status-pill.out-of-stock {
+            background: rgba(239, 68, 68, 0.16);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.22);
+        }
+        .admin-status-pill.pending {
+            background: rgba(74, 144, 226, 0.16);
+            color: var(--blue-light);
+            border: 1px solid rgba(74, 144, 226, 0.22);
+        }
+        .admin-empty-state {
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+        .admin-log {
+            display: grid;
+            gap: 0.75rem;
+        }
+        .admin-log .log-entry {
+            padding: 1rem;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+        .admin-access-panel {
+            padding: 1.75rem;
+            border-radius: 24px;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.18);
+            color: var(--text-secondary);
+        }
+        .admin-access-panel strong {
+            display: block;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+        @media (max-width: 1024px) {
+            .admin-grid {
+                grid-template-columns: 1fr;
+            }
+            .admin-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .admin-table {
+                min-width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
     <div id="notification-container"></div>
-    <header>
-        <div class="header-container">
-            <div class="logo"><a href="../index.html">Wimp<span>-Drop</span></a></div>
-            <nav>
-                <a href="../index.html">Home</a>
-                <a href="shop.html">Shop</a>
-                <a href="about.html">About</a>
-                <a href="contact.html">Contact</a>
-            </nav>
-            <div class="header-actions"><div data-auth-section></div></div>
-        </div>
-    </header>
-    <section class="section">
-        <div class="container admin-page-container">
-            <div id="admin-login-panel" class="admin-card hidden">
-                <h1>Admin Login</h1>
-                <p class="admin-subtitle">Enter your admin credentials to access the dashboard.</p>
-                <form id="admin-login-form">
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" name="email" placeholder="you@yourdomain.com" required>
+    <header class="site-header">
+    <div class="header-container">
+        <div class="site-nav-main">
+            <div class="brand-group">
+                <a href="/index.html" class="logo link-reset">Wimp<span>-Drop</span></a>
+                <div class="nav-menu-trigger">
+                    <button class="btn btn-outline btn-small nav-menu-btn" type="button" id="nav-menu-button" aria-expanded="false" aria-controls="site-nav-menu">
+                        Shop <span class="nav-menu-chevron">▾</span>
+                    </button>
+                    <div class="nav-menu" id="site-nav-menu">
+                        <a href="/pages/shop.html">All products</a>
+                        <a href="/pages/shop.html?search=electronics">Electronics</a>
+                        <a href="/pages/shop.html?search=fashion">Fashion</a>
+                        <a href="/pages/shop.html?search=home">Home</a>
+                        <a href="/pages/shop.html?search=accessories">Accessories</a>
+                        <a href="/pages/shop.html?search=gadgets">Gadgets</a>
                     </div>
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" name="password" placeholder="••••••••" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">Sign In as Admin</button>
-                </form>
+                </div>
             </div>
-
-            <div id="admin-dashboard" class="hidden">
-                <h1 class="section-title">Admin Dashboard</h1>
-                <p class="admin-subtitle">Manage products, orders, and promotions from your admin panel.</p>
-                <div class="admin-stats-grid">
-                    <div class="stat-card">
-                        <strong>1,240</strong>
-                        <span>Active Listings</span>
-                    </div>
-                    <div class="stat-card">
-                        <strong>82</strong>
-                        <span>Pending Orders</span>
-                    </div>
-                    <div class="stat-card">
-                        <strong>97%</strong>
-                        <span>Supplier Uptime</span>
-                    </div>
+            <div class="site-search">
+                <input id="site-search-input" type="search" placeholder="Search products, brands, categories…" autocomplete="off" data-search>
+                <button class="btn btn-primary search-submit" id="site-search-submit" type="button">Search</button>
+                <div class="search-suggestions" id="search-suggestions"></div>
+            </div>
+            <div class="site-actions">
+                <button class="icon-btn mobile-search-toggle" id="mobile-search-toggle" type="button" aria-label="Open search">🔎</button>
+                <a href="/pages/account.html" class="icon-link" aria-label="Account">👤</a>
+                <a href="/pages/watchlist.html" class="icon-link" aria-label="Watchlist">♡<span class="badge" data-wishlist-badge style="display:none">0</span></a>
+                <a href="/pages/cart.html" class="icon-link" aria-label="Cart">🛒<span class="badge" data-cart-badge style="display:none">0</span></a>
+                <button class="icon-btn mobile-menu-btn" id="mobile-menu-button" type="button" aria-label="Open menu">☰</button>
+            </div>
+        </div>
+    </div>
+    <div class="site-subnav">
+        <div class="subnav-links">
+            <a href="/pages/shop.html" class="active">Shop</a>
+            <a href="/pages/shop.html?search=electronics">Electronics</a>
+            <a href="/pages/shop.html?search=fashion">Fashion</a>
+            <a href="/pages/shop.html?search=home">Home</a>
+            <a href="/pages/shop.html?search=accessories">Accessories</a>
+            <a href="/pages/shop.html?search=gadgets">Gadgets</a>
+        </div>
+        <div class="subnav-promo">Search first, shop fast — new arrivals live from the catalog.</div>
+    </div>
+    <div class="mobile-search-panel" id="mobile-search-panel" aria-hidden="true">
+        <div class="mobile-search-shell">
+            <div class="site-search">
+                <input id="mobile-site-search-input" type="search" placeholder="Search Wimp-Drop catalog…" autocomplete="off">
+                <button class="btn btn-primary search-submit" id="mobile-search-submit" type="button">Search</button>
+            </div>
+            <div class="search-suggestions" id="mobile-search-suggestions"></div>
+            <button class="btn btn-secondary btn-small mobile-search-close" type="button">Close</button>
+        </div>
+    </div>
+</header>
+    <section class="section">
+        <div class="container admin-shell">
+            <div class="section-head">
+                <div>
+                    <h1 class="section-title">Admin Console</h1>
+                    <p class="section-copy">Securely manage Supabase product listings, view inventory, and run backend checks from one admin interface.</p>
                 </div>
-                <div class="admin-grid">
-                    <div class="admin-card">
-                        <h3>Products</h3>
-                        <p>Refresh and manage products sourced directly from the Supabase catalog.</p>
-                        <button id="sync-products-btn" class="btn btn-primary btn-small btn-block">Refresh Catalog</button>
+            </div>
+            <div id="admin-access-panel" class="admin-access-panel" style="display:none;">
+                <strong>Restricted admin area</strong>
+                <p>Admin access requires a valid signed-in session. If you are an administrator, sign in through the storefront login page and return here after your session is active.</p>
+                <p><a href="../pages/login.html" class="link-reset">Go to login page</a></p>
+            </div>
+            <div id="admin-dashboard-grid" class="admin-grid" style="display:none;">
+                <aside class="admin-sidebar">
+                    <div class="sidebar-group">
+                        <h2>Quick actions</h2>
+                        <button id="refresh-catalog-btn" class="btn btn-primary btn-large">Refresh product catalog</button>
+                        <button id="run-tests-btn" class="btn btn-secondary btn-large">Run Supabase health check</button>
                     </div>
-                    <div class="admin-card">
-                        <h3>Orders</h3>
-                        <p>Review recent orders and update fulfillment status.</p>
-                        <button class="btn btn-primary btn-small btn-block">Review Orders</button>
-                    </div>
-                    <div class="admin-card">
-                        <h3>Promotions</h3>
-                        <p>Create promo codes and newsletter campaigns.</p>
-                        <button class="btn btn-primary btn-small btn-block">Create Promo</button>
-                    </div>
-                    <div class="admin-card">
-                        <h3>Admin Setup</h3>
-                        <p>Securely create an admin user on the server.</p>
-                        <button id="create-admin-user-btn" class="btn btn-secondary btn-small btn-block">Create Admin User</button>
-                    </div>
-                </div>
-                <div class="admin-panel-toolbar">
-                    <button id="run-tests-btn" class="btn btn-secondary btn-small">Run Supabase Tests</button>
-                    <div id="test-results" class="admin-test-results"></div>
-                </div>
-                <div class="admin-notes-card">
-                    <h2>Admin Notes</h2>
-                    <ul class="admin-notes-list">
-                        <li>Only authorized personnel should access this page.</li>
-                        <li>Use Supabase for managing orders, wishlists, and products.</li>
-                        <li>Ensure Internet access for backend API calls.</li>
-                    </ul>
-                </div>
-                <div class="admin-activity-grid">
-                    <div class="activity-feed card">
-                        <h3>Activity Feed</h3>
-                        <div id="activity-feed" class="activity-list">
-                            <div class="activity-empty">No activity yet.</div>
+                    <div class="sidebar-group">
+                        <h2>Live stats</h2>
+                        <div class="admin-stats">
+                            <div class="admin-stat"><strong id="admin-product-count">—</strong><span>Products loaded</span></div>
+                            <div class="admin-stat"><strong id="admin-stock-count">—</strong><span>Total inventory</span></div>
+                            <div class="admin-stat"><strong id="admin-status-count">—</strong><span>Active listings</span></div>
+                            <div class="admin-stat"><strong id="admin-last-refresh">—</strong><span>Last refresh</span></div>
                         </div>
                     </div>
-                    <div class="log-panel card">
-                        <h3>Sync Logs</h3>
-                        <div class="progress-bar"><div id="sync-progress" class="progress-fill" style="width:0%"></div></div>
-                        <div id="sync-log" class="log-entries"></div>
-                        <div class="log-actions"><button id="clear-log" class="btn btn-outline btn-small">Clear</button></div>
+                </aside>
+                <main class="admin-main">
+                    <div class="admin-panel-card">
+                        <div class="admin-toolbar">
+                            <div>
+                                <h2>Products table</h2>
+                                <p class="section-copy">Data is sourced from the Supabase `products` table. Refresh to reload the latest catalog state.</p>
+                            </div>
+                            <div id="admin-test-result" class="section-copy"></div>
+                        </div>
+                        <div class="admin-table-wrapper">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>SKU</th>
+                                        <th>Inventory</th>
+                                        <th>Status</th>
+                                        <th>Added</th>
+                                        <th>Price</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-product-table-body"></tbody>
+                            </table>
+                            <div id="admin-empty-state" class="admin-empty-state">No products loaded. Select Refresh product catalog to load your Supabase items.</div>
+                        </div>
                     </div>
-                </div>
+                    <div class="admin-panel-card admin-log">
+                        <h2>Action log</h2>
+                        <div id="admin-log-entries">
+                            <div class="log-entry">Waiting for admin actions...</div>
+                        </div>
+                    </div>
+                </main>
             </div>
         </div>
     </section>
-    <script>
-        async function initAdminPage() {
-            const loginPanel = document.getElementById('admin-login-panel');
-            const dashboard = document.getElementById('admin-dashboard');
-            const form = document.getElementById('admin-login-form');
-            
-            if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
-                await supabaseService.restoreSession();
-            }
-
-            const user = supabaseService?.currentUser || null;
-            if (user) {
-                const adminCheck = await supabaseService.isUserAdmin(user.id);
-                if (adminCheck.success && adminCheck.isAdmin) {
-                    loginPanel.style.display = 'none';
-                    dashboard.style.display = 'block';
-                    updateUserUI();
-                    return;
-                }
-            }
-
-            loginPanel.style.display = 'block';
-            dashboard.style.display = 'none';
-
-            // Load env and check for local admin override flag
-            let LOCAL_ADMIN_EMAIL = '';
-            let LOCAL_ADMIN_PASSWORD = '';
-            let ENABLE_LOCAL_ADMIN_OVERRIDE = false;
-
-            if (window.env && typeof window.env.load === 'function') {
-                try {
-                    if (!window.env.isLoaded) await window.env.load();
-                } catch (e) { /* ignore */ }
-                ENABLE_LOCAL_ADMIN_OVERRIDE = !!window.env.get('VITE_ENABLE_LOCAL_ADMIN_OVERRIDE');
-                LOCAL_ADMIN_EMAIL = window.env.get('VITE_LOCAL_ADMIN_EMAIL') || '';
-                LOCAL_ADMIN_PASSWORD = window.env.get('VITE_LOCAL_ADMIN_PASSWORD') || '';
-            }
-
-            form?.addEventListener('submit', async (event) => {
-                event.preventDefault();
-                const email = form.querySelector('[name="email"]').value.trim();
-                const password = form.querySelector('[name="password"]').value.trim();
-                if (!email || !password) {
-                    showNotification('Please provide both email and password', 'error');
-                    return;
-                }
-
-                // If local override is enabled and credentials match the configured local admin, grant access without contacting Supabase.
-                if (ENABLE_LOCAL_ADMIN_OVERRIDE && email === LOCAL_ADMIN_EMAIL && password === LOCAL_ADMIN_PASSWORD) {
-                    loginPanel.style.display = 'none';
-                    dashboard.style.display = 'block';
-                    updateUserUI && updateUserUI();
-                    showNotification('Admin access granted (local override)', 'success');
-                    return;
-                }
-
-                // Otherwise, fall back to Supabase auth (regular flow)
-                const result = await supabaseService.signIn(email, password);
-                if (!result.success) {
-                    showNotification(result.error || 'Admin sign in failed', 'error');
-                    return;
-                }
-
-                const adminCheck = await supabaseService.isUserAdmin(result.user.id);
-                if (adminCheck.success && adminCheck.isAdmin) {
-                    loginPanel.style.display = 'none';
-                    dashboard.style.display = 'block';
-                    updateUserUI();
-                    showNotification('Admin access granted', 'success');
-                } else {
-                    await supabaseService.signOut();
-                    showNotification('Only admin users may access this page', 'error');
-                }
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', initAdminPage);
-        document.addEventListener('DOMContentLoaded', () => {
-            const runBtn = document.getElementById('run-tests-btn');
-            const resultsEl = document.getElementById('test-results');
-            const syncBtn = document.getElementById('sync-products-btn');
-
-            runBtn?.addEventListener('click', async () => {
-                resultsEl.textContent = 'Running Supabase test...';
-                try {
-                    const r = await fetch('/api/admin/run-tests');
-                    const data = await r.json();
-                    if (!data.success) {
-                        resultsEl.textContent = 'Tests failed: ' + (data.error || JSON.stringify(data));
-                        return;
-                    }
-                    const sb = data.results.supabase;
-                    resultsEl.innerHTML = `Supabase: ${sb.ok ? 'OK' : 'FAIL'} (status ${sb.status || ''})`;
-                } catch (e) {
-                    resultsEl.textContent = 'Test runner error: ' + e.message;
-                }
-            });
-
-            syncBtn?.addEventListener('click', async (e) => {
-                e.preventDefault();
-                await performSyncProducts();
-            });
-        });
-    </script>
     <footer>
         <div class="footer-content">
             <div class="footer-section">
@@ -234,95 +315,188 @@
     <script src="../js/supabase.js"></script>
     <script src="../js/flutterwave.js"></script>
     <script src="../js/main.js"></script>
-
     <script>
-        async function performSyncProducts() {
-                // Enhanced sync with progress and logs
-                const syncBtn = document.getElementById('sync-products-btn');
-                const progressEl = document.getElementById('sync-progress');
-                const logEl = document.getElementById('sync-log');
-                const feedEl = document.getElementById('activity-feed');
-                function appendLog(msg, level = 'info') {
-                    const d = new Date().toLocaleTimeString();
-                    const entry = document.createElement('div');
-                    entry.className = 'log-entry log-' + level;
-                    entry.textContent = `[${d}] ${msg}`;
-                    logEl.prepend(entry);
-                    // add to activity feed as well
-                    const af = document.createElement('div');
-                    af.className = 'activity-entry';
-                    af.textContent = `${d} — ${msg}`;
-                    if (feedEl.querySelector('.activity-empty')) feedEl.innerHTML = '';
-                    feedEl.prepend(af);
-                }
-
-                try {
-                    syncBtn.disabled = true;
-                    appendLog('Refreshing product catalog from Supabase.', 'info');
-                    progressEl.style.width = '8%';
-                    await new Promise(resolve => setTimeout(resolve, 250));
-                    appendLog('Catalog refreshed successfully.', 'success');
-                    progressEl.style.width = '100%';
-                    setTimeout(() => { progressEl.style.width = '0%'; syncBtn.disabled = false; }, 900);
-                    return;
-                } catch (error) {
-                    appendLog('Product sync error: ' + (error.message || error), 'error');
-                    console.error('Product sync error:', error);
-                    showNotification('Product sync failed: ' + (error.message || error), 'error');
-                    progressEl.style.width = '0%';
-                    document.getElementById('sync-products-btn').disabled = false;
-                }
+        function formatDate(value) {
+            if (!value) return 'Unknown';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return value;
+            return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
         }
 
-        // attach to the Sync Products button when admin is ready
-        document.addEventListener('DOMContentLoaded', () => {
-            const syncBtn = document.querySelector('button.btn-primary.btn-small');
-            if (syncBtn) {
-                syncBtn.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    await performSyncProducts();
-                });
+        function renderStatusChip(status) {
+            const normalized = String(status || 'Unknown').toLowerCase();
+            const span = document.createElement('span');
+            span.className = 'admin-status-pill';
+            if (/out|stock|sold|inactive/.test(normalized)) {
+                span.classList.add('out-of-stock');
+                span.textContent = status || 'Out of stock';
+            } else if (/pending|draft/.test(normalized)) {
+                span.classList.add('pending');
+                span.textContent = status || 'Pending';
+            } else {
+                span.classList.add('active');
+                span.textContent = status || 'Active';
+            }
+            return span;
+        }
+
+        function normalizeAdminProduct(raw) {
+            return {
+                id: raw.id || raw.product_id || raw.SKU || raw.sku || 'n/a',
+                title: raw['Product Title'] || raw.title || raw['product_title'] || raw.name || 'Untitled product',
+                image: raw['Product Image'] || raw.image || raw.product_image || raw['product_image'] || '',
+                sku: raw['SKU'] || raw.sku || raw['item_sku'] || raw['sku'] || 'n/a',
+                inventory: raw['Available Inventory'] ?? raw.available_inventory ?? raw.inventory ?? 'N/A',
+                status: raw['Product Status'] || raw.status || raw['Status'] || 'Unknown',
+                addedAt: raw['Added Time'] || raw.added_at || raw.created_at || raw['created_at'] || '',
+                price: raw['Retail Price'] || raw.price || raw['Price'] || raw['product_price'] || '—',
+                vendor: raw['Vendor'] || raw.vendor || raw.supplier || ''
+            };
+        }
+
+        function appendAdminLog(message) {
+            const logArea = document.getElementById('admin-log-entries');
+            if (!logArea) return;
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `${new Date().toLocaleTimeString()} — ${message}`;
+            logArea.prepend(entry);
+        }
+
+        function setAdminAlert(message) {
+            const alert = document.getElementById('admin-access-panel');
+            if (!alert) return;
+            alert.innerHTML = `<strong>Restricted admin area</strong><p>${message}</p><p><a href="../pages/login.html" class="link-reset">Go to login page</a></p>`;
+            alert.style.display = 'block';
+        }
+
+        function updateAdminStats(items) {
+            document.getElementById('admin-product-count').textContent = items.length.toString();
+            const totalInventory = items.reduce((sum, item) => sum + (Number(item.inventory) || 0), 0);
+            const activeCount = items.filter(item => /active|available/i.test(String(item.status))).length;
+            document.getElementById('admin-stock-count').textContent = totalInventory.toString();
+            document.getElementById('admin-status-count').textContent = activeCount.toString();
+            document.getElementById('admin-last-refresh').textContent = formatDate(new Date());
+        }
+
+        function renderAdminProducts(products) {
+            const body = document.getElementById('admin-product-table-body');
+            const emptyState = document.getElementById('admin-empty-state');
+            if (!body || !emptyState) return;
+            body.innerHTML = '';
+            if (!Array.isArray(products) || products.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+            emptyState.style.display = 'none';
+            products.forEach((raw) => {
+                const product = normalizeAdminProduct(raw);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div style="display:flex;align-items:center;gap:0.75rem;">
+                            <img src="${product.image || 'https://via.placeholder.com/56'}" alt="${product.title}" class="admin-product-image">
+                            <div>
+                                <strong style="color:white;display:block;">${product.title}</strong>
+                                <span style="font-size:0.85rem;color:var(--text-secondary);">${product.vendor || ''}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${product.sku}</td>
+                    <td>${product.inventory}</td>
+                    <td></td>
+                    <td>${formatDate(product.addedAt)}</td>
+                    <td>${product.price}</td>
+                    <td><button class="btn btn-outline btn-small" type="button">View</button></td>
+                `;
+                const statusCell = row.querySelector('td:nth-child(4)');
+                if (statusCell) {
+                    statusCell.appendChild(renderStatusChip(product.status));
+                }
+                body.appendChild(row);
+            });
+        }
+
+        async function loadAdminProducts() {
+            const refreshBtn = document.getElementById('refresh-catalog-btn');
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = 'Refreshing…';
+            appendAdminLog('Loading products from Supabase.');
+            try {
+                const result = await supabaseService.getProducts({ limit: 50, sortBy: 'newest' });
+                if (!result.success) {
+                    appendAdminLog(`Failed to load products: ${result.error || 'unknown error'}`);
+                    document.getElementById('admin-empty-state').textContent = `Unable to load products: ${result.error || 'unknown error'}`;
+                    return;
+                }
+                const products = result.products || [];
+                renderAdminProducts(products);
+                updateAdminStats(products);
+                appendAdminLog(`Loaded ${products.length} products.`);
+            } catch (error) {
+                appendAdminLog(`Error loading products: ${error.message || error}`);
+                document.getElementById('admin-empty-state').textContent = `Error loading products: ${error.message || error}`;
+            } finally {
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = 'Refresh product catalog';
+            }
+        }
+
+        async function runAdminHealthCheck() {
+            const resultBox = document.getElementById('admin-test-result');
+            resultBox.textContent = 'Checking Supabase...';
+            try {
+                const response = await fetch('/api/admin/run-tests');
+                const data = await response.json();
+                if (!data.success) {
+                    appendAdminLog('Health check failed.');
+                    resultBox.textContent = 'Health check failed.';
+                    return;
+                }
+                const supabaseResult = data.results?.supabase;
+                const statusText = supabaseResult?.ok ? 'OK' : 'FAIL';
+                appendAdminLog(`Health check completed: ${statusText}`);
+                resultBox.textContent = `Supabase: ${statusText}`;
+            } catch (error) {
+                appendAdminLog(`Health check error: ${error.message || error}`);
+                resultBox.textContent = 'Health check error.';
+            }
+        }
+
+        async function initAdminPage() {
+            try {
+                await supabaseService.init();
+                await supabaseService.restoreSession();
+            } catch (error) {
+                console.error('Admin init error:', error);
+                setAdminAlert('Unable to initialize Supabase. Please verify your environment configuration.');
+                return;
             }
 
-            const createAdminBtn = document.getElementById('create-admin-user-btn');
-            if (createAdminBtn) {
-                createAdminBtn.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    const secret = prompt('Enter ADMIN_CREATION_SECRET to create the admin user:');
-                    if (!secret) return;
-
-                    const email = prompt('Admin email', 'wimpycooperation@gmail.com');
-                    const password = prompt('Admin password', 'trexsrexs456$');
-                    if (!email || !password) {
-                        showNotification('Admin email and password are required.', 'error');
-                        return;
-                    }
-
-                    const confirmCreate = confirm(`Create admin user ${email} on the server?`);
-                    if (!confirmCreate) return;
-
-                    try {
-                        const resp = await fetch('/api/admin/create-admin', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'x-admin-secret': secret
-                            },
-                            body: JSON.stringify({ email, password, full_name: 'Wimp Admin' })
-                        });
-                        const data = await resp.json();
-                        if (!data.success) {
-                            showNotification('Create admin failed: ' + (data.error || JSON.stringify(data)), 'error');
-                            return;
-                        }
-                        showNotification('Admin user created successfully.', 'success');
-                    } catch (error) {
-                        console.error('Create admin error:', error);
-                        showNotification('Failed to create admin user: ' + error.message, 'error');
-                    }
-                });
+            const currentUser = supabaseService.getCurrentUser?.() || null;
+            if (!currentUser) {
+                setAdminAlert('No active admin session found. Please sign in before accessing this page.');
+                return;
             }
-        });
+
+            const adminCheck = await supabaseService.isUserAdmin(currentUser.id);
+            if (!adminCheck.success || !adminCheck.isAdmin) {
+                setAdminAlert('Admin privileges are required to view this page. Contact your workspace administrator if you think this is an error.');
+                return;
+            }
+
+            document.getElementById('admin-dashboard-grid').style.display = 'grid';
+            document.getElementById('admin-access-panel').style.display = 'none';
+            document.getElementById('admin-welcome')?.textContent;
+            appendAdminLog(`Admin session detected for ${currentUser.email}.`);
+
+            document.getElementById('refresh-catalog-btn')?.addEventListener('click', loadAdminProducts);
+            document.getElementById('run-tests-btn')?.addEventListener('click', runAdminHealthCheck);
+
+            await loadAdminProducts();
+        }
+
+        document.addEventListener('DOMContentLoaded', initAdminPage);
     </script>
 </body>
 </html>
