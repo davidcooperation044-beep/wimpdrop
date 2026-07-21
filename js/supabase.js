@@ -397,7 +397,7 @@ class SupabaseService {
       const sb = await this.getClient();
       if (sb.from) {
         // SDK path
-        let query = sb.from('products').select('*').eq('is_visible', true);
+        let query = sb.from('products').select('*').eq('is_active', true);
         if (filters.category) query = query.eq('category', filters.category);
         if (filters.search) query = query.ilike('name', `%${filters.search}%`);
         if (filters.priceMax) query = query.lte('price', filters.priceMax);
@@ -411,7 +411,7 @@ class SupabaseService {
       }
 
       // REST fallback
-      let url = `${this.supabaseUrl}/rest/v1/products?is_visible=eq.true&select=*`;
+      let url = `${this.supabaseUrl}/rest/v1/products?is_active=eq.true&select=*`;
       if (filters.category) url += `&category=eq.${filters.category}`;
       if (filters.limit) url += `&limit=${filters.limit}`;
 
