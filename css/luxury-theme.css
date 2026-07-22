@@ -1628,6 +1628,69 @@ nav a:hover::after {
   gap: var(--spacing-lg);
 }
 
+/* Account page layout — previously hard-coded as an inline
+   grid-template-columns: 250px 1fr with NO way to override on
+   mobile (inline styles beat media queries). Moved to real
+   classes so it can actually collapse below. */
+.account-layout {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 2rem;
+}
+
+.account-sidebar {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 1.5rem;
+  border-radius: 8px;
+  height: fit-content;
+  border: 1px solid var(--border-color);
+}
+
+.account-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tab-button {
+  background: none;
+  color: inherit;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.tab-button.active {
+  background: #e63a2e;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .account-layout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .account-sidebar {
+    padding: 0.5rem;
+  }
+
+  .account-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 0.4rem;
+  }
+
+  .tab-button {
+    flex: 0 0 auto;
+  }
+}
+
 /* Admin table — previously had zero CSS at all, so it rendered
    unstyled and could overflow badly on mobile with no scroll handling */
 .admin-table-wrapper {
@@ -3210,6 +3273,11 @@ footer {
     height: 80vh;
   }
 
+  .hero-home {
+    height: auto;
+    min-height: auto;
+  }
+
   .hero-card,
   .hero-panel,
   .hero-copy,
@@ -3278,6 +3346,7 @@ footer {
   }
 
   .hero-home {
+    height: auto;
     min-height: auto;
   }
 
