@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Account - Wimp-Drop</title>
     <link rel="stylesheet" href="../css/luxury-theme.css">
-    <link rel="icon" type="image/png" href="../images/wimp.png">
-      
+      <link rel="icon" type="image/png" href="../images/wimp.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -565,6 +564,8 @@
                 showNotification(result.error || 'Failed to update default address', 'error');
             }
         }
+
+        async function saveProfile() {
             const firstNameInput = document.getElementById('profile-first-name');
             const lastNameInput = document.getElementById('profile-last-name');
             const phoneInput = document.getElementById('profile-phone');
