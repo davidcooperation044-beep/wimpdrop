@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -250,7 +250,24 @@
             };
         }
 
+        async function waitForAppReady() {
+            // main.js (loaded after this inline script) sets window._appReady
+            // shortly after DOMContentLoaded fires. Poll briefly for it to
+            // exist rather than assuming it's already set, since this
+            // script's own DOMContentLoaded listener fires before main.js's.
+            let attempts = 0;
+            while (!window._appReady && attempts < 100) {
+                await new Promise((resolve) => setTimeout(resolve, 20));
+                attempts++;
+            }
+            if (window._appReady) {
+                await window._appReady;
+            }
+        }
+
         async function loadProductDetails() {
+            await waitForAppReady();
+
             const productId = getProductIdFromURL();
             if (!productId) {
                 window.location.href = 'shop.html';
