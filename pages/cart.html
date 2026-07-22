@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -227,10 +227,26 @@
         window.renderCartItems = renderCartItems;
         window.updateOrderSummary = updateOrderSummary;
 
+        async function waitForAppReady() {
+            // main.js (loaded after this inline script) sets window._appReady
+            // shortly after DOMContentLoaded fires, and only populates
+            // AppState.cart from localStorage partway through that chain.
+            // Poll briefly for it rather than using a fixed timeout, which
+            // was rendering before the cart was actually loaded.
+            let attempts = 0;
+            while (!window._appReady && attempts < 100) {
+                await new Promise((resolve) => setTimeout(resolve, 20));
+                attempts++;
+            }
+            if (window._appReady) {
+                await window._appReady;
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
+            waitForAppReady().then(() => {
                 renderCartItems();
-            }, 50);
+            });
         });
     </script>
     <script src="../js/env.js"></script>
@@ -240,4 +256,3 @@
     <script src="../js/luxury-ui.js"></script>
 </body>
 </html>
-
