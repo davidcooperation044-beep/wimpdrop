@@ -106,7 +106,7 @@ const Storage = {
 };
 
 // Initialize app on page load
-document.addEventListener('DOMContentLoaded', async () => {
+async function initializePage() {
   await initializeConfig();
   await initializeCurrencySystem();
   setupLiveTicker();
@@ -115,12 +115,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Initialize Supabase client if credentials are present
   if (typeof supabaseService !== 'undefined' && CONFIG.supabaseUrl) {
-    await supabaseService.initialize(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+    try {
+      await supabaseService.initialize(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+    } catch (error) {
+      console.warn('Supabase initialization failed:', error.message || error);
+    }
   }
 
   // Initialize Flutterwave after config load
   if (typeof flutterwaveService !== 'undefined' && CONFIG.flutterwaveKey) {
-    await flutterwaveService.initialize(CONFIG.flutterwaveKey);
+    try {
+      await flutterwaveService.initialize(CONFIG.flutterwaveKey);
+    } catch (error) {
+      console.warn('Flutterwave initialization failed:', error.message || error);
+    }
   }
 
   initializeApp();
@@ -190,7 +198,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (e) {
     console.warn('Failed to load mobile UI enhancements', e);
   }
-});
+}
 
 function setupEventListeners() {
   const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
@@ -207,24 +215,36 @@ function setupEventListeners() {
   const mobileSearchSuggestions = document.getElementById('mobile-search-suggestions');
   const mobileSearchClose = document.querySelector('.mobile-search-close');
 
+  const updateNavOpenState = (isOpen) => {
+    if (!navMenuTrigger || !siteNavMenu) return;
+    navMenuTrigger.classList.toggle('open', isOpen);
+    siteNavMenu.classList.toggle('open', isOpen);
+    if (navMenuButton) {
+      navMenuButton.setAttribute('aria-expanded', String(isOpen));
+    }
+  };
+
   if (navMenuTrigger && siteNavMenu) {
-    navMenuTrigger.addEventListener('click', () => {
-      const isOpen = navMenuTrigger.classList.toggle('open');
-      if (navMenuButton) {
-        navMenuButton.setAttribute('aria-expanded', String(isOpen));
-      }
+    navMenuTrigger.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const isOpen = !navMenuTrigger.classList.contains('open');
+      updateNavOpenState(isOpen);
     });
   }
 
   if (mobileMenuBtn && navMenuTrigger && siteNavMenu) {
-    mobileMenuBtn.addEventListener('click', () => {
-      const isOpen = navMenuTrigger.classList.toggle('open');
-      siteNavMenu.classList.toggle('open', isOpen);
-      if (navMenuButton) {
-        navMenuButton.setAttribute('aria-expanded', String(isOpen));
-      }
+    mobileMenuBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const isOpen = !navMenuTrigger.classList.contains('open');
+      updateNavOpenState(isOpen);
     });
   }
+
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest('.nav-menu-trigger') && !event.target.closest('#site-nav-menu')) {
+      updateNavOpenState(false);
+    }
+  });
 
   const handleSearch = (query) => {
     if (!query) return;
@@ -444,6 +464,27 @@ function refreshCurrencyDisplay() {
   }
 }
 
+function setupProductAutoRefresh() {
+  if (window.__productAutoRefreshBound) return;
+  window.__productAutoRefreshBound = true;
+
+  const refreshProducts = () => {
+    if (!document.hidden) {
+      try {
+        loadProducts();
+      } catch (error) {
+        console.warn('Auto refresh failed:', error);
+      }
+    }
+  };
+
+  window.addEventListener('focus', refreshProducts);
+  window.addEventListener('pageshow', refreshProducts);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) refreshProducts();
+  });
+}
+
 // Initialize the application
 function initializeApp() {
   console.log('Initializing Wimp-Drop...');
@@ -451,6 +492,8 @@ function initializeApp() {
   // Load cart and wishlist from localStorage
   AppState.cart = Storage.getCart();
   AppState.wishlist = Storage.getWishlist();
+
+  setupProductAutoRefresh();
   
   // Initialize any visible product lists or homepage rails
   const productList = document.getElementById('product-list');
@@ -708,8 +751,8 @@ function applyShopFilters() {
       break;
     default:
       filtered.sort((a, b) => {
-        const aDate = new Date(a.added_at || a."Added Time" || a.created_at || Date.now());
-        const bDate = new Date(b.added_at || b."Added Time" || b.created_at || Date.now());
+        const aDate = new Date(a.added_at || a.added_time || a.created_at || Date.now());
+        const bDate = new Date(b.added_at || b.added_time || b.created_at || Date.now());
         return bDate - aDate;
       });
       break;
@@ -773,31 +816,36 @@ function removeShopChip(type, label) {
 }
 
 function normalizeProduct(raw) {
-  const rawPrice = raw.price || raw.sale_price || raw.salePrice || raw.current_price || raw['Product Base Price ($)'] || raw['Total Cost ($)'] || 0;
-  const rawOriginalPrice = raw.original_price || raw.originalPrice || raw.list_price || raw.listPrice || raw.compare_at_price || raw.price || raw['Product Base Price ($)'] || raw['Total Cost ($)'] || 0;
-  const inventory = Number(raw.stock || raw.quantity || raw.inventory || raw['Available Inventory'] || raw['Inventory'] || 0);
+  const price = Number(raw.price ?? raw.base_price ?? raw.total_cost ?? raw.shipping_fee ?? 0);
+  const originalPrice = Number(raw.price ?? raw.base_price ?? raw.total_cost ?? raw.original_price ?? raw.originalPrice ?? 0);
+  const inventory = Number(raw.stock ?? raw.inventory_raw ?? raw.inventory ?? raw.cj_inventory_total ?? raw.factory_inventory_total ?? raw.my_inventory_total ?? 0);
+  const title = raw.title || raw.name || raw.product_title || 'Untitled product';
+  const image = raw.image_url || raw.image || raw.thumbnail || raw.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop';
+  const status = raw.status || 'On Sale';
+  const published = raw.is_published ?? true;
 
   return {
-    id: raw.id || raw.product_id || raw.variant_id || raw.sku || raw.SKU || raw['SKU'] || '',
-    product_id: raw.product_id || raw.productId || raw.id || raw.sku || raw.SKU || raw['SKU'] || '',
-    name: raw.name || raw.title || raw.productTitle || raw['Product Title'] || 'Untitled product',
-    category: raw.category || raw.category_name || raw.categoryName || raw['Category'] || 'General',
-    price: Number(rawPrice),
-    originalPrice: Number(rawOriginalPrice),
-    image: raw.thumbnail || raw.image || raw.images?.[0] || raw['Product Image'] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop',
+    id: raw.id || raw.product_id || raw.variant_id || raw.sku || '',
+    product_id: raw.id || raw.product_id || raw.variant_id || raw.sku || '',
+    name: title,
+    category: raw.category || raw.category_name || raw.categoryName || 'General',
+    price,
+    originalPrice,
+    image,
     rating: Number(raw.rating || raw.stars || 4.5),
     reviews: Number(raw.reviews || raw.review_count || raw.reviewCount || 0),
     supplier: raw.supplier || raw.brand || raw.source || 'Wimp-Drop Catalog',
-    description: raw.description || raw.productDescription || raw['Specification'] || raw['Product Status'] || '',
+    description: raw.description || raw.productDescription || raw.status || '',
     stock: inventory,
-    inStock: (raw.status || raw.product_status || raw.stock_status || raw['Product Status'] || 'active') !== 'Out of Stock' && inventory > 0,
-    status: raw.status || raw.product_status || raw.stock_status || raw['Product Status'] || 'active',
-    origin: raw.origin || raw.shipping_origin || raw.supplier_country || raw.country || raw['Shipping From'] || 'Global',
+    inStock: published && status !== 'Out of Stock' && inventory > 0,
+    status,
+    origin: raw.shipping_from || raw.shippingFrom || raw.origin || raw.country || 'Global',
     variants: Array.isArray(raw.variants) ? raw.variants : [],
-    sku: raw.sku || raw.variant_sku || raw.item_sku || raw.SKU || raw['SKU'] || '',
-    added_at: raw.added_at || raw['Added Time'] || raw['Price Update Time'] || raw['Price Updated'] || '',
+    sku: raw.sku || raw.variant_sku || raw.item_sku || '',
+    added_at: raw.added_time || raw.added_at || raw.price_update_time || raw.created_at || '',
     shippingTime: raw.shippingTime || raw.lead_time || 'Standard',
-    url: raw.url || raw.detailUrl || raw.product_url || raw.link || ''
+    url: raw.url || raw.detailUrl || raw.product_url || raw.link || '',
+    is_published: published
   };
 }
 
@@ -1138,28 +1186,9 @@ async function loadProducts(filters = {}) {
       if (category) queryFilters.category = category;
       if (search) queryFilters.search = search;
 
-      const res = await supabaseService.getProducts(queryFilters);
+      const res = await supabaseService.getProducts({ ...queryFilters, includeUnpublished: true });
       if (res.success && res.products) {
-        products = res.products.map(raw => {
-          const p = normalizeProduct(raw);
-          return {
-            id: p.id,
-            name: p.name,
-            category: p.category,
-            price: p.price,
-            originalPrice: p.originalPrice,
-            image: p.image,
-            rating: p.rating,
-            reviews: p.reviews,
-            supplier: p.supplier,
-            description: p.description,
-            status: p.status,
-            inStock: p.inStock,
-            origin: p.origin,
-            sku: p.sku,
-            added_at: p.added_at
-          };
-        });
+        products = res.products.map(raw => normalizeProduct(raw));
         totalCount = res.count || products.length;
       } else {
         products = [];
@@ -1707,18 +1736,7 @@ async function handleSearch(e) {
     try {
       const res = await supabaseService.getProducts({ search: query, limit: 24 });
       if (res.success) {
-        const products = res.products.map(p => ({
-          id: p.id,
-          name: p.name,
-          category: p.category,
-          price: Number(p.price) || 0,
-          originalPrice: Number(p.original_price || p.price) || 0,
-          image: p.thumbnail || p.image || (p.images && p.images[0]) || 'https://via.placeholder.com/400',
-          rating: Number(p.rating) || 4.5,
-          reviews: Number(p.reviews_count) || 0,
-          supplier: p.supplier || 'Wimp-Drop Catalog',
-          description: p.description || ''
-        }));
+        const products = res.products.map(p => normalizeProduct(p));
 
         AppState.products = products;
         renderProducts(products);

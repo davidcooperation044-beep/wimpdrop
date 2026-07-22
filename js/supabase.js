@@ -392,75 +392,98 @@ class SupabaseService {
   // DATABASE OPERATIONS
   // ══════════════════════════════════════
 
+  getPublicProductSelectColumns() {
+    return [
+      'id',
+      'title',
+      'image_url',
+      'sku',
+      'variant',
+      'shipping_from',
+      'inventory_raw',
+      'stock',
+      'cj_inventory_total',
+      'factory_inventory_total',
+      'my_inventory_total',
+      'cn_warehouse_cj_inventory',
+      'us_warehouse_cj_inventory',
+      'us_warehouse_verified_factory_inventory',
+      'cn_warehouse_unverified_factory_inventory',
+      'price',
+      'added_time',
+      'price_updated',
+      'price_change',
+      'price_update_time',
+      'dimensions_mm',
+      'weight_g',
+      'packing_weight_g',
+      'pickup_supported',
+      'status',
+      'is_published',
+      'created_at',
+      'updated_at'
+    ].join(',');
+  }
+
   async getProducts(filters = {}) {
     try {
       const sb = await this.getClient();
+      const selectColumns = this.getPublicProductSelectColumns();
+      const sortField = filters.sortBy === 'newest' ? 'added_time' : filters.sortBy === 'price-low' ? 'price' : filters.sortBy;
+      const includeUnpublished = filters.includeUnpublished === true;
+
       if (sb.from) {
-        // SDK path
-        const buildQuery = () => {
-          let query = sb.from('products').select('*');
-          if (filters.category) query = query.eq('category', filters.category);
-          if (filters.search) query = query.ilike('name', `%${filters.search}%`);
+        const buildQuery = ({ withSort = true } = {}) => {
+          let query = sb.from('products').select(selectColumns);
+          if (!includeUnpublished) {
+            query = query.eq('is_published', true);
+          }
+          if (filters.search) {
+            query = query.or(`title.ilike.%${filters.search}%,sku.ilike.%${filters.search}%,variant.ilike.%${filters.search}%`);
+          }
           if (filters.priceMax) query = query.lte('price', filters.priceMax);
           if (filters.limit) query = query.limit(filters.limit);
           if (filters.offset) query = query.range(filters.offset, filters.offset + (filters.limit || 12) - 1);
-          if (filters.sortBy) {
-            const sortField = filters.sortBy === 'newest' ? '"Added Time"' : filters.sortBy;
+          if (withSort && sortField) {
             query = query.order(sortField, { ascending: filters.sortAsc !== false });
           }
           return query;
+        };
 
         const executeQuery = async (query) => {
           const { data, error, count } = await query;
           if (error) throw error;
-          return { data, count };
+          return { success: true, products: data || [], count };
         };
 
         try {
-          const { data, count } = await executeQuery(buildQuery().eq('is_active', true));
-          return { success: true, products: data || [], count };
+          return await executeQuery(buildQuery({ withSort: true }));
         } catch (error) {
-          if (error.code === '42703' || /column.*is_active/.test(error.message)) {
-            const { data, count } = await executeQuery(buildQuery());
-            return { success: true, products: data || [], count };
-          }
-          if (filters.sortBy && (/column.*created_at/.test(error.message) || /column.*order.*does not exist/.test(error.message))) {
-            const { data, count } = await executeQuery(buildQuery().limit(filters.limit).range(filters.offset, filters.offset + (filters.limit || 12) - 1));
-            return { success: true, products: data || [], count };
+          if (filters.sortBy && /order.*does not exist/i.test(error.message)) {
+            return await executeQuery(buildQuery({ withSort: false }));
           }
           throw error;
         }
       }
 
-      // REST fallback
-      const buildUrl = (includeActive = true, includeOrder = !!filters.sortBy) => {
-        let url = `${this.supabaseUrl}/rest/v1/products?select=*`;
-        if (includeActive) url += '&is_active=eq.true';
-        if (filters.category) url += `&category=eq.${filters.category}`;
+      const buildUrl = (includeOrder = !!filters.sortBy) => {
+        let url = `${this.supabaseUrl}/rest/v1/products?select=${encodeURIComponent(selectColumns)}`;
+        if (!includeUnpublished) {
+          url += '&is_published=eq.true';
+        }
+        if (filters.search) {
+          url += `&or=(title.ilike.%${encodeURIComponent(filters.search)}%,sku.ilike.%${encodeURIComponent(filters.search)}%,variant.ilike.%${encodeURIComponent(filters.search)}%)`;
+        }
+        if (filters.priceMax) url += `&price=lte.${filters.priceMax}`;
         if (filters.limit) url += `&limit=${filters.limit}`;
         if (filters.offset) url += `&offset=${filters.offset}`;
-        if (includeOrder) url += `&order=${encodeURIComponent(`${filters.sortBy}.desc`)}`;
+        if (includeOrder && sortField) url += `&order=${encodeURIComponent(`${sortField}.${filters.sortAsc === false ? 'asc' : 'desc'}`)}`;
         return url;
       };
 
-      let url = buildUrl(true, !!filters.sortBy);
-      let response = await fetch(url, {
+      const response = await fetch(buildUrl(!!filters.sortBy), {
         headers: { ...this.headers, 'Prefer': 'count=exact' }
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        if (response.status === 400 && /is_active/.test(errorText)) {
-          response = await fetch(buildUrl(false, !!filters.sortBy), {
-            headers: { ...this.headers, 'Prefer': 'count=exact' }
-          });
-        } else if (response.status === 400 && /created_at/.test(errorText)) {
-          response = await fetch(buildUrl(false, false), {
-            headers: { ...this.headers, 'Prefer': 'count=exact' }
-          });
-        }
-      }
-
       const data = await response.json();
       return { success: true, products: Array.isArray(data) ? data : [] };
     } catch (error) {
@@ -469,19 +492,26 @@ class SupabaseService {
     }
   }
 
-  async getProduct(productId) {
+  async getProduct(productId, filters = {}) {
     try {
       const sb = await this.getClient();
+      const selectColumns = this.getPublicProductSelectColumns();
+      const includeUnpublished = filters.includeUnpublished === true;
       if (sb.from) {
-        const { data, error } = await sb.from('products').select('*').eq('id', productId).single();
+        let query = sb.from('products').select(selectColumns).eq('id', productId);
+        if (!includeUnpublished) {
+          query = query.eq('is_published', true);
+        }
+        const { data, error } = await query.single();
         if (error) throw error;
         return { success: true, product: data };
       }
 
-      const response = await fetch(
-        `${this.supabaseUrl}/rest/v1/products?id=eq.${productId}&select=*`,
-        { headers: this.headers }
-      );
+      let url = `${this.supabaseUrl}/rest/v1/products?id=eq.${productId}&select=${encodeURIComponent(selectColumns)}`;
+      if (!includeUnpublished) {
+        url += '&is_published=eq.true';
+      }
+      const response = await fetch(url, { headers: this.headers });
       const data = await response.json();
       return { success: true, product: data[0] || null };
     } catch (error) {
@@ -490,20 +520,31 @@ class SupabaseService {
     }
   }
 
-  async getProductVariants(productId) {
+  async getProductVariants(productIdentifier, filters = {}) {
     try {
       const sb = await this.getClient();
+      const selectColumns = this.getPublicProductSelectColumns();
+      const includeUnpublished = filters.includeUnpublished === true;
       if (sb.from) {
-        const { data, error } = await sb.from('products')
-          .select('*')
-          .or(`product_id.eq.${productId},id.eq.${productId}`)
-          .order('created_at', { ascending: false });
+        let query = sb.from('products').select(selectColumns);
+        if (!includeUnpublished) {
+          query = query.eq('is_published', true);
+        }
+        if (productIdentifier) {
+          const identifier = String(productIdentifier).trim();
+          if (identifier.length === 36 && identifier.includes('-')) {
+            query = query.eq('id', identifier);
+          } else {
+            query = query.or(`sku.eq.${identifier},title.eq.${identifier}`);
+          }
+        }
+        const { data, error } = await query.order('added_time', { ascending: false });
         if (error) throw error;
         return { success: true, products: data || [] };
       }
 
       const response = await fetch(
-        `${this.supabaseUrl}/rest/v1/products?product_id=eq.${productId}&select=*`,
+        `${this.supabaseUrl}/rest/v1/products?is_published=eq.true&select=${encodeURIComponent(selectColumns)}`,
         { headers: this.headers }
       );
       const data = await response.json();
@@ -632,6 +673,134 @@ class SupabaseService {
           .select().single();
         if (error) throw error;
         return { success: true, profile: data };
+      }
+      return { success: false };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  normalizeAddress(address) {
+    if (!address) return null;
+    return {
+      id: address.id || '',
+      label: address.label || '',
+      recipient: address.recipient || '',
+      line1: address.line1 || '',
+      line2: address.line2 || '',
+      city: address.city || '',
+      state: address.state || '',
+      postalCode: address.postal_code || address.postalCode || '',
+      country: address.country || '',
+      phone: address.phone || '',
+      isDefault: Boolean(address.is_default ?? address.isDefault),
+      createdAt: address.created_at || address.createdAt || null
+    };
+  }
+
+  async getUserAddresses() {
+    try {
+      const sb = await this.getClient();
+      const session = await this.getSession();
+      if (!session) return { success: false, addresses: [] };
+
+      const userId = session.user?.id;
+      if (sb.from) {
+        const { data, error } = await sb.from('user_addresses')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        return {
+          success: true,
+          addresses: (data || []).map((address) => this.normalizeAddress(address))
+        };
+      }
+      return { success: false, addresses: [] };
+    } catch (error) {
+      return { success: false, addresses: [], error: error.message };
+    }
+  }
+
+  async saveUserAddress(addressData) {
+    try {
+      const sb = await this.getClient();
+      const session = await this.getSession();
+      if (!session) return { success: false };
+
+      const userId = session.user?.id;
+      if (!userId) return { success: false };
+
+      const payload = {
+        id: addressData.id || `address-${Date.now()}`,
+        user_id: userId,
+        label: addressData.label || '',
+        recipient: addressData.recipient || '',
+        line1: addressData.line1 || '',
+        line2: addressData.line2 || '',
+        city: addressData.city || '',
+        state: addressData.state || '',
+        postal_code: addressData.postalCode || '',
+        country: addressData.country || '',
+        phone: addressData.phone || '',
+        is_default: Boolean(addressData.isDefault)
+      };
+
+      if (sb.from) {
+        if (payload.is_default) {
+          await sb.from('user_addresses').update({ is_default: false }).eq('user_id', userId);
+        }
+        const { data, error } = await sb.from('user_addresses')
+          .upsert(payload)
+          .select()
+          .single();
+        if (error) throw error;
+        return { success: true, address: this.normalizeAddress(data) };
+      }
+      return { success: false };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async deleteUserAddress(addressId) {
+    try {
+      const sb = await this.getClient();
+      const session = await this.getSession();
+      if (!session) return { success: false };
+
+      const userId = session.user?.id;
+      if (sb.from) {
+        const { error } = await sb.from('user_addresses')
+          .delete()
+          .eq('id', addressId)
+          .eq('user_id', userId);
+        if (error) throw error;
+        return { success: true };
+      }
+      return { success: false };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async setDefaultUserAddress(addressId) {
+    try {
+      const sb = await this.getClient();
+      const session = await this.getSession();
+      if (!session) return { success: false };
+
+      const userId = session.user?.id;
+      if (sb.from) {
+        await sb.from('user_addresses').update({ is_default: false }).eq('user_id', userId);
+        const { data, error } = await sb.from('user_addresses')
+          .update({ is_default: true })
+          .eq('id', addressId)
+          .eq('user_id', userId)
+          .select()
+          .single();
+        if (error) throw error;
+        return { success: true, address: this.normalizeAddress(data) };
       }
       return { success: false };
     } catch (error) {
