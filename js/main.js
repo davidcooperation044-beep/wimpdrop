@@ -1489,19 +1489,19 @@ async function handleLogin(email, password) {
         Storage.setUser(AppState.user);
         updateUserUI();
         showNotification('Login successful!', 'success');
-        return true;
+        return { success: true, user: result.user, session: result.session };
       } else {
         showNotification(result.error || 'Login failed', 'error');
-        return false;
+        return { success: false, error: result.error || 'Login failed' };
       }
     } else {
       showNotification('Auth service not initialized', 'error');
-      return false;
+      return { success: false, error: 'Auth service not initialized' };
     }
   } catch (error) {
     console.error('Login error:', error);
     showNotification('Login failed: ' + error.message, 'error');
-    return false;
+    return { success: false, error: error.message };
   }
 }
 
@@ -1970,6 +1970,14 @@ async function subscribeNewsletter() {
 document.addEventListener('DOMContentLoaded', () => {
   const nbtn = document.getElementById('newsletter-btn');
   if (nbtn) nbtn.addEventListener('click', (e) => { e.preventDefault(); subscribeNewsletter(); });
+});
+
+// ===== APP BOOTSTRAP =====
+// This actually starts the app: loads config, initializes Supabase,
+// and triggers the first loadProducts() call. Without this, nothing
+// in initializePage() ever runs.
+document.addEventListener('DOMContentLoaded', () => {
+  initializePage().catch(err => console.error('initializePage failed:', err));
 });
 
 // Export for use in other modules
