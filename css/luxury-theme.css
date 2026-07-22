@@ -1657,6 +1657,7 @@ nav a:hover::after {
   display: grid;
   grid-template-columns: 250px 1fr;
   gap: 2rem;
+  min-width: 0;
 }
 
 .account-sidebar {
@@ -1665,12 +1666,18 @@ nav a:hover::after {
   border-radius: 8px;
   height: fit-content;
   border: 1px solid var(--border-color);
+  min-width: 0;
 }
 
 .account-nav {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  min-width: 0;
+}
+
+.account-layout > main {
+  min-width: 0;
 }
 
 .tab-button {
