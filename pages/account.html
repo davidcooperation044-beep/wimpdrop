@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Account - Wimp-Drop</title>
-      <link rel="stylesheet" href="../css/luxury-theme.css">
+      
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -501,11 +501,11 @@
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
             protectAccountPage();
-            setTimeout(() => {
+            waitForAppReady().then(() => {
                 if (AppState.user) {
                     loadProfile();
                 }
-            }, 300);
+            });
         });
     </script>
     <script src="../js/env.js"></script>
