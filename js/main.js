@@ -866,21 +866,16 @@ function groupProductsByProductId(products) {
 }
 
 function renderProductGroupCard(group) {
-  const repr = group[0];
-  const groupKey = repr.product_id || repr.id || repr.sku || repr.name;
-  const selectedVariantId = AppState.shopFilters.selectedVariants[groupKey];
-  const selected = group.find(p => p.id === selectedVariantId) || repr;
+  // Shop cards show ONE product per card, no variant switching here —
+  // variant selection happens on the product detail page instead.
+  const selected = group[0];
   const hasDiscount = group.some(p => p.originalPrice && p.originalPrice > p.price);
   const validOriginals = group.map(p => p.originalPrice || p.price || 0).filter(Boolean);
   const lowPrice = Math.min(...group.map(p => p.price || 0));
   const highPrice = Math.max(...group.map(p => p.price || 0));
   const stockStatus = group.some(p => p.inStock) ? 'Available' : 'Out of stock';
   const discountPercent = hasDiscount && validOriginals.length ? Math.round((1 - (lowPrice / Math.max(...validOriginals))) * 100) : 0;
-  const variantButtons = group.slice(0, 5).map((variant) => {
-    const label = variant.sku || variant.name || 'Variant';
-    const active = selected.id === variant.id;
-    return `<button class="variant-pill${active ? ' active' : ''}" type="button" onclick="selectShopVariant('${repr.product_id || repr.id}', '${variant.id}')">${label}</button>`;
-  }).join('');
+  const variantCount = group.length;
 
   return `
     <article class="product-group-card">
@@ -902,7 +897,7 @@ function renderProductGroupCard(group) {
           ${lowPrice !== highPrice ? `<span class="price-range">${formatCurrency(lowPrice)} - ${formatCurrency(highPrice)}</span>` : ''}
           ${hasDiscount ? `<span class="price-original">${formatCurrency(Math.max(...validOriginals))}</span>` : ''}
         </div>
-        <div class="variant-list">${variantButtons}</div>
+        ${variantCount > 1 ? `<div class="product-variant-hint">${variantCount} options available</div>` : ''}
         <div class="product-actions">
           <button class="btn btn-primary btn-small" onclick="addToCart('${selected.id}')" ${selected.inStock ? '' : 'disabled'}>Add to cart</button>
           <button class="btn btn-outline btn-small" onclick="quickView('${selected.id}')">Quick view</button>
@@ -910,11 +905,6 @@ function renderProductGroupCard(group) {
       </div>
     </article>
   `;
-}
-
-function selectShopVariant(groupKey, variantId) {
-  AppState.shopFilters.selectedVariants[groupKey] = variantId;
-  applyShopFilters();
 }
 
 function renderProducts(products) {
