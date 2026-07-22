@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Account - Wimp-Drop</title>
     <link rel="stylesheet" href="../css/luxury-theme.css">
-      <link rel="icon" type="image/png" href="../images/wimp.png">
+      
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -101,7 +101,7 @@
                         <div style="background: rgba(255,255,255,0.06); padding: 2rem; border-radius: 8px; border: 1px solid var(--border-color);">
                             <h2>Profile Information</h2>
                             
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 2rem 0;">
+                            <div class="form-grid-2" style="margin: 2rem 0;">
                                 <div class="form-group">
                                     <label>First Name</label>
                                     <input id="profile-first-name" type="text" value="" placeholder="First Name">
@@ -171,7 +171,7 @@
                     <!-- Addresses Tab -->
                     <div id="addresses-tab" class="tab-content" style="display: none;">
                         <div style="background: rgba(255,255,255,0.06); padding: 2rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 0.75rem;">
                                 <h2>Saved Addresses</h2>
                                 <button class="btn btn-primary" onclick="openAddressForm()">+ Add New Address</button>
                             </div>
@@ -186,7 +186,7 @@
                             <div id="address-form-panel" style="display: none; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
                                 <h3 id="address-form-title">Add Address</h3>
                                 <input type="hidden" id="address-form-id" value="">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0;">
+                                <div class="form-grid-2" style="margin: 1.5rem 0;">
                                     <div class="form-group">
                                         <label>Label (e.g. Home, Work)</label>
                                         <input id="address-label" type="text" placeholder="Home">
@@ -204,7 +204,7 @@
                                     <label>Address line 2 (optional)</label>
                                     <input id="address-line2" type="text" placeholder="Apartment, suite, etc.">
                                 </div>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin: 1rem 0;">
+                                <div class="form-grid-3" style="margin: 1rem 0;">
                                     <div class="form-group">
                                         <label>City</label>
                                         <input id="address-city" type="text">
@@ -218,7 +218,7 @@
                                         <input id="address-postal" type="text">
                                     </div>
                                 </div>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                                <div class="form-grid-2" style="margin-bottom: 1rem;">
                                     <div class="form-group">
                                         <label>Country</label>
                                         <input id="address-country" type="text">
