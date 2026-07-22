@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Account - Wimp-Drop</title>
-      
+      <link rel="stylesheet" href="../css/luxury-theme.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -251,27 +251,40 @@
     
     <script>
         // Protect account page - redirect to login if not logged in
+        async function waitForAppReady() {
+            // main.js (loaded after this inline script) sets window._appReady
+            // shortly after DOMContentLoaded fires. Poll briefly for it to
+            // exist rather than assuming it's already set.
+            let attempts = 0;
+            while (!window._appReady && attempts < 100) {
+                await new Promise((resolve) => setTimeout(resolve, 20));
+                attempts++;
+            }
+            if (window._appReady) {
+                await window._appReady;
+            }
+        }
+
         async function protectAccountPage() {
-            // Wait for user loading
-            setTimeout(async () => {
-                if (!AppState.user) {
-                    // Try to restore from Supabase
-                    if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
-                        await supabaseService.restoreSession();
-                        if (supabaseService.currentUser) {
-                            AppState.user = supabaseService.currentUser;
-                            updateUserUI();
-                            return;
-                        }
+            await waitForAppReady();
+
+            if (!AppState.user) {
+                // Try to restore from Supabase
+                if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
+                    await supabaseService.restoreSession();
+                    if (supabaseService.currentUser) {
+                        AppState.user = supabaseService.currentUser;
+                        updateUserUI();
+                        return;
                     }
-                    
-                    // Not logged in, redirect to login
-                    showNotification('Please log in to access your account', 'error');
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 1000);
                 }
-            }, 100);
+
+                // Not logged in, redirect to login
+                showNotification('Please log in to access your account', 'error');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1000);
+            }
         }
         
         function switchTab(tabName, event) {
