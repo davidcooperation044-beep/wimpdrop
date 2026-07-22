@@ -88,6 +88,16 @@ body {
   overflow-x: hidden;
   background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0a0e27 100%);
   background-attachment: fixed;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Sticky footer: footer is pushed to the bottom of the viewport when
+   page content is short, but flows normally after content (and the
+   page scrolls) once content is tall enough to need it. */
+footer {
+  margin-top: auto;
 }
 
 a {
