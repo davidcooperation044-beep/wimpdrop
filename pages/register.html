@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - Wimp-Drop</title>
-    <link rel="icon" type="image/png" href="../images/wimp.png">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -252,6 +252,32 @@
             if (input) input.addEventListener('input', updatePasswordState);
         });
 
+        async function handleOAuthLogin(provider) {
+            setRegisterFeedback('');
+            try {
+                if (window._supabaseReady) {
+                    await window._supabaseReady;
+                }
+
+                if (!window._supabase?.auth?.signInWithOAuth) {
+                    throw new Error('Auth service is not available.');
+                }
+
+                const { error } = await window._supabase.auth.signInWithOAuth({
+                    provider,
+                    options: {
+                        redirectTo: `${window.location.origin}/pages/account.html`
+                    }
+                });
+
+                if (error) throw error;
+                // Browser is redirected to the provider now; nothing else to do here.
+            } catch (error) {
+                const msg = (error?.message || error || 'Google sign-in failed').toString();
+                setRegisterFeedback(`We could not start Google sign-in: ${msg}`, 'error');
+            }
+        }
+
         async function handleRegisterForm(event) {
             event.preventDefault();
             const email = document.querySelector('input[name="email"]').value.trim();
@@ -331,4 +357,3 @@
     <script src="../js/luxury-ui.js"></script>
 </body>
 </html>
-
