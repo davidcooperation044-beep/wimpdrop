@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Account - Wimp-Drop</title>
-    <link rel="icon" type="image/png" href="../images/wimp.png">
-    <link rel="icon" type="image/png" href="../images/wimp.png">
-     <link rel="stylesheet" href="../css/luxury-theme.css">
+    <link rel="stylesheet" href="../css/luxury-theme.css">
+      <link rel="icon" type="image/png" href="../images/wimp.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -137,7 +136,8 @@
                         <div style="background: rgba(255,255,255,0.06); padding: 2rem; border-radius: 8px; border: 1px solid var(--border-color);">
                             <h2>Order History</h2>
                             
-                            <table style="width: 100%; margin-top: 1.5rem; border-collapse: collapse;">
+                            <div style="overflow-x: auto;">
+                            <table style="width: 100%; margin-top: 1.5rem; border-collapse: collapse; min-width: 500px;">
                                 <thead style="border-bottom: 2px solid #e0e0e0;">
                                     <tr>
                                         <th style="text-align: left; padding: 1rem;">Order #</th>
@@ -164,6 +164,7 @@
                                     </tr>
                                 </tbody>
                             </table>
+                            </div>
                         </div>
                     </div>
                     
@@ -172,18 +173,68 @@
                         <div style="background: rgba(255,255,255,0.06); padding: 2rem; border-radius: 8px; border: 1px solid var(--border-color);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                                 <h2>Saved Addresses</h2>
-                                <button class="btn btn-primary">+ Add New Address</button>
+                                <button class="btn btn-primary" onclick="openAddressForm()">+ Add New Address</button>
                             </div>
-                            
-                            <div class="grid grid-2" style="gap: 1.5rem;">
-                                <div style="border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 8px; position: relative; background: rgba(255,255,255,0.04);">
-                                    <span style="position: absolute; top: 1rem; right: 1rem; background: #e63a2e; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem;">Default</span>
-                                    <h4>Home Address</h4>
-                                    <p>123 Main Street<br>New York, NY 10001<br>United States<br>+1 (555) 000-0000</p>
-                                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                                        <a href="#" style="color: #e63a2e; font-size: 0.875rem;">Edit</a>
-                                        <a href="#" style="color: #9fb0d6; font-size: 0.875rem;">Delete</a>
+
+                            <div id="addresses-empty" style="display: none; color: var(--text-secondary);">
+                                No saved addresses yet. Add one to speed up checkout.
+                            </div>
+
+                            <div class="grid grid-2" id="addresses-list" style="gap: 1.5rem;"></div>
+
+                            <!-- Add/Edit Address Form (hidden until opened) -->
+                            <div id="address-form-panel" style="display: none; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+                                <h3 id="address-form-title">Add Address</h3>
+                                <input type="hidden" id="address-form-id" value="">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0;">
+                                    <div class="form-group">
+                                        <label>Label (e.g. Home, Work)</label>
+                                        <input id="address-label" type="text" placeholder="Home">
                                     </div>
+                                    <div class="form-group">
+                                        <label>Recipient name</label>
+                                        <input id="address-recipient" type="text" placeholder="Full name">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Address line 1</label>
+                                    <input id="address-line1" type="text" placeholder="Street address">
+                                </div>
+                                <div class="form-group">
+                                    <label>Address line 2 (optional)</label>
+                                    <input id="address-line2" type="text" placeholder="Apartment, suite, etc.">
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin: 1rem 0;">
+                                    <div class="form-group">
+                                        <label>City</label>
+                                        <input id="address-city" type="text">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>State/Region</label>
+                                        <input id="address-state" type="text">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Postal code</label>
+                                        <input id="address-postal" type="text">
+                                    </div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                                    <div class="form-group">
+                                        <label>Country</label>
+                                        <input id="address-country" type="text">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Phone</label>
+                                        <input id="address-phone" type="tel">
+                                    </div>
+                                </div>
+                                <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
+                                    <input id="address-default" type="checkbox">
+                                    <span>Set as default address</span>
+                                </label>
+                                <div style="display: flex; gap: 0.75rem;">
+                                    <button class="btn btn-primary" onclick="submitAddressForm()">Save Address</button>
+                                    <button class="btn btn-outline" onclick="closeAddressForm()">Cancel</button>
                                 </div>
                             </div>
                         </div>
@@ -206,7 +257,8 @@
                             
                             <div style="margin: 2rem 0;">
                                 <h4>Password</h4>
-                                <button class="btn btn-secondary">Change Password</button>
+                                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.75rem;">We'll email you a secure link to set a new password.</p>
+                                <a href="forgot-password.html" class="btn btn-secondary">Change Password</a>
                             </div>
                             
                             <div style="margin: 2rem 0;">
@@ -315,6 +367,8 @@
                 loadWishlistTab();
             } else if (tabName === 'orders') {
                 loadOrdersTab();
+            } else if (tabName === 'addresses') {
+                loadAddressesTab();
             }
         }
         
@@ -345,7 +399,173 @@
             if (phoneInput) phoneInput.value = AppState.user?.user_metadata?.phone || '';
         }
 
-        async function saveProfile() {
+        // ===== ADDRESSES =====
+
+        function escapeHtml(str) {
+            return (str || '').toString()
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        async function loadAddressesTab() {
+            const listEl = document.getElementById('addresses-list');
+            const emptyEl = document.getElementById('addresses-empty');
+            if (!listEl) return;
+
+            if (!AppState.user) {
+                listEl.innerHTML = '';
+                if (emptyEl) { emptyEl.style.display = 'block'; emptyEl.textContent = 'Please log in to manage addresses.'; }
+                return;
+            }
+
+            if (typeof supabaseService === 'undefined' || !supabaseService.isInitialized) {
+                listEl.innerHTML = '';
+                if (emptyEl) { emptyEl.style.display = 'block'; emptyEl.textContent = 'Unable to load addresses right now.'; }
+                return;
+            }
+
+            const res = await supabaseService.getUserAddresses();
+            if (!res.success) {
+                listEl.innerHTML = '';
+                if (emptyEl) { emptyEl.style.display = 'block'; emptyEl.textContent = res.error || 'Unable to load addresses right now.'; }
+                return;
+            }
+
+            renderAddresses(res.addresses || []);
+        }
+
+        function renderAddresses(addresses) {
+            const listEl = document.getElementById('addresses-list');
+            const emptyEl = document.getElementById('addresses-empty');
+            if (!listEl) return;
+
+            if (!addresses.length) {
+                listEl.innerHTML = '';
+                if (emptyEl) emptyEl.style.display = 'block';
+                return;
+            }
+            if (emptyEl) emptyEl.style.display = 'none';
+
+            listEl.innerHTML = addresses.map(addr => `
+                <div style="border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 8px; position: relative; background: rgba(255,255,255,0.04);">
+                    ${addr.isDefault ? '<span style="position: absolute; top: 1rem; right: 1rem; background: #e63a2e; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem;">Default</span>' : ''}
+                    <h4>${escapeHtml(addr.label || 'Address')}</h4>
+                    <p>${escapeHtml(addr.recipient)}<br>
+                       ${escapeHtml(addr.line1)}${addr.line2 ? '<br>' + escapeHtml(addr.line2) : ''}<br>
+                       ${escapeHtml(addr.city)}, ${escapeHtml(addr.state)} ${escapeHtml(addr.postalCode)}<br>
+                       ${escapeHtml(addr.country)}<br>
+                       ${escapeHtml(addr.phone)}</p>
+                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <a href="#" style="color: #e63a2e; font-size: 0.875rem;" onclick="event.preventDefault(); openAddressForm('${addr.id}')">Edit</a>
+                        <a href="#" style="color: #9fb0d6; font-size: 0.875rem;" onclick="event.preventDefault(); deleteAddress('${addr.id}')">Delete</a>
+                        ${!addr.isDefault ? `<a href="#" style="color: #9fb0d6; font-size: 0.875rem;" onclick="event.preventDefault(); makeAddressDefault('${addr.id}')">Set as default</a>` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            // cache for edit lookups
+            AppState._addressCache = addresses;
+        }
+
+        function openAddressForm(addressId) {
+            const panel = document.getElementById('address-form-panel');
+            const title = document.getElementById('address-form-title');
+            const idField = document.getElementById('address-form-id');
+            if (!panel) return;
+
+            const existing = addressId ? (AppState._addressCache || []).find(a => a.id === addressId) : null;
+
+            document.getElementById('address-label').value = existing?.label || '';
+            document.getElementById('address-recipient').value = existing?.recipient || '';
+            document.getElementById('address-line1').value = existing?.line1 || '';
+            document.getElementById('address-line2').value = existing?.line2 || '';
+            document.getElementById('address-city').value = existing?.city || '';
+            document.getElementById('address-state').value = existing?.state || '';
+            document.getElementById('address-postal').value = existing?.postalCode || '';
+            document.getElementById('address-country').value = existing?.country || '';
+            document.getElementById('address-phone').value = existing?.phone || '';
+            document.getElementById('address-default').checked = Boolean(existing?.isDefault);
+            idField.value = existing?.id || '';
+            title.textContent = existing ? 'Edit Address' : 'Add Address';
+
+            panel.style.display = 'block';
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function closeAddressForm() {
+            const panel = document.getElementById('address-form-panel');
+            if (panel) panel.style.display = 'none';
+        }
+
+        async function submitAddressForm() {
+            if (!AppState.user) {
+                showNotification('Please log in first', 'error');
+                return;
+            }
+            const line1 = document.getElementById('address-line1').value.trim();
+            const city = document.getElementById('address-city').value.trim();
+            if (!line1 || !city) {
+                showNotification('Address line 1 and city are required', 'error');
+                return;
+            }
+
+            const payload = {
+                id: document.getElementById('address-form-id').value || undefined,
+                label: document.getElementById('address-label').value.trim(),
+                recipient: document.getElementById('address-recipient').value.trim(),
+                line1,
+                line2: document.getElementById('address-line2').value.trim(),
+                city,
+                state: document.getElementById('address-state').value.trim(),
+                postalCode: document.getElementById('address-postal').value.trim(),
+                country: document.getElementById('address-country').value.trim(),
+                phone: document.getElementById('address-phone').value.trim(),
+                isDefault: document.getElementById('address-default').checked
+            };
+
+            if (typeof supabaseService === 'undefined' || !supabaseService.isInitialized) {
+                showNotification('Unable to save address while offline', 'error');
+                return;
+            }
+
+            const result = await supabaseService.saveUserAddress(payload);
+            if (result.success) {
+                showNotification('Address saved', 'success');
+                closeAddressForm();
+                loadAddressesTab();
+            } else {
+                showNotification(result.error || 'Failed to save address', 'error');
+            }
+        }
+
+        async function deleteAddress(addressId) {
+            if (!confirm('Delete this address?')) return;
+            if (typeof supabaseService === 'undefined' || !supabaseService.isInitialized) {
+                showNotification('Unable to delete address while offline', 'error');
+                return;
+            }
+            const result = await supabaseService.deleteUserAddress(addressId);
+            if (result.success) {
+                showNotification('Address deleted', 'success');
+                loadAddressesTab();
+            } else {
+                showNotification(result.error || 'Failed to delete address', 'error');
+            }
+        }
+
+        async function makeAddressDefault(addressId) {
+            if (typeof supabaseService === 'undefined' || !supabaseService.isInitialized) {
+                showNotification('Unable to update address while offline', 'error');
+                return;
+            }
+            const result = await supabaseService.setDefaultUserAddress(addressId);
+            if (result.success) {
+                showNotification('Default address updated', 'success');
+                loadAddressesTab();
+            } else {
+                showNotification(result.error || 'Failed to update default address', 'error');
+            }
+        }
             const firstNameInput = document.getElementById('profile-first-name');
             const lastNameInput = document.getElementById('profile-last-name');
             const phoneInput = document.getElementById('profile-phone');
@@ -384,23 +604,24 @@
             
             // Load wishlist from Supabase
             if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
-                const result = await supabaseService.getUserWishlist(AppState.user.id);
+                const result = await supabaseService.getWishlist();
                 
                 if (result.success && result.items && result.items.length > 0) {
                     wishlistContainer.innerHTML = result.items.map(item => {
                         const product = item.products;
+                        if (!product) return '';
                         return `
                             <div class="product-card">
                                 <div class="product-image">
-                                    <img src="${product.images?.[0] || 'https://via.placeholder.com/300'}" alt="${product.name}">
+                                    <img src="${product.image_url || 'https://via.placeholder.com/300'}" alt="${product.title}">
                                 </div>
                                 <div class="product-info">
-                                    <h3 class="product-name">${product.name}</h3>
+                                    <h3 class="product-name">${product.title}</h3>
                                     <div class="product-price">
                                         <span class="price-current">${formatCurrency(product.price)}</span>
                                     </div>
                                     <div class="product-actions" style="display: flex; gap: 0.5rem;">
-                                        <button class="btn btn-primary btn-small flex-1" onclick="addToCart(${product.id})">Add to Cart</button>
+                                        <button class="btn btn-primary btn-small flex-1" onclick="addToCart('${product.id}')">Add to Cart</button>
                                         <button class="btn btn-outline btn-small" onclick="removeWishlistItem('${product.id}')">Remove</button>
                                     </div>
                                 </div>
