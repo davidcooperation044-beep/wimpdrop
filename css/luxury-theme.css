@@ -1628,6 +1628,44 @@ nav a:hover::after {
   gap: var(--spacing-lg);
 }
 
+/* Admin table — previously had zero CSS at all, so it rendered
+   unstyled and could overflow badly on mobile with no scroll handling */
+.admin-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid rgba(212, 175, 55, 0.16);
+  border-radius: 12px;
+}
+
+.admin-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.12);
+}
+
+.admin-table th {
+  background: rgba(26, 31, 58, 0.9);
+  color: var(--gold);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  position: sticky;
+  top: 0;
+}
+
+.admin-table tr:hover td {
+  background: rgba(212, 175, 55, 0.05);
+}
+
 /* ===== Marketplace-style shop page (Alibaba/Temu/Jumia-inspired density) ===== */
 
 .market-filter-bar {
