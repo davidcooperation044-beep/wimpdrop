@@ -851,7 +851,14 @@ function normalizeProduct(raw) {
 
 function groupProductsByProductId(products) {
   return products.reduce((groups, product) => {
-    const key = product.product_id || product.id || product.sku || product.name;
+    // Group by normalized title, since product_id is unique per SKU row
+    // in the flat table (no shared parent id) and would never group
+    // variants together. Title is the real signal that rows belong to
+    // the same product.
+    const key = (product.name || product.title || product.sku || product.id || '')
+      .toString()
+      .trim()
+      .toLowerCase();
     if (!groups[key]) groups[key] = [];
     groups[key].push(product);
     return groups;
@@ -1173,14 +1180,18 @@ async function loadProducts(filters = {}) {
     const urlParams = new URLSearchParams(window.location.search);
     const page = Math.max(1, parseInt(urlParams.get('page')) || 1);
     const perPage = 12;
-    const offset = (page - 1) * perPage;
 
     let products = [];
     let totalCount = 0;
 
-    // Load products exclusively from Supabase
+    // Load products exclusively from Supabase.
+    // NOTE: we fetch a large batch of raw SKU rows (not just one page's worth),
+    // because multiple rows can share the same product title (variants).
+    // Pagination must happen AFTER grouping variants into distinct products,
+    // otherwise a page can fill up with 12 raw rows that collapse into 1-2
+    // actual products.
     if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
-      const queryFilters = { limit: perPage, offset };
+      const queryFilters = { limit: 1000 };
       const category = urlParams.get('category');
       const search = urlParams.get('search');
       if (category) queryFilters.category = category;
@@ -1188,8 +1199,19 @@ async function loadProducts(filters = {}) {
 
       const res = await supabaseService.getProducts({ ...queryFilters, includeUnpublished: true });
       if (res.success && res.products) {
-        products = res.products.map(raw => normalizeProduct(raw));
-        totalCount = res.count || products.length;
+        const allRows = res.products.map(raw => normalizeProduct(raw));
+        // Group variant rows into distinct products by title
+        const grouped = groupProductsByProductId(allRows);
+        const distinctProducts = Object.values(grouped).map(group => {
+          // Use the first variant as the representative card, but attach
+          // all variants so the UI can offer a variant picker.
+          const primary = group[0];
+          return { ...primary, variantRows: group };
+        });
+
+        totalCount = distinctProducts.length;
+        const offset = (page - 1) * perPage;
+        products = distinctProducts.slice(offset, offset + perPage);
       } else {
         products = [];
       }
@@ -1228,8 +1250,11 @@ function renderProducts(products) {
   if (!productList) return;
 
   if (isShopPage()) {
-    const grouped = groupProductsByProductId(products);
-    const cards = Object.values(grouped).map(group => renderProductGroupCard(group));
+    // products here are already one-per-distinct-product (grouped in
+    // loadProducts), each carrying its full variant list in variantRows.
+    // Re-grouping here would collapse each product back down to just
+    // itself and lose the other variants, so use variantRows directly.
+    const cards = products.map(p => renderProductGroupCard(p.variantRows && p.variantRows.length ? p.variantRows : [p]));
     productList.innerHTML = cards.join('');
     return;
   }
@@ -1976,8 +2001,13 @@ document.addEventListener('DOMContentLoaded', () => {
 // This actually starts the app: loads config, initializes Supabase,
 // and triggers the first loadProducts() call. Without this, nothing
 // in initializePage() ever runs.
+// window._appReady is exposed so individual pages (e.g. account.html's
+// login guard) can await the real init chain instead of guessing with
+// an arbitrary setTimeout.
 document.addEventListener('DOMContentLoaded', () => {
-  initializePage().catch(err => console.error('initializePage failed:', err));
+  window._appReady = initializePage().catch(err => {
+    console.error('initializePage failed:', err);
+  });
 });
 
 // Export for use in other modules
