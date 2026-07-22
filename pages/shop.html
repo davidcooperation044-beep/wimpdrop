@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -69,122 +69,58 @@
     </div>
 </header>
     
-    <section class="section shop-section">
+    <section class="section shop-section marketplace-shop">
         <div class="container">
-            <div class="shop-header">
-                <div>
-                    <h1 class="shop-heading">Deal-ready products</h1>
-                    <p class="shop-intro">A dense storefront view of sourced products with origin filters, variant pickers, and true deal badges.</p>
+            <div class="market-filter-bar">
+                <div class="market-filter-row">
+                    <span class="market-filter-label">Ship from:</span>
+                    <div id="origin-filters" class="origin-pill-row"></div>
                 </div>
-                <div class="shop-search-wrap">
-                    <label for="shop-search" class="sr-only">Search products</label>
-                    <input id="shop-search" type="search" placeholder="Search title, variant, origin..." class="shop-search" autocomplete="off">
+                <div class="market-filter-row">
+                    <span class="market-filter-label">Category:</span>
+                    <div class="shop-chip-row" id="product-chips"></div>
+                </div>
+                <div class="market-filter-row market-filter-row-compact">
+                    <div class="market-price-filter">
+                        <span class="market-filter-label">Max price:</span>
+                        <input id="price-range" type="range" min="0" max="100000" step="100" value="100000" class="price-slider price-slider-compact">
+                        <span id="price-range-value" class="price-range-value">$0</span>
+                    </div>
+                    <div class="market-search-inline">
+                        <label for="shop-search" class="sr-only">Search products</label>
+                        <input id="shop-search" type="search" placeholder="Search title, variant, origin…" class="shop-search" autocomplete="off">
+                    </div>
+                    <button id="clear-filters" class="btn btn-outline btn-small">Clear filters</button>
                 </div>
             </div>
 
-            <div class="shop-chip-row" id="product-chips"></div>
-
-            <div class="shop-layout">
-                <aside class="shop-sidebar">
-                    <div class="panel-card panel-dense">
-                        <div class="panel-head">
-                            <div>
-                                <h3>Filters</h3>
-                                <p class="panel-subtitle">Narrow results by origin and price.</p>
-                            </div>
-                            <button id="clear-filters" class="btn btn-outline btn-small">Clear</button>
-                        </div>
-
-                        <div class="filter-section">
-                            <h4 class="filter-heading">Shipping origin</h4>
-                            <div id="origin-filters" class="filter-list"></div>
-                        </div>
-
-                        <div class="filter-section">
-                            <div class="filter-row">
-                                <div>
-                                    <h4 class="filter-heading">Max price</h4>
-                                    <p class="filter-note">Hide higher-priced listings.</p>
-                                </div>
-                                <span id="price-range-value" class="price-range-value">$0</span>
-                            </div>
-                            <input id="price-range" type="range" min="0" max="100000" step="100" value="100000" class="price-slider">
-                            <div class="price-ticks">
-                                <span>$0</span>
-                                <span id="price-range-max">$100k</span>
-                            </div>
-                        </div>
-
-                        <div class="filter-section">
-                            <h4 class="filter-heading">Sort results</h4>
-                            <div class="sort-pill-wrap" id="sort-pills">
-                                <button class="sort-pill active" data-sort="newest">Newest</button>
-                                <button class="sort-pill" data-sort="price-low">Price ↓</button>
-                                <button class="sort-pill" data-sort="price-high">Price ↑</button>
-                            </div>
-                        </div>
-                    </div>
-                </aside>
-
-                <main class="shop-content">
-                    <div class="shop-toolbar">
-                        <div>
-                            <p class="result-note" id="result-count">Showing 0 product groups</p>
-                        </div>
-                        <div class="toolbar-actions">
-                            <button id="open-sheet" class="btn btn-outline btn-small shop-sheet-open">Filters</button>
-                            <div class="toolbar-sort">
-                                <label for="sort-select" class="toolbar-label">Sort</label>
-                                <select id="sort-select" class="form-select compact"></select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="shop-product-grid" id="product-list">
-                        <div class="skeleton skeleton-card"></div>
-                        <div class="skeleton skeleton-card"></div>
-                        <div class="skeleton skeleton-card"></div>
-                        <div class="skeleton skeleton-card"></div>
-                    </div>
-                </main>
+            <div class="market-sort-bar">
+                <span class="market-filter-label">Sort by:</span>
+                <div class="sort-pill-wrap market-sort-pills" id="sort-pills">
+                    <button class="sort-pill active" data-sort="newest">Newest</button>
+                    <button class="sort-pill" data-sort="price-low">Price ↓</button>
+                    <button class="sort-pill" data-sort="price-high">Price ↑</button>
+                    <button class="sort-pill" data-sort="stock">Stock</button>
+                </div>
+                <select id="sort-select" class="form-select compact sr-only"></select>
+                <p class="result-note" id="result-count">Showing 0 product groups</p>
             </div>
 
-            <div class="shop-bottom-sheet hidden" id="sheet-filters">
-                <div class="sheet-bar">
-                    <div>
-                        <strong>Filters</strong>
-                        <p>Swipe down to close</p>
-                    </div>
-                    <button id="close-sheet" class="btn btn-outline btn-small">Close</button>
-                </div>
-                <div class="sheet-content">
-                    <div class="filter-section">
-                        <h4 class="filter-heading">Shipping origin</h4>
-                        <div id="sheet-origin-filters" class="filter-list"></div>
-                    </div>
-                    <div class="filter-section">
-                        <div class="filter-row">
-                            <div>
-                                <h4 class="filter-heading">Max price</h4>
-                            </div>
-                            <span id="sheet-price-value" class="price-range-value">$0</span>
-                        </div>
-                        <input id="sheet-price-range" type="range" min="0" max="100000" step="100" value="100000" class="price-slider">
-                        <div class="price-ticks">
-                            <span>$0</span>
-                            <span id="sheet-price-max">$100k</span>
-                        </div>
-                    </div>
-                    <button id="apply-sheet" class="btn btn-primary btn-large">Apply filters</button>
-                </div>
+            <div class="shop-product-grid market-grid" id="product-list">
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
             </div>
         </div>
     </section>
 
     <!-- Pagination -->
     <section class="section">
-        <div class="pagination-row" id="pagination-container">
-            <button class="btn btn-secondary" id="pagination-prev">← Previous</button>
+        <div class="pagination-row market-pagination" id="pagination-container">
+            <button class="btn btn-secondary" id="pagination-prev">← Prev</button>
             <span id="pagination-pages" class="pagination-pages">
                 <!-- Page buttons rendered here -->
             </span>
@@ -216,4 +152,3 @@
     <script src="../js/luxury-ui.js"></script>
 </body>
 </html>
-
