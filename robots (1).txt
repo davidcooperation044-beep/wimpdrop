@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /pages/account.html
+Disallow: /pages/cart.html
+Disallow: /pages/checkout.html
+Disallow: /pages/watchlist.html
+Disallow: /pages/order-success.html
+Disallow: /pages/login.html
+Disallow: /pages/register.html
+Disallow: /pages/forgot-password.html
+Disallow: /pages/reset-password.html
+Disallow: /pages/admin.html
+
+Sitemap: https://wimpdrop.com.ng/sitemap.xml
