@@ -32,7 +32,6 @@ class FlutterwaveService {
       }
 
       this.isInitialized = true;
-      console.log('✓ Flutterwave initialized successfully');
       return true;
 
     } catch (error) {
@@ -106,8 +105,6 @@ class FlutterwaveService {
 
   // Handle payment callback (called by Flutterwave after payment)
   handlePaymentCallback(response) {
-    console.log('Flutterwave callback response:', response);
-
     if (!response) {
       this.handlePaymentFailed('No response from Flutterwave');
       return;
@@ -126,8 +123,6 @@ class FlutterwaveService {
   // Handle successful payment
   async handlePaymentSuccess(response) {
     try {
-      console.log('✓ Payment successful:', response);
-
       // Update transaction status
       if (this.currentTransaction) {
         this.currentTransaction.status = 'completed';
@@ -176,8 +171,6 @@ class FlutterwaveService {
   // Handle pending payment
   async handlePaymentPending(response) {
     try {
-      console.log('⏳ Payment pending:', response);
-
       // Update transaction status
       if (this.currentTransaction) {
         this.currentTransaction.status = 'pending';
@@ -199,8 +192,6 @@ class FlutterwaveService {
 
   // Handle when user closes payment modal without action
   handlePaymentClosed() {
-    console.log('Payment modal closed');
-    
     if (window.onFlutterwaveClosed) {
       window.onFlutterwaveClosed();
     }

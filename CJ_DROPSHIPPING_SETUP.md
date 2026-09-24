@@ -25,10 +25,10 @@
 - ✅ Properly formats requests with authentication headers
 
 ### Issue: Missing Configuration
-**Problem**: CJ Store ID was empty in env.local.
+**Problem**: CJ Store ID was empty in .env.local.
 
 **Solution**:
-- ✅ Updated `env.local` with `VITE_CJ_STORE_ID=CJ5626152`
+- ✅ Updated `.env.local` with `VITE_CJ_STORE_ID=CJ5626152`
 - ✅ Confirmed API key: `CJ5626152@api@31a37ecf6f0a4ce2acc17c3e6936f906`
 - ✅ Account email: `davidcooperation044@gmail.com`
 
@@ -36,7 +36,7 @@
 
 ## 🔧 Configuration Reference
 
-### Environment Variables (in `env.local`)
+### Environment Variables (in `.env.local`)
 
 ```bash
 # CJ Dropshipping Configuration
@@ -59,7 +59,7 @@ VITE_CJ_EMAIL=davidcooperation044@gmail.com
 ✅ pages/about.html              Added CJ API script
 ✅ pages/contact.html            Already had CJ API script
 ✅ pages/forgot-password.html    Added CJ API script
-✅ env.local                     Updated VITE_CJ_STORE_ID
+✅ .env.local                    Updated VITE_CJ_STORE_ID
 ✅ js/api/cj-dropshipping.js     Complete rewrite
 ```
 
@@ -72,7 +72,7 @@ VITE_CJ_EMAIL=davidcooperation044@gmail.com
 ```
 1. Page loads
    ↓
-2. env.js loads and parses env.local
+2. env.js loads and parses .env.local
    ↓
 3. cj-dropshipping.js loads and creates global `cjAPI` instance
    ↓
@@ -247,14 +247,14 @@ await cjAPI.testConnection();
 ### Issue: "CJ API not initialized"
 
 **Solution**: 
-- Check that `env.local` has `VITE_CJ_API_KEY` set
+- Check that `.env.local` has `VITE_CJ_API_KEY` set
 - Verify server has reloaded (refresh page)
 - Check browser console for env loading errors
 
 ### Issue: "401 Unauthorized" or "403 Forbidden"
 
 **Solution**:
-- Verify API key is correct in `env.local`
+- Verify API key is correct in `.env.local`
 - Check that Store ID matches the API key prefix (CJ5626152)
 - Try: `await cjAPI.testConnection()` in console
 
@@ -285,7 +285,7 @@ await cjAPI.testConnection();
 ## 🔐 Security Notes
 
 ### Client-Side API Key Risk
-**Current**: API key is in `env.local`, loaded into browser
+**Current**: API key is in `.env.local`, loaded into browser
 
 **For Production**, do one of:
 
@@ -381,7 +381,7 @@ Create `/api/cj/search` endpoint that proxies requests with the API key.
 ## ✅ Verification Checklist
 
 - [x] All HTML pages have CJ API script
-- [x] env.local has correct API key and Store ID
+- [x] .env.local has correct API key and Store ID
 - [x] CJ API v2 rewrite is in place
 - [x] Global `cjAPI` instance is created
 - [x] API auto-initializes on page load

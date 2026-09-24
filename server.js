@@ -29,7 +29,7 @@ function sanitizeUrl(url) {
 }
 
 function loadEnvFile() {
-  const envPath = path.join(rootDir, 'env.local');
+  const envPath = path.join(rootDir, '.env.local');
   if (!fs.existsSync(envPath)) {
     return {};
   }
@@ -108,7 +108,7 @@ function getAdminCreationSecret() {
   return process.env.ADMIN_CREATION_SECRET || envFile.ADMIN_CREATION_SECRET || '';
 }
 
-// Admin: import products to Supabase via REST (uses anon key from env.local)
+// Admin: import products to Supabase via REST (uses anon key from .env.local)
 async function handleAdminImportProducts(request, response) {
   if (request.method !== 'POST') return sendJson(response, 405, { success: false, error: 'Method not allowed' });
   try {

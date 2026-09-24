@@ -196,8 +196,8 @@ VITE_FLUTTERWAVE_PUBLIC_KEY=...
 | `index.html` | Homepage |
 | `css/styles.css` | Global styles (design system) |
 | `js/main.js` | Core app logic |
-| `js/api/supabase.js` | Product sourcing, database operations |
-| `js/api/flutterwave.js` | Payment processing |
+| `js/supabase.js` | Product sourcing, database operations |
+| `js/flutterwave.js` | Payment processing |
 | `BACKEND_SETUP.md` | Database setup guide |
 | `README.md` | Full documentation |
 

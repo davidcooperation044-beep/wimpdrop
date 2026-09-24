@@ -41,9 +41,9 @@ The eCommerce platform structure is fully built and ready for environment config
 - [x] Cart badge updates
 
 ### API Integration Modules (Ready to Deploy)
-- [x] **js/api/supabase.js** - Database, auth, orders, products
-- [x] **js/api/flutterwave.js** - Payment processing
-- [x] **js/api/supabase.js** - Product sourcing API
+- [x] **js/supabase.js** - Database, auth, orders, products
+- [x] **js/flutterwave.js** - Payment processing
+- [x] **js/supabase.js** - Product sourcing API
 - [x] Edge Function proxy architecture (for security)
 
 ### Environment & Security

@@ -246,7 +246,7 @@ if (env.get('VITE_DEBUG_MODE')) {
 ### Validate Before Using
 
 ```javascript
-// In js/api/supabase.js
+// In js/supabase.js
 if (!CONFIG.supabaseUrl || !CONFIG.supabaseKey) {
   console.error('❌ Supabase not configured');
   console.error('Missing:', [

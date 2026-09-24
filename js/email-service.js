@@ -33,10 +33,8 @@ class EmailService {
       const result = await this._sendEmail(emailPayload);
       
       if (result.success) {
-        console.log('Order confirmation emails sent successfully');
         return { success: true, message: 'Confirmation emails sent' };
       } else {
-        console.log('Email service not fully configured, but order was created');
         return { success: true, message: 'Order created (email pending)' };
       }
     } catch (error) {

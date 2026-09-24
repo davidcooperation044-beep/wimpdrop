@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shopping Cart - Wimp-Drop</title>
-    <link rel="icon" type="image/png" href="../images/wimp.png">
+    <link rel="icon" type="image/png" href="/images/wimp.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/luxury-theme.css">
+    <link rel="stylesheet" href="/css/luxury-theme.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -86,7 +86,7 @@
                                 <h2 style="margin: 0; font-size: 1.2rem;">Your selections</h2>
                                 <p id="cart-count-copy" style="margin: 0.25rem 0 0; color: var(--text-secondary);">0 items ready to ship</p>
                             </div>
-                            <a href="shop.html" class="btn btn-outline btn-small">Continue shopping</a>
+                            <a href="/pages/shop.html" class="btn btn-outline btn-small">Continue shopping</a>
                         </div>
                         <div id="cart-items-container"></div>
                     </div>
@@ -100,7 +100,7 @@
                     <div class="summary-row"><span>Estimated tax</span><strong id="tax">0</strong></div>
                     <div class="summary-row total"><span>Total</span><strong id="total">0</strong></div>
                     <button class="btn btn-primary btn-block btn-large" onclick="window.location.href='checkout.html'">Proceed to checkout</button>
-                    <a href="watchlist.html" class="btn btn-secondary btn-block">View saved items</a>
+                    <a href="/pages/watchlist.html" class="btn btn-secondary btn-block">View saved items</a>
                     <div class="summary-note">Secure checkout • live stock checks • trusted dispatch partners.</div>
                 </aside>
             </div>
@@ -113,7 +113,7 @@
                 <strong id="mobile-total">0</strong>
                 <div style="color: var(--text-secondary); font-size: 0.9rem;">Ready for checkout</div>
             </div>
-            <a href="checkout.html" class="btn btn-primary btn-small">Checkout</a>
+            <a href="/pages/checkout.html" class="btn btn-primary btn-small">Checkout</a>
         </div>
     </div>
     
@@ -122,10 +122,10 @@
             <div class="footer-section">
                 <h4>Legal</h4>
                 <ul>
-                    <li><a href="privacy.html">Privacy Policy</a></li>
-                    <li><a href="terms.html">Terms of Service</a></li>
-                    <li><a href="disclaimer.html">Disclaimer</a></li>
-                    <li><a href="security.html">Security</a></li>
+                    <li><a href="/pages/privacy.html">Privacy Policy</a></li>
+                    <li><a href="/pages/terms.html">Terms of Service</a></li>
+                    <li><a href="/pages/disclaimer.html">Disclaimer</a></li>
+                    <li><a href="/pages/security.html">Security</a></li>
                 </ul>
             </div>
         </div>
@@ -155,7 +155,7 @@
                     <div class="empty-state" style="text-align: center;">
                         <h3 style="margin-bottom: 0.5rem;">Your cart is empty</h3>
                         <p style="margin-bottom: 1rem;">Save a few premium picks and return here whenever you are ready to check out.</p>
-                        <a href="shop.html" class="btn btn-primary">Browse the catalog</a>
+                        <a href="/pages/shop.html" class="btn btn-primary">Browse the catalog</a>
                     </div>
                 `;
                 if (countCopy) countCopy.textContent = '0 items ready to ship';
@@ -250,10 +250,10 @@
             });
         });
     </script>
-    <script src="../js/env.js"></script>
-    <script src="../js/supabase.js"></script>
-    <script src="../js/flutterwave.js"></script>
-    <script src="../js/main.js"></script>
-    <script src="../js/luxury-ui.js"></script>
+    <script src="/js/env.js"></script>
+    <script src="/js/supabase.js"></script>
+    <script src="/js/flutterwave.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/luxury-ui.js"></script>
 </body>
 </html>

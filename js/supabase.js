@@ -70,7 +70,6 @@ class SupabaseService {
         this.supabaseUrl = supabaseUrl;
         this.supabaseKey = supabaseKey;
         this.channels = {};
-        console.log('✓ Supabase SDK initialized (realtime-only mode)');
         resolve(this.client);
         return;
       } catch (err) {

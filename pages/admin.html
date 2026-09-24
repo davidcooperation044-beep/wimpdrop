@@ -4,13 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Wimp-Drop</title>
-    <link rel="icon" type="image/png" href="../images/wimp.png">
+    <link rel="icon" type="image/png" href="/images/wimp.png">
     <link rel="manifest" href="/manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/luxury-theme.css">
-    <link rel="stylesheet" href="../css/mobile-app.css" id="mobile-app-style" media="(max-width:899px)">
+    <link rel="stylesheet" href="/css/luxury-theme.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .admin-shell {
@@ -239,7 +238,7 @@
             <div id="admin-access-panel" class="admin-access-panel" style="display:none;">
                 <strong>Restricted admin area</strong>
                 <p>Admin access requires a valid signed-in session. If you are an administrator, sign in through the storefront login page and return here after your session is active.</p>
-                <p><a href="../pages/login.html" class="link-reset">Go to login page</a></p>
+                <p><a href="/pages/login.html" class="link-reset">Go to login page</a></p>
             </div>
             <div id="admin-dashboard-grid" class="admin-grid" style="display:none;">
                 <aside class="admin-sidebar">
@@ -300,10 +299,10 @@
             <div class="footer-section">
                 <h4>Legal</h4>
                 <ul>
-                    <li><a href="privacy.html">Privacy Policy</a></li>
-                    <li><a href="terms.html">Terms of Service</a></li>
-                    <li><a href="disclaimer.html">Disclaimer</a></li>
-                    <li><a href="security.html">Security</a></li>
+                    <li><a href="/pages/privacy.html">Privacy Policy</a></li>
+                    <li><a href="/pages/terms.html">Terms of Service</a></li>
+                    <li><a href="/pages/disclaimer.html">Disclaimer</a></li>
+                    <li><a href="/pages/security.html">Security</a></li>
                 </ul>
             </div>
         </div>
@@ -312,10 +311,10 @@
         </div>
     </footer>
 
-    <script src="../js/env.js"></script>
-    <script src="../js/supabase.js"></script>
-    <script src="../js/flutterwave.js"></script>
-    <script src="../js/main.js"></script>
+    <script src="/js/env.js"></script>
+    <script src="/js/supabase.js"></script>
+    <script src="/js/flutterwave.js"></script>
+    <script src="/js/main.js"></script>
     <script>
         function formatDate(value) {
             if (!value) return 'Unknown';
@@ -367,7 +366,7 @@
         function setAdminAlert(message) {
             const alert = document.getElementById('admin-access-panel');
             if (!alert) return;
-            alert.innerHTML = `<strong>Restricted admin area</strong><p>${message}</p><p><a href="../pages/login.html" class="link-reset">Go to login page</a></p>`;
+            alert.innerHTML = `<strong>Restricted admin area</strong><p>${message}</p><p><a href="/pages/login.html" class="link-reset">Go to login page</a></p>`;
             alert.style.display = 'block';
         }
 

@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details - Wimp-Drop</title>
-    <link rel="icon" type="image/png" href="../images/wimp.png">
+    <link rel="icon" type="image/png" href="/images/wimp.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/luxury-theme.css">
+    <link rel="stylesheet" href="/css/luxury-theme.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -72,9 +72,9 @@
 
     <div class="breadcrumb-bar">
         <div class="container">
-            <a href="../index.html" class="breadcrumb-link">Home</a>
+            <a href="/index.html" class="breadcrumb-link">Home</a>
             <span class="breadcrumb-separator">/</span>
-            <a href="shop.html" class="breadcrumb-link">Shop</a>
+            <a href="/pages/shop.html" class="breadcrumb-link">Shop</a>
             <span class="breadcrumb-separator">/</span>
             <span id="product-breadcrumb" class="breadcrumb-current">Product</span>
         </div>
@@ -187,10 +187,10 @@
             <div class="footer-section">
                 <h4>Legal</h4>
                 <ul>
-                    <li><a href="privacy.html">Privacy Policy</a></li>
-                    <li><a href="terms.html">Terms of Service</a></li>
-                    <li><a href="disclaimer.html">Disclaimer</a></li>
-                    <li><a href="security.html">Security</a></li>
+                    <li><a href="/pages/privacy.html">Privacy Policy</a></li>
+                    <li><a href="/pages/terms.html">Terms of Service</a></li>
+                    <li><a href="/pages/disclaimer.html">Disclaimer</a></li>
+                    <li><a href="/pages/security.html">Security</a></li>
                 </ul>
             </div>
         </div>
@@ -595,13 +595,13 @@
                 <article class="product-group-card">
                     ${hasDiscount ? `<div class="discount-badge">-${discountPercent}%</div>` : ''}
                     <div class="product-image">
-                        <a href="product.html?id=${pidUrl}" class="product-link">
+                        <a href="/pages/product.html?id=${pidUrl}" class="product-link">
                             <img src="${product.image}" alt="${product.title}" class="product-image-inner">
                         </a>
                     </div>
                     <div class="product-info">
                         <div class="product-category">${product.category || 'Featured'}</div>
-                        <h3 class="product-name"><a href="product.html?id=${pidUrl}">${product.title}</a></h3>
+                        <h3 class="product-name"><a href="/pages/product.html?id=${pidUrl}">${product.title}</a></h3>
                         <div class="product-meta">
                             <span class="product-status ${product.inStock ? 'in-stock' : 'out-stock'}">${product.inStock ? 'Available' : 'Limited'}</span>
                             <span class="product-origin">${product.shippingFrom || 'Global'}</span>
@@ -622,10 +622,10 @@
         window.populateProductPage = populateProductPage;
         document.addEventListener('DOMContentLoaded', loadProductDetails);
     </script>
-    <script src="../js/env.js"></script>
-    <script src="../js/supabase.js"></script>
-    <script src="../js/flutterwave.js"></script>
-    <script src="../js/main.js"></script>
-    <script src="../js/luxury-ui.js"></script>
+    <script src="/js/env.js"></script>
+    <script src="/js/supabase.js"></script>
+    <script src="/js/flutterwave.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/luxury-ui.js"></script>
 </body>
 </html>

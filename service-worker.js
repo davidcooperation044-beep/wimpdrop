@@ -6,7 +6,6 @@ const ASSETS_TO_CACHE = [
   '/pages/product.html',
   '/pages/account.html',
   '/pages/order-success.html',
-  '/css/styles.css',
   '/js/main.js',
   '/js/env.js',
   '/js/supabase.js',

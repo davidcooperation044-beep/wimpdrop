@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - Wimp-Drop</title>
-    <link rel="icon" type="image/png" href="../images/wimp.png">
+    <link rel="icon" type="image/png" href="/images/wimp.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/luxury-theme.css">
+    <link rel="stylesheet" href="/css/luxury-theme.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -184,7 +184,7 @@
                     <div style="margin-bottom: 2rem;">
                         <label style="display: flex; gap: 0.5rem; cursor: pointer;">
                             <input type="checkbox" required>
-                            <span>I agree to the <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Policy</a></span>
+                            <span>I agree to the <a href="/pages/terms.html">Terms of Service</a> and <a href="/pages/privacy.html">Privacy Policy</a></span>
                         </label>
                         <label style="display: flex; gap: 0.5rem; cursor: pointer;">
                             <input type="checkbox">
@@ -233,7 +233,7 @@
                         </div>
                         
                         <button class="btn btn-primary btn-block btn-large" onclick="processOrder()">Complete Order</button>
-                        <a href="cart.html" class="btn btn-secondary btn-block" style="margin-top: 1rem;">Back to Cart</a>
+                        <a href="/pages/cart.html" class="btn btn-secondary btn-block" style="margin-top: 1rem;">Back to Cart</a>
                     </div>
                 </div>
             </div>
@@ -245,10 +245,10 @@
             <div class="footer-section">
                 <h4>Legal</h4>
                 <ul>
-                    <li><a href="privacy.html">Privacy Policy</a></li>
-                    <li><a href="terms.html">Terms of Service</a></li>
-                    <li><a href="disclaimer.html">Disclaimer</a></li>
-                    <li><a href="security.html">Security</a></li>
+                    <li><a href="/pages/privacy.html">Privacy Policy</a></li>
+                    <li><a href="/pages/terms.html">Terms of Service</a></li>
+                    <li><a href="/pages/disclaimer.html">Disclaimer</a></li>
+                    <li><a href="/pages/security.html">Security</a></li>
                 </ul>
             </div>
         </div>
@@ -489,17 +489,14 @@
         // Initialize on load
         document.addEventListener('DOMContentLoaded', initCheckout);
     </script>
-    <script src="../js/env.js"></script>
-    <script src="../js/supabase.js"></script>
-    <script src="../js/flutterwave.js"></script>
-    <script src="../js/main.js"></script>
-    <script src="../js/luxury-ui.js"></script>
+    <script src="/js/env.js"></script>
+    <script src="/js/supabase.js"></script>
+    <script src="/js/flutterwave.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/luxury-ui.js"></script>
 </body>
 </html>
-    <script src="../js/supabase.js"></script>
-    <script src="../js/flutterwave.js"></script>
-    <script src="../js/email-service.js"></script>
-    <script src="../js/main.js"></script>
+    <script src="/js/email-service.js"></script>
 </body>
 </html>
 

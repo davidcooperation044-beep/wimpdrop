@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Watchlist - Wimp-Drop</title>
-    <link rel="icon" type="image/png" href="../images/wimp.png">
+    <link rel="icon" type="image/png" href="/images/wimp.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/luxury-theme.css">
+    <link rel="stylesheet" href="/css/luxury-theme.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -86,7 +86,7 @@
                                 <h2 style="margin: 0; font-size: 1.2rem;">Favorites</h2>
                                 <p id="watchlist-copy" style="margin: 0.25rem 0 0; color: var(--text-secondary);">0 saved items</p>
                             </div>
-                            <a href="shop.html" class="btn btn-outline btn-small">Browse catalog</a>
+                            <a href="/pages/shop.html" class="btn btn-outline btn-small">Browse catalog</a>
                         </div>
                         <div id="watchlist-items"></div>
                     </div>
@@ -97,7 +97,7 @@
                     <div class="summary-note">Your watchlist updates instantly when you save or remove products, and it stays aligned with your cart for quick checkout later.</div>
                     <div class="summary-row"><span>Saved items</span><strong id="saved-count">0</strong></div>
                     <div class="summary-row"><span>Ready to buy</span><strong id="available-count">0</strong></div>
-                    <a href="cart.html" class="btn btn-primary btn-block">Go to cart</a>
+                    <a href="/pages/cart.html" class="btn btn-primary btn-block">Go to cart</a>
                 </aside>
             </div>
         </div>
@@ -109,7 +109,7 @@
                 <strong id="mobile-watchlist-count">0 saved</strong>
                 <div style="color: var(--text-secondary); font-size: 0.9rem;">Tap to keep shopping</div>
             </div>
-            <a href="shop.html" class="btn btn-primary btn-small">Continue browsing</a>
+            <a href="/pages/shop.html" class="btn btn-primary btn-small">Continue browsing</a>
         </div>
     </div>
 
@@ -118,10 +118,10 @@
             <div class="footer-section">
                 <h4>Legal</h4>
                 <ul>
-                    <li><a href="privacy.html">Privacy Policy</a></li>
-                    <li><a href="terms.html">Terms of Service</a></li>
-                    <li><a href="disclaimer.html">Disclaimer</a></li>
-                    <li><a href="security.html">Security</a></li>
+                    <li><a href="/pages/privacy.html">Privacy Policy</a></li>
+                    <li><a href="/pages/terms.html">Terms of Service</a></li>
+                    <li><a href="/pages/disclaimer.html">Disclaimer</a></li>
+                    <li><a href="/pages/security.html">Security</a></li>
                 </ul>
             </div>
         </div>
@@ -148,7 +148,7 @@
                     <div class="empty-state" style="text-align: center;">
                         <h3 style="margin-bottom: 0.5rem;">Nothing saved yet</h3>
                         <p style="margin-bottom: 1rem;">Heart a few products and your favorite drops will stay here until you are ready to buy.</p>
-                        <a href="shop.html" class="btn btn-primary">Discover products</a>
+                        <a href="/pages/shop.html" class="btn btn-primary">Discover products</a>
                     </div>
                 `;
             } else {
@@ -157,7 +157,7 @@
                         ${savedProducts.map(product => `
                             <article class="wishlist-card">
                                 <div class="product-image">
-                                    <a href="product.html?id=${encodeURIComponent(product.id)}" class="product-link">
+                                    <a href="/pages/product.html?id=${encodeURIComponent(product.id)}" class="product-link">
                                         <img src="${product.image}" alt="${product.name}">
                                     </a>
                                 </div>
@@ -172,7 +172,7 @@
                                     </div>
                                     <div class="product-actions">
                                         <button class="btn btn-primary btn-small" onclick="addToCart('${product.id}')">Add to cart</button>
-                                        <a class="btn btn-outline btn-small" href="product.html?id=${encodeURIComponent(product.id)}">View</a>
+                                        <a class="btn btn-outline btn-small" href="/pages/product.html?id=${encodeURIComponent(product.id)}">View</a>
                                     </div>
                                 </div>
                             </article>
@@ -196,10 +196,10 @@
         });
     </script>
 
-    <script src="../js/env.js"></script>
-    <script src="../js/supabase.js"></script>
-    <script src="../js/flutterwave.js"></script>
-    <script src="../js/main.js"></script>
-    <script src="../js/luxury-ui.js"></script>
+    <script src="/js/env.js"></script>
+    <script src="/js/supabase.js"></script>
+    <script src="/js/flutterwave.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/luxury-ui.js"></script>
 </body>
 </html>

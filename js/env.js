@@ -37,9 +37,7 @@ class EnvConfig {
     try {
       const rootPath = window.location.origin;
       const candidates = [
-        '/env.local',
         '/.env.local',
-        `${rootPath}/env.local`,
         `${rootPath}/.env.local`
       ];
       let content = null;
@@ -49,7 +47,6 @@ class EnvConfig {
           const response = await fetch(path);
           if (response.ok) {
             content = await response.text();
-            console.log(`Loaded env from ${path}`);
             break;
           }
         } catch (e) {
@@ -58,7 +55,6 @@ class EnvConfig {
       }
 
       if (!content) {
-        console.log('.env.local not found, using defaults');
         return;
       }
 
@@ -76,7 +72,6 @@ class EnvConfig {
         }
       });
       
-      console.log('✓ Environment variables loaded from .env.local');
     } catch (error) {
       console.warn('Could not load .env.local:', error.message);
     }
@@ -178,28 +173,21 @@ class EnvConfig {
       missing.forEach(key => {
         console.warn(`  - ${key}`);
       });
-      console.log('See .env.example for required variables');
       return false;
     }
-    
-    console.log('✓ All environment variables loaded');
     return true;
   }
 
-  // Print status
+  // Return configuration status without logging credentials.
   printStatus() {
-    console.group('🔧 Environment Configuration');
-    console.log('Loaded:', this.isLoaded);
-    console.log('Environment:', this.get('VITE_ENVIRONMENT'));
-    console.log('App:', this.get('VITE_APP_NAME'), 'v' + this.get('VITE_APP_VERSION'));
-    
     const missing = this.getMissing();
-    if (missing.length > 0) {
-      console.warn('Missing variables:', missing);
-    } else {
-      console.log('✓ All required variables configured');
-    }
-    console.groupEnd();
+    return {
+      loaded: this.isLoaded,
+      environment: this.get('VITE_ENVIRONMENT'),
+      app: this.get('VITE_APP_NAME'),
+      version: this.get('VITE_APP_VERSION'),
+      missing
+    };
   }
 }
 

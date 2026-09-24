@@ -7,9 +7,9 @@ let CONFIG = {};
 async function initializeConfig() {
   if (typeof env !== 'undefined') {
     await env.load();
-    // Fallback: directly fetch /env.local if loader missed it
+    // Fallback: directly fetch /.env.local if loader missed it
     try {
-      const resp = await fetch('/env.local');
+      const resp = await fetch('/.env.local');
       if (resp.ok) {
         const txt = await resp.text();
         const lines = txt.split('\n');
@@ -26,7 +26,6 @@ async function initializeConfig() {
             }
           }
         });
-        console.log('Loaded fallback /env.local');
       }
     } catch (e) {
       // ignore
@@ -42,7 +41,6 @@ async function initializeConfig() {
     
     // Validate configuration
     if (CONFIG.debugMode) {
-      console.log('🔧 CONFIG loaded:', CONFIG);
     }
   }
 }
@@ -144,7 +142,6 @@ async function initializePage() {
     if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
       // Products table updates
       supabaseService.subscribe('products', async (payload) => {
-        console.log('Realtime products change:', payload);
         if (typeof loadProducts === 'function') {
           await loadProducts();
         }
@@ -152,7 +149,6 @@ async function initializePage() {
 
       // Orders updates
       supabaseService.subscribe('orders', async (payload) => {
-        console.log('Realtime orders change:', payload);
         if (AppState.user && typeof supabaseService.getUserOrders === 'function') {
           const res = await supabaseService.getUserOrders();
           if (res.success) {
@@ -165,7 +161,6 @@ async function initializePage() {
       // User profile updates for current user
       if (AppState.user && AppState.user.id) {
         supabaseService.subscribe('user_profiles', async (payload) => {
-          console.log('Realtime user profile change:', payload);
           const r = await supabaseService.getUserProfile();
           if (r.success) {
             AppState.userProfile = r.profile;
@@ -487,7 +482,6 @@ function setupProductAutoRefresh() {
 
 // Initialize the application
 function initializeApp() {
-  console.log('Initializing Wimp-Drop...');
   
   // Load cart and wishlist from localStorage
   AppState.cart = Storage.getCart();
@@ -1617,37 +1611,28 @@ function updateUserUI() {
 
 async function processFlutterwavePayment(amount, email, phone) {
   try {
-    // TODO: Integrate Flutterwave payment gateway
-    console.log('Processing Flutterwave payment:', { amount, email, phone });
-    
-    // This would typically open Flutterwave modal
-    // FlutterWaveCheckout({
-    //   public_key: CONFIG.flutterwaveKey,
-    //   tx_ref: "txn-" + Date.now(),
-    //   amount: amount,
-    //   currency: "NGN",
-    //   payment_options: "card,ussd",
-    //   customer: {
-    //     email: email,
-    //     phone_number: phone
-    //   },
-    //   customizations: {
-    //     title: "Wimp-Drop Store",
-    //     logo: "logo-url"
-    //   },
-    //   callback: handlePaymentCallback
-    // });
-    
-    showNotification('Payment processing...', 'info');
+    if (typeof flutterwaveService === 'undefined' || !CONFIG.flutterwaveKey) {
+      throw new Error('Payment service is not configured.');
+    }
+
+    const result = await flutterwaveService.initiatePayment({
+      amount,
+      email,
+      phone,
+      customer_name: email,
+      tx_ref: flutterwaveService.generateTransactionRef()
+    });
+    if (!result.success) throw new Error(result.error || 'Payment could not be started.');
+    return result;
     
   } catch (error) {
     console.error('Payment error:', error);
-    showNotification('Payment failed', 'error');
+    showNotification(error.message || 'Payment failed', 'error');
+    return { success: false, error: error.message };
   }
 }
 
 function handlePaymentCallback(response) {
-  console.log('Payment callback:', response);
   if (response.status === 'successful') {
     handleCheckoutSuccess(response);
   } else {
@@ -1673,7 +1658,6 @@ async function getOrderHistory() {
 async function trackOrder(orderId) {
   try {
     // TODO: Integrate tracking with Supabase order records or shipping provider.
-    console.log('Tracking order:', orderId);
     return {
       orderId,
       status: 'shipped',
@@ -1812,7 +1796,6 @@ function registerPWA() {
     window.addEventListener('load', async () => {
       try {
         await navigator.serviceWorker.register('/service-worker.js');
-        console.log('Service Worker registered for realtime storefront caching');
       } catch (error) {
         console.warn('Service Worker registration failed:', error);
       }
