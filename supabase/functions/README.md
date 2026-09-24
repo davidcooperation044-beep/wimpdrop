@@ -2,10 +2,7 @@
 
 Set these encrypted Supabase secrets before deploying:
 
-- `CJ_EMAIL`
-- `CJ_OPEN_ID`
-- `CJ_THIRD_ACCOUNT_ID`
-- `CJ_REDIRECT_URI`
+- `CJ_API_KEY` (from My CJ > Authorization > API > Add API)
 - `CJ_API_BASE_URL` (optional; defaults to CJ's official API base)
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `FLW_SECRET_KEY`
@@ -27,6 +24,7 @@ Functions:
 - `cj-auth`: admin-only OAuth start/complete and token cache refresh.
 - `products-sync-status`: admin-only sync status endpoint.
 - `admin-products-import`: admin-only CJ product import into unpublished drafts.
+- `admin-products-review`: admin-only draft publish, unpublish, edit, and protected delete actions.
 - `create-payment-intent`: authenticated checkout intent creation.
 - `flutterwave-webhook`: signature and server-side transaction verification, order creation, and forwarding trigger.
 - `stock-sync`: cron-only stock sync.
@@ -51,12 +49,13 @@ Deploy with the Supabase CLI after linking the project:
 
 ```bash
 supabase db push
-supabase secrets set CJ_EMAIL=... CJ_OPEN_ID=... CJ_THIRD_ACCOUNT_ID=... CJ_REDIRECT_URI=... FLW_SECRET_KEY=... FLW_WEBHOOK_SECRET_HASH=... CRON_SECRET=...
+supabase secrets set CJ_API_KEY=... FLW_SECRET_KEY=... FLW_WEBHOOK_SECRET_HASH=... CRON_SECRET=...
 supabase functions deploy cj-auth
 supabase functions deploy create-payment-intent
 supabase functions deploy flutterwave-webhook
 supabase functions deploy products-sync-status
 supabase functions deploy admin-products-import
+supabase functions deploy admin-products-review
 supabase functions deploy stock-sync
 supabase functions deploy order-forward
 supabase functions deploy fulfillment-retry

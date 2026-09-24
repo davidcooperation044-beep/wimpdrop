@@ -49,7 +49,7 @@ async function cjFetch(path: string, init: RequestInit = {}): Promise<any> {
   const text = await response.text();
   let body: any;
   try { body = text ? JSON.parse(text) : null; } catch { body = { message: text }; }
-  if (!response.ok || body?.result === false) {
+  if (!response.ok || body?.result === false || body?.success === false) {
     const error = new Error(body?.message || `CJ request failed (${response.status})`);
     (error as any).status = response.status;
     (error as any).response = body;
@@ -59,10 +59,14 @@ async function cjFetch(path: string, init: RequestInit = {}): Promise<any> {
 }
 
 async function saveTokens(data: any): Promise<void> {
+  if (!data?.accessToken || !data?.refreshToken || !data?.openId) {
+    throw new Error('CJ authentication response did not include the complete token set');
+  }
   const accessExpiry = data.accessTokenExpiryDate || new Date(Date.now() + 180 * 86400000).toISOString();
   const refreshExpiry = data.refreshTokenExpiryDate || new Date(Date.now() + 180 * 86400000).toISOString();
   const { error } = await db.from('cj_token_cache').upsert({
     id: true,
+    open_id: String(data.openId),
     access_token: data.accessToken,
     refresh_token: data.refreshToken,
     access_token_expires_at: accessExpiry,
@@ -80,37 +84,33 @@ export async function getCjAccessToken(forceRefresh = false): Promise<string> {
     return data.access_token;
   }
   if (!data?.refresh_token || new Date(data.refresh_token_expires_at).getTime() <= Date.now()) {
-    throw new Error('CJ authorization is required; no valid refresh token is cached');
+    const authenticated = await authenticateWithApiKey();
+    return authenticated.data.accessToken;
   }
 
-  const refreshed = await cjFetch('/authentication/refreshAccessToken', {
-    method: 'POST',
-    body: JSON.stringify({ refreshToken: data.refresh_token })
-  });
-  await saveTokens(refreshed.data);
-  return refreshed.data.accessToken;
+  try {
+    const refreshed = await cjFetch('/authentication/refreshAccessToken', {
+      method: 'POST',
+      body: JSON.stringify({ refreshToken: data.refresh_token })
+    });
+    await saveTokens(refreshed.data);
+    return refreshed.data.accessToken;
+  } catch (error) {
+    const response = (error as any).response;
+    if ((error as any).status === 401 || response?.code === 1600001 || /refresh token/i.test((error as Error).message)) {
+      const authenticated = await authenticateWithApiKey();
+      return authenticated.data.accessToken;
+    }
+    throw error;
+  }
 }
 
-export async function startCjAuthorization(): Promise<any> {
-  return cjFetch('/authorization/startSession', {
-    method: 'POST',
-    body: JSON.stringify({
-      email: Deno.env.get('CJ_EMAIL'),
-      openId: Deno.env.get('CJ_OPEN_ID'),
-      thirdAccountId: Deno.env.get('CJ_THIRD_ACCOUNT_ID'),
-      redirectUri: Deno.env.get('CJ_REDIRECT_URI')
-    })
-  });
-}
-
-export async function completeCjAuthorization(oauthCode: string): Promise<any> {
+export async function authenticateWithApiKey(): Promise<any> {
+  const apiKey = Deno.env.get('CJ_API_KEY');
+  if (!apiKey) throw new Error('CJ_API_KEY secret is not configured');
   const result = await cjFetch('/authentication/getAccessToken', {
     method: 'POST',
-    body: JSON.stringify({
-      oauthCode,
-      openId: Deno.env.get('CJ_OPEN_ID'),
-      thirdAccountId: Deno.env.get('CJ_THIRD_ACCOUNT_ID')
-    })
+    body: JSON.stringify({ apiKey })
   });
   await saveTokens(result.data);
   return result;

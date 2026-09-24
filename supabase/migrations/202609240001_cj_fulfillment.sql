@@ -46,12 +46,16 @@ on conflict (key) do nothing;
 
 create table if not exists public.cj_token_cache (
   id boolean primary key default true check (id),
+  open_id text not null default '',
   access_token text not null,
   refresh_token text not null,
   access_token_expires_at timestamptz not null,
   refresh_token_expires_at timestamptz not null,
   updated_at timestamptz not null default now()
 );
+
+alter table public.cj_token_cache
+  add column if not exists open_id text not null default '';
 
 create table if not exists public.supplier_sync_runs (
   id uuid primary key default gen_random_uuid(),

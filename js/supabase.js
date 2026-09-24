@@ -394,6 +394,7 @@ class SupabaseService {
   getPublicProductSelectColumns() {
     return [
       'id',
+      'name',
       'title',
       'image_url',
       'sku',
@@ -415,6 +416,7 @@ class SupabaseService {
       'supplier_sku',
       'supplier_cost',
       'stock_quantity',
+      'sync_status',
       'added_time',
       'price_updated',
       'price_change',

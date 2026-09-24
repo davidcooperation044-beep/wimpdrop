@@ -184,6 +184,26 @@
             border: 1px solid rgba(239, 68, 68, 0.2);
             border-radius: 12px;
         }
+        .review-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .review-edit {
+            width: 100%;
+            min-width: 120px;
+            min-height: 42px;
+            padding: 0.55rem 0.7rem;
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border-gold);
+            border-radius: 8px;
+        }
+        .review-checkbox {
+            width: 20px;
+            height: 20px;
+        }
         @media (max-width: 1024px) {
             .admin-grid {
                 grid-template-columns: 1fr;
@@ -296,6 +316,31 @@
                     <div class="admin-panel-card">
                         <div class="admin-toolbar">
                             <div>
+                                <h2>Pending Review</h2>
+                                <p class="section-copy">CJ imports stay offline until you approve their name, price, and inventory.</p>
+                            </div>
+                            <button id="publish-selected-btn" class="btn btn-primary btn-small" type="button" disabled>Publish selected</button>
+                        </div>
+                        <div class="admin-table-wrapper">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th><input id="select-all-drafts" class="review-checkbox" type="checkbox" aria-label="Select all drafts"></th>
+                                        <th>Product</th>
+                                        <th>Supplier cost</th>
+                                        <th>Sell price</th>
+                                        <th>Stock</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-draft-table-body"></tbody>
+                            </table>
+                            <div id="admin-draft-empty" class="admin-empty-state">No imported drafts are waiting for review.</div>
+                        </div>
+                    </div>
+                    <div class="admin-panel-card">
+                        <div class="admin-toolbar">
+                            <div>
                                 <h2>Products table</h2>
                                 <p class="section-copy">Data is sourced from the Supabase `products` table. Refresh to reload the latest catalog state.</p>
                             </div>
@@ -390,14 +435,16 @@
         function normalizeAdminProduct(raw) {
             return {
                 id: raw.id || raw.product_id || raw.SKU || raw.sku || 'n/a',
-                title: raw['Product Title'] || raw.title || raw['product_title'] || raw.name || 'Untitled product',
+                title: raw['Product Title'] || raw.name || raw.title || raw['product_title'] || 'Untitled product',
                 image: raw['Product Image'] || raw.image || raw.product_image || raw['product_image'] || '',
                 sku: raw['SKU'] || raw.sku || raw['item_sku'] || raw['sku'] || 'n/a',
-                inventory: raw['Available Inventory'] ?? raw.available_inventory ?? raw.inventory ?? 'N/A',
-                status: raw['Product Status'] || raw.status || raw['Status'] || 'Unknown',
+                inventory: raw['Available Inventory'] ?? raw.stock_quantity ?? raw.available_inventory ?? raw.inventory ?? 'N/A',
+                status: raw.sync_status || raw['Product Status'] || raw.status || raw['Status'] || (raw.is_published ? 'active' : 'draft'),
                 addedAt: raw['Added Time'] || raw.added_at || raw.created_at || raw['created_at'] || '',
                 price: raw['Retail Price'] || raw.price || raw['Price'] || raw['product_price'] || '—',
-                vendor: raw['Vendor'] || raw.vendor || raw.supplier || ''
+                supplierCost: raw.supplier_cost ?? '—',
+                vendor: raw['Vendor'] || raw.vendor || raw.supplier || '',
+                isPublished: raw.is_published === true
             };
         }
 
@@ -454,7 +501,7 @@
                     <td></td>
                     <td>${formatDate(product.addedAt)}</td>
                     <td>${product.price}</td>
-                    <td><button class="btn btn-outline btn-small" type="button">View</button></td>
+                    <td><div class="review-actions"><button class="btn btn-outline btn-small" type="button" data-view-product="${product.id}">View / edit</button>${product.isPublished ? `<button class="btn btn-secondary btn-small" type="button" data-unpublish-product="${product.id}">Unpublish</button>` : ''}</div></td>
                 `;
                 const statusCell = row.querySelector('td:nth-child(4)');
                 if (statusCell) {
@@ -462,6 +509,101 @@
                 }
                 body.appendChild(row);
             });
+            body.querySelectorAll('[data-view-product]').forEach((button) => {
+                button.addEventListener('click', () => editLiveProduct(button.dataset.viewProduct));
+            });
+            body.querySelectorAll('[data-unpublish-product]').forEach((button) => {
+                button.addEventListener('click', () => reviewProduct('unpublish', [button.dataset.unpublishProduct]));
+            });
+        }
+
+        function selectedDraftIds() {
+            return [...document.querySelectorAll('[data-draft-check]:checked')].map((input) => input.value);
+        }
+
+        function updateDraftSelectionState() {
+            const selected = selectedDraftIds();
+            const publishButton = document.getElementById('publish-selected-btn');
+            if (publishButton) publishButton.disabled = selected.length === 0;
+        }
+
+        async function reviewProduct(action, productIds, fields = {}) {
+            try {
+                const result = await invokeAdminFunction('admin-products-review', { action, productIds, ...fields });
+                if (!result?.success && action !== 'delete') throw new Error(result?.error || `Unable to ${action} product`);
+                if (result?.blocked?.length) throw new Error(result.error);
+                appendAdminLog(`${action} completed for ${productIds.length} product(s).`);
+                await Promise.all([loadAdminProducts(), loadPendingDrafts()]);
+            } catch (error) {
+                appendAdminLog(`Product review failed: ${error.message || error}`);
+                window.alert(error.message || error);
+            }
+        }
+
+        async function saveDraft(productId, row) {
+            const name = row.querySelector('[data-draft-name]').value.trim();
+            const price = Number(row.querySelector('[data-draft-price]').value);
+            await reviewProduct('update', [productId], { name, price });
+        }
+
+        async function publishDraft(productId, row) {
+            await saveDraft(productId, row);
+            await reviewProduct('publish', [productId]);
+        }
+
+        function renderPendingDrafts(products) {
+            const body = document.getElementById('admin-draft-table-body');
+            const empty = document.getElementById('admin-draft-empty');
+            if (!body || !empty) return;
+            body.innerHTML = '';
+            if (!products.length) {
+                empty.style.display = 'block';
+                updateDraftSelectionState();
+                return;
+            }
+            empty.style.display = 'none';
+            products.forEach((raw) => {
+                const product = normalizeAdminProduct(raw);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><input class="review-checkbox" type="checkbox" value="${product.id}" data-draft-check aria-label="Select ${product.title}"></td>
+                    <td><div style="display:flex;align-items:center;gap:0.75rem;"><img src="${product.image || 'https://via.placeholder.com/56'}" alt="${product.title}" width="56" height="56" class="admin-product-image"><input class="review-edit" data-draft-name value="${String(product.title).replace(/"/g, '&quot;')}" aria-label="Product name"></div></td>
+                    <td>${product.supplierCost}</td>
+                    <td><input class="review-edit" data-draft-price type="number" min="0" step="0.01" value="${Number(product.price) || 0}" aria-label="Sell price"></td>
+                    <td>${product.inventory}</td>
+                    <td><div class="review-actions"><button class="btn btn-outline btn-small" type="button" data-save-draft>Save</button><button class="btn btn-primary btn-small" type="button" data-publish-draft>Publish</button><button class="btn btn-secondary btn-small" type="button" data-delete-draft>Delete</button></div></td>
+                `;
+                row.querySelector('[data-draft-check]').addEventListener('change', updateDraftSelectionState);
+                row.querySelector('[data-save-draft]').addEventListener('click', () => saveDraft(product.id, row));
+                row.querySelector('[data-publish-draft]').addEventListener('click', () => publishDraft(product.id, row));
+                row.querySelector('[data-delete-draft]').addEventListener('click', () => reviewProduct('delete', [product.id]));
+                body.appendChild(row);
+            });
+            updateDraftSelectionState();
+        }
+
+        async function loadPendingDrafts() {
+            try {
+                const result = await supabaseService.getProducts({ includeUnpublished: true, limit: 100, sortBy: 'newest' });
+                if (!result.success) throw new Error(result.error || 'Unable to load drafts');
+                renderPendingDrafts((result.products || []).filter((product) => product.sync_status === 'draft'));
+            } catch (error) {
+                appendAdminLog(`Draft review load failed: ${error.message || error}`);
+            }
+        }
+
+        async function editLiveProduct(productId) {
+            try {
+                const result = await supabaseService.getProduct(productId);
+                if (!result.success || !result.product) throw new Error(result.error || 'Product not found');
+                const name = window.prompt('Product name', result.product.name || result.product.title || '');
+                if (name === null) return;
+                const price = window.prompt('Sell price', String(result.product.price || 0));
+                if (price === null) return;
+                await reviewProduct('update', [productId], { name, price: Number(price) });
+            } catch (error) {
+                window.alert(error.message || error);
+            }
         }
 
         async function loadAdminProducts() {
@@ -625,9 +767,16 @@
             document.getElementById('run-tests-btn')?.addEventListener('click', runAdminHealthCheck);
             document.getElementById('sync-stock-btn')?.addEventListener('click', syncCjStock);
             document.getElementById('import-products-btn')?.addEventListener('click', importCjDrafts);
+            document.getElementById('select-all-drafts')?.addEventListener('change', (event) => {
+                document.querySelectorAll('[data-draft-check]').forEach((input) => {
+                    input.checked = event.target.checked;
+                });
+                updateDraftSelectionState();
+            });
+            document.getElementById('publish-selected-btn')?.addEventListener('click', () => reviewProduct('publish', selectedDraftIds()));
 
             await loadAdminProducts();
-            await Promise.all([loadSupplierStatus(), loadFailedFulfillments()]);
+            await Promise.all([loadPendingDrafts(), loadSupplierStatus(), loadFailedFulfillments()]);
         }
 
         document.addEventListener('DOMContentLoaded', initAdminPage);
