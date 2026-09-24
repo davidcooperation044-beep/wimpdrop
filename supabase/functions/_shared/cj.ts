@@ -21,7 +21,14 @@ export function json(body: unknown, status = 200): Response {
 }
 
 export function handleOptions(request: Request): Response | null {
-  return request.method === 'OPTIONS' ? json({}, 204) : null;
+  return request.method === 'OPTIONS' ? new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': Deno.env.get('APP_ORIGIN') || '*',
+      'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
+      'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
+    }
+  }) : null;
 }
 
 export async function requireAdmin(request: Request): Promise<void> {
