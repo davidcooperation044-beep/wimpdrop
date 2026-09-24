@@ -77,6 +77,33 @@ function sendJson(response, statusCode, payload) {
   response.end(JSON.stringify(payload));
 }
 
+function sendRuntimeEnv(response) {
+  const defaults = {
+    VITE_SUPABASE_URL: 'https://your-project.supabase.co',
+    VITE_SUPABASE_ANON_KEY: '',
+    VITE_FLUTTERWAVE_PUBLIC_KEY: '',
+    VITE_APP_NAME: 'Wimp-Drop',
+    VITE_APP_VERSION: '1.0.0',
+    VITE_ENVIRONMENT: 'development',
+    VITE_DEFAULT_CURRENCY: 'NGN',
+    VITE_TAX_RATE: 0.075,
+    VITE_SHIPPING_STANDARD_COST: 5000,
+    VITE_SHIPPING_EXPRESS_COST: 10000
+  };
+  const config = Object.fromEntries(
+    Object.entries(defaults).map(([key, defaultValue]) => [
+      key,
+      process.env[key] || defaultValue
+    ])
+  );
+
+  response.writeHead(200, {
+    'Content-Type': 'application/javascript',
+    'Cache-Control': 'no-store'
+  });
+  response.end(`window.ENV_CONFIG = ${JSON.stringify(config)};`);
+}
+
 function readRequestBody(request) {
   return new Promise((resolve, reject) => {
     let data = '';
@@ -453,6 +480,11 @@ async function handleEmailRequest(request, response) {
 
 const server = http.createServer(async (request, response) => {
   console.log('[HTTP]', request.method, request.url);
+  if (request.method === 'GET' && new URL(request.url, `http://${request.headers.host || 'localhost'}`).pathname === '/js/runtime-env.js') {
+    sendRuntimeEnv(response);
+    return;
+  }
+
   if (request.url && request.url.startsWith('/api/admin/create-admin')) {
     await handleAdminCreateAdmin(request, response);
     return;

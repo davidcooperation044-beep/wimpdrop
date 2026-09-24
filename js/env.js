@@ -12,12 +12,14 @@ class EnvConfig {
   // Load environment variables
   async load() {
     try {
-      // Try to load from .env.local file (development)
-      if (this.isDevelopment) {
+      // Prefer the server-provided runtime config; retain .env.local for file-based development.
+      if (window.ENV_CONFIG) {
+        this.loadFromWindow();
+      } else if (this.isDevelopment) {
         await this.loadFromFile();
       }
-      
-      // Override with window variables if available
+
+      // Allow a runtime config assigned while loading to take precedence as well.
       this.loadFromWindow();
       
       // Set defaults for missing values
