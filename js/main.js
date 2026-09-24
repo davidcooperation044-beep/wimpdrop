@@ -829,6 +829,9 @@ function normalizeProduct(raw) {
     rating: Number(raw.rating || raw.stars || 4.5),
     reviews: Number(raw.reviews || raw.review_count || raw.reviewCount || 0),
     supplier: raw.supplier || raw.brand || raw.source || 'Wimp-Drop Catalog',
+    supplierProductId: raw.supplier_product_id || raw.supplierProductId || '',
+    supplierVariantId: raw.supplier_variant_id || raw.supplierVariantId || raw.variant_id || '',
+    supplierSku: raw.supplier_sku || raw.supplierSku || raw.sku || '',
     description: raw.description || raw.productDescription || raw.status || '',
     stock: inventory,
     inStock: published && status !== 'Out of Stock' && inventory > 0,
@@ -970,6 +973,9 @@ function addToCart(productId, quantity = 1) {
       image: product.image,
       quantity: quantity,
       supplier: product.supplier
+      ,supplier_product_id: product.supplierProductId || null
+      ,supplier_variant_id: product.supplierVariantId || null
+      ,supplier_sku: product.supplierSku || null
     });
   }
 

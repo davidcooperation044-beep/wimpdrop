@@ -156,6 +156,34 @@
             margin-bottom: 0.75rem;
             color: var(--text-primary);
         }
+        .supplier-control-row {
+            display: grid;
+            gap: 0.75rem;
+        }
+        .supplier-control-row input {
+            width: 100%;
+            min-height: 44px;
+            padding: 0.75rem;
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border-gold);
+            border-radius: 8px;
+        }
+        .failed-order-list {
+            display: grid;
+            gap: 0.75rem;
+        }
+        .failed-order {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem;
+            color: var(--text-secondary);
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+        }
         @media (max-width: 1024px) {
             .admin-grid {
                 grid-template-columns: 1fr;
@@ -246,6 +274,11 @@
                         <h2>Quick actions</h2>
                         <button id="refresh-catalog-btn" class="btn btn-primary btn-large">Refresh product catalog</button>
                         <button id="run-tests-btn" class="btn btn-secondary btn-large">Run Supabase health check</button>
+                        <button id="sync-stock-btn" class="btn btn-secondary btn-large">Sync CJ stock now</button>
+                        <div class="supplier-control-row">
+                            <input id="cj-import-keyword" type="search" placeholder="CJ product keyword" autocomplete="off">
+                            <button id="import-products-btn" class="btn btn-outline btn-large">Import CJ drafts</button>
+                        </div>
                     </div>
                     <div class="sidebar-group">
                         <h2>Live stats</h2>
@@ -254,6 +287,8 @@
                             <div class="admin-stat"><strong id="admin-stock-count">—</strong><span>Total inventory</span></div>
                             <div class="admin-stat"><strong id="admin-status-count">—</strong><span>Active listings</span></div>
                             <div class="admin-stat"><strong id="admin-last-refresh">—</strong><span>Last refresh</span></div>
+                            <div class="admin-stat"><strong id="admin-cj-last-sync">—</strong><span>Last CJ sync</span></div>
+                            <div class="admin-stat"><strong id="admin-cj-out-of-sync">—</strong><span>CJ products out of sync</span></div>
                         </div>
                     </div>
                 </aside>
@@ -282,6 +317,18 @@
                                 <tbody id="admin-product-table-body"></tbody>
                             </table>
                             <div id="admin-empty-state" class="admin-empty-state">No products loaded. Select Refresh product catalog to load your Supabase items.</div>
+                        </div>
+                    </div>
+                    <div class="admin-panel-card">
+                        <div class="admin-toolbar">
+                            <div>
+                                <h2>Fulfillment failures</h2>
+                                <p class="section-copy">Orders that exhausted automatic CJ retries require manual attention.</p>
+                            </div>
+                            <strong id="admin-failed-count">0</strong>
+                        </div>
+                        <div id="admin-failed-orders" class="failed-order-list">
+                            <div class="admin-empty-state">No failed fulfillment orders.</div>
                         </div>
                     </div>
                     <div class="admin-panel-card admin-log">
@@ -463,6 +510,90 @@
             }
         }
 
+        async function invokeAdminFunction(name, body = {}) {
+            const client = await supabaseService.getClient();
+            const { data, error } = await client.functions.invoke(name, { body });
+            if (error) throw error;
+            return data;
+        }
+
+        async function loadSupplierStatus() {
+            try {
+                const result = await invokeAdminFunction('products-sync-status');
+                if (!result?.success) throw new Error(result?.error || 'Unable to read CJ sync status');
+                document.getElementById('admin-cj-last-sync').textContent = formatDate(result.lastRun?.finished_at);
+                document.getElementById('admin-cj-out-of-sync').textContent = String(result.outOfSync ?? '—');
+            } catch (error) {
+                appendAdminLog(`CJ status unavailable: ${error.message || error}`);
+            }
+        }
+
+        async function loadFailedFulfillments() {
+            const container = document.getElementById('admin-failed-orders');
+            try {
+                const client = await supabaseService.getClient();
+                const { data, error } = await client.from('orders').select('id,order_number,fulfillment_last_error,fulfillment_attempts,updated_at').eq('fulfillment_status', 'fulfillment_failed').order('updated_at', { ascending: false }).limit(50);
+                if (error) throw error;
+                const orders = data || [];
+                document.getElementById('admin-failed-count').textContent = String(orders.length);
+                container.innerHTML = orders.length ? orders.map((order) => `
+                    <div class="failed-order">
+                        <div><strong>${order.order_number || order.id}</strong><br><span>${order.fulfillment_last_error || 'Unknown supplier error'} (${order.fulfillment_attempts || 0} attempts)</span></div>
+                        <button class="btn btn-outline btn-small" type="button" data-retry-order="${order.id}">Retry</button>
+                    </div>
+                `).join('') : '<div class="admin-empty-state">No failed fulfillment orders.</div>';
+                container.querySelectorAll('[data-retry-order]').forEach((button) => {
+                    button.addEventListener('click', async () => {
+                        button.disabled = true;
+                        try {
+                            await invokeAdminFunction('admin-fulfillment-retry', { orderId: button.dataset.retryOrder });
+                            appendAdminLog(`Retry requested for ${button.dataset.retryOrder}.`);
+                            await loadFailedFulfillments();
+                        } catch (error) {
+                            appendAdminLog(`Retry failed: ${error.message || error}`);
+                            button.disabled = false;
+                        }
+                    });
+                });
+            } catch (error) {
+                container.innerHTML = `<div class="admin-empty-state">Unable to load fulfillment failures: ${error.message || error}</div>`;
+            }
+        }
+
+        async function syncCjStock() {
+            const button = document.getElementById('sync-stock-btn');
+            button.disabled = true;
+            button.textContent = 'Syncing CJ stock…';
+            try {
+                const result = await invokeAdminFunction('admin-stock-sync');
+                appendAdminLog(`CJ stock sync completed: ${result.checked || 0} checked.`);
+                await Promise.all([loadSupplierStatus(), loadAdminProducts()]);
+            } catch (error) {
+                appendAdminLog(`CJ stock sync failed: ${error.message || error}`);
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Sync CJ stock now';
+            }
+        }
+
+        async function importCjDrafts() {
+            const button = document.getElementById('import-products-btn');
+            const keyword = document.getElementById('cj-import-keyword').value.trim();
+            button.disabled = true;
+            button.textContent = 'Importing CJ drafts…';
+            try {
+                const result = await invokeAdminFunction('admin-products-import', { keyword, size: 20 });
+                appendAdminLog(`Imported ${result.imported || 0} CJ draft products for review.`);
+                await loadAdminProducts();
+                await loadSupplierStatus();
+            } catch (error) {
+                appendAdminLog(`CJ draft import failed: ${error.message || error}`);
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Import CJ drafts';
+            }
+        }
+
         async function initAdminPage() {
             try {
                 await supabaseService.init();
@@ -492,8 +623,11 @@
 
             document.getElementById('refresh-catalog-btn')?.addEventListener('click', loadAdminProducts);
             document.getElementById('run-tests-btn')?.addEventListener('click', runAdminHealthCheck);
+            document.getElementById('sync-stock-btn')?.addEventListener('click', syncCjStock);
+            document.getElementById('import-products-btn')?.addEventListener('click', importCjDrafts);
 
             await loadAdminProducts();
+            await Promise.all([loadSupplierStatus(), loadFailedFulfillments()]);
         }
 
         document.addEventListener('DOMContentLoaded', initAdminPage);

@@ -83,7 +83,8 @@ class FlutterwaveService {
         onclose: this.handlePaymentClosed.bind(this),
         meta: {
           order_id: paymentData.order_id || null,
-          user_id: paymentData.user_id || null
+          user_id: paymentData.user_id || null,
+          ...(paymentData.meta || {})
         }
       };
 

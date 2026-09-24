@@ -409,6 +409,12 @@ class SupabaseService {
       'us_warehouse_verified_factory_inventory',
       'cn_warehouse_unverified_factory_inventory',
       'price',
+      'supplier',
+      'supplier_product_id',
+      'supplier_variant_id',
+      'supplier_sku',
+      'supplier_cost',
+      'stock_quantity',
       'added_time',
       'price_updated',
       'price_change',
@@ -587,6 +593,19 @@ class SupabaseService {
 
     } catch (error) {
       console.error('Create order error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async createPaymentIntent(intentData) {
+    try {
+      const sb = await this.getClient();
+      if (!sb.functions) throw new Error('Supabase Functions are not available');
+      const { data, error } = await sb.functions.invoke('create-payment-intent', { body: intentData });
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Create payment intent error:', error);
       return { success: false, error: error.message };
     }
   }

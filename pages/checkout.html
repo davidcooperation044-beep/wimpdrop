@@ -410,66 +410,28 @@
                     shipping_method: shippingMethod,
                     cart_items: AppState.cart
                 };
+
+                const paymentIntent = await supabaseService.createPaymentIntent({
+                    txRef: paymentData.tx_ref,
+                    amount: total,
+                    currency: paymentData.currency,
+                    shippingAddress: paymentData.meta.shipping_address,
+                    cartItems: AppState.cart
+                });
+                if (!paymentIntent?.success) {
+                    showNotification(paymentIntent?.error || 'Unable to prepare secure payment.', 'error');
+                    return;
+                }
                 
                 // Set up payment success handler
-                window.onFlutterwaveSuccess = async (response) => {
-                    try {
-                        showNotification('Processing your order...', 'info');
-                        
-                        // Create order in Supabase
-                        if (supabaseService.isInitialized) {
-                            const orderResult = await supabaseService.createOrder(AppState.user.id, {
-                                items: AppState.cart,
-                                totalAmount: total,
-                                shippingAddress: {
-                                    firstName,
-                                    lastName,
-                                    email,
-                                    phone,
-                                    street,
-                                    city,
-                                    state,
-                                    postal,
-                                    country
-                                },
-                                shippingMethod,
-                                paymentRef: response.transaction_id
-                            });
-                            
-                            if (orderResult.success) {
-                                // Save order ID to session for order-success page
-                                sessionStorage.setItem('lastOrderId', orderResult.order.id);
-                                sessionStorage.setItem('lastOrderTotal', total);
-                                sessionStorage.setItem('lastOrderEmail', email);
-                                
-                                // Send order confirmation emails to admin and user
-                                if (typeof emailService !== 'undefined') {
-                                    try {
-                                        await emailService.sendOrderConfirmation(orderResult.order, email);
-                                        showNotification('Order confirmation sent to your email', 'success');
-                                    } catch (emailError) {
-                                        console.warn('Email sending error:', emailError);
-                                        // Don't fail the order if email fails
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Clear cart
-                        clearCart();
-                        
-                        // Redirect to success page
-                        setTimeout(() => {
-                            window.location.href = 'order-success.html';
-                        }, 1000);
-                    } catch (error) {
-                        console.error('Error saving order:', error);
-                        showNotification('Order saved but there was an error. Please check your account.', 'warning');
-                        clearCart();
-                        setTimeout(() => {
-                            window.location.href = 'order-success.html';
-                        }, 2000);
-                    }
+                window.onFlutterwaveSuccess = (response) => {
+                    showNotification('Payment received. Confirming your order securely...', 'success');
+                    clearCart();
+                    sessionStorage.setItem('lastOrderTotal', total);
+                    sessionStorage.setItem('lastOrderEmail', email);
+                    setTimeout(() => {
+                        window.location.href = '/pages/order-success.html';
+                    }, 1000);
                 };
                 
                 // Set up payment failure handler
