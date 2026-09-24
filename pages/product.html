@@ -218,28 +218,27 @@
             const image = raw.image_url || raw.image || raw.thumbnail || raw.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop';
             const price = Number(raw.price || raw.sale_price || raw.current_price || 0);
             const originalPrice = Number(raw.base_price || raw.original_price || raw.list_price || raw.compare_at_price || raw.price || 0);
-            const stock = Number(raw.stock || raw.quantity || raw.inventory || 0);
+            const stock = Number(raw.stock_quantity || 0);
             const status = raw.status || raw.product_status || 'On Sale';
-            const shippingFrom = raw.shipping_from || raw.shippingFrom || raw.origin || 'Global';
+            const shippingFrom = raw.supplier || 'Wimp-Drop Catalog';
             const dimensionsMm = raw.dimensions_mm || raw.dimensions || '';
             const weightG = raw.weight_g || raw.weight || '';
-            const sku = raw.sku || raw.variant_sku || raw.item_sku || '';
-            const variantLabel = raw.variant || raw.variant_name || raw.title || raw.name || 'Standard';
+            const sku = raw.supplier_sku || '';
+            const variantLabel = raw.title || raw.name || 'Standard';
             const inStock = stock > 0 && status === 'On Sale';
 
             return {
-                id: raw.id || raw.product_id || raw.variant_id || sku || '',
+                id: raw.id || raw.product_id || sku || '',
                 product_id: productId,
                 title,
                 name: title,
-                variant: variantLabel,
-                sku,
+                variantLabel,
                 category: raw.category || raw.category_name || 'General',
                 price,
                 originalPrice,
                 image,
                 supplier: raw.supplier || raw.brand || 'Wimp-Drop Catalog',
-                stock,
+                stock_quantity: stock,
                 status,
                 inStock,
                 shippingFrom,
@@ -350,16 +349,16 @@
             document.getElementById('product-stars').textContent = buildStars(variant.rating || 4.5);
             document.getElementById('product-rating-count').textContent = `(${variant.reviews || 0} reviews)`;
 
-            const stockPill = document.getElementById('stock-pill');
+                const stockPill = document.getElementById('stock-pill');
             if (stockPill) {
                 stockPill.textContent = variant.inStock ? 'In stock' : 'Out of stock';
-                stockPill.classList.toggle('is-low', variant.stock > 0 && variant.stock <= 5);
+                stockPill.classList.toggle('is-low', variant.stock_quantity > 0 && variant.stock_quantity <= 5);
             }
 
             document.getElementById('stock-line').textContent = buildStockLine(variant);
             document.getElementById('shipping-line').textContent = buildShippingLine(variant.shippingFrom);
             document.getElementById('trust-origin-pill').textContent = `Ships from ${variant.shippingFrom || 'Global'}`;
-            document.getElementById('selected-variant-summary').textContent = `${variant.variant}${variant.sku ? ` • ${variant.sku}` : ''}`;
+            document.getElementById('selected-variant-summary').textContent = `${variant.variantLabel}${variant.supplier_sku ? ` • ${variant.supplier_sku}` : ''}`;
 
             const addButton = document.getElementById('add-to-cart-btn');
             const buyButton = document.getElementById('buy-now-btn');
@@ -396,10 +395,10 @@
             if (!variant.inStock) {
                 return 'Out of stock right now — check back soon for fresh inventory.';
             }
-            if (variant.stock <= 5) {
-                return `Only ${variant.stock} left in stock — order soon.`;
+            if (variant.stock_quantity <= 5) {
+                return `Only ${variant.stock_quantity} left in stock — order soon.`;
             }
-            return `${variant.stock} units available for immediate dispatch.`;
+            return `${variant.stock_quantity} units available for immediate dispatch.`;
         }
 
         function buildShippingLine(origin) {
@@ -411,8 +410,8 @@
             if (!container) return;
             container.innerHTML = currentProductVariants.map((variant, index) => `
                 <button class="variant-option ${index === selectedVariantIndex ? 'active' : ''}" type="button" onclick="selectVariant(${index})">
-                    <span class="variant-option-title">${variant.variant || 'Standard'}</span>
-                    <span class="variant-option-meta">${variant.sku || 'Select SKU'}</span>
+                    <span class="variant-option-title">${variant.variantLabel || 'Standard'}</span>
+                    <span class="variant-option-meta">${variant.supplier_sku || 'Select SKU'}</span>
                 </button>
             `).join('');
         }
@@ -492,7 +491,7 @@
                 </tr>
                 <tr class="spec-row">
                     <td class="spec-key">SKU</td>
-                    <td class="spec-value">${variant.sku || 'Pending'}</td>
+                    <td class="spec-value">${variant.supplier_sku || 'Pending'}</td>
                 </tr>
                 <tr class="spec-row">
                     <td class="spec-key">Shipping origin</td>
@@ -587,7 +586,7 @@
         }
 
         function renderRelatedProductCard(product) {
-            const pid = product.id || product.product_id || product.sku || product.title;
+            const pid = product.id || product.product_id || product.supplier_sku || product.title;
             const pidUrl = encodeURIComponent(pid);
             const hasDiscount = Number(product.originalPrice || 0) > Number(product.price || 0);
             const discountPercent = hasDiscount ? Math.round((1 - (Number(product.price || 0) / Math.max(Number(product.originalPrice || 1), 1))) * 100) : 0;

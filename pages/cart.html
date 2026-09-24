@@ -138,7 +138,7 @@
     <script>
         function getItemStock(item) {
             const product = AppState.products.find(p => p.id === item.id);
-            const stock = Number(item.stock ?? product?.stock ?? 0);
+            const stock = Number(item.stock_quantity ?? product?.stock_quantity ?? 0);
             const inStock = stock > 0;
             if (!inStock) return { inStock: false, label: 'Out of stock' };
             if (stock <= 3) return { inStock: true, label: `${stock} left` };
@@ -167,7 +167,7 @@
             container.innerHTML = AppState.cart.map(item => {
                 const id = typeof item.id === 'string' ? JSON.stringify(item.id) : item.id;
                 const stock = getItemStock(item);
-                const origin = item.origin || item.supplier || 'Trusted source';
+                const supplier = item.supplier || 'Trusted source';
                 return `
                 <div class="cart-product">
                     <div class="cart-product-image">
@@ -176,7 +176,7 @@
                     <div class="cart-product-copy">
                         <h3 class="cart-product-title">${item.name}</h3>
                         <div class="cart-product-meta">
-                            <span class="meta-pill">${origin}</span>
+                            <span class="meta-pill">${supplier}</span>
                             <span class="meta-pill">${stock.label}</span>
                         </div>
                         <div class="quantity-pill">
@@ -209,13 +209,13 @@
 
         function updateOrderSummary() {
             const subtotal = Math.round(getCartTotal());
-            const origins = [...new Set(AppState.cart.map(item => item.origin || item.supplier || 'Trusted source'))];
-            const shipping = subtotal > 0 ? (subtotal >= 100000 ? 0 : 1200 + origins.length * 350) : 0;
+            const suppliers = [...new Set(AppState.cart.map(item => item.supplier || 'Trusted source'))];
+            const shipping = subtotal > 0 ? (subtotal >= 100000 ? 0 : 1200 + suppliers.length * 350) : 0;
             const vat = Math.round(subtotal * 0.075);
             const total = subtotal + shipping + vat;
 
-            document.getElementById('origin-summary').textContent = origins.length
-                ? `Grouped for dispatch from ${origins.join(' • ')}`
+            document.getElementById('origin-summary').textContent = suppliers.length
+                ? `Grouped for dispatch from ${suppliers.join(' • ')}`
                 : 'Your selections will be grouped by source region for faster dispatch planning.';
             document.getElementById('subtotal').textContent = formatCurrency(subtotal, AppState.displayCurrency);
             document.getElementById('shipping').textContent = formatCurrency(shipping, AppState.displayCurrency);

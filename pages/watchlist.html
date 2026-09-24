@@ -141,7 +141,7 @@
             if (!container) return;
 
             const savedProducts = AppState.products.filter(product => AppState.wishlist.includes(product.id));
-            const available = savedProducts.filter(product => Number(product.stock || (product.inStock ? 1 : 0)) > 0);
+            const available = savedProducts.filter(product => Number(product.stock_quantity || (product.inStock ? 1 : 0)) > 0);
 
             if (!savedProducts.length) {
                 container.innerHTML = `

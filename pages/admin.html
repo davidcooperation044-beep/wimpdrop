@@ -435,11 +435,11 @@
 
         function normalizeAdminProduct(raw) {
             return {
-                id: raw.id || raw.product_id || raw.SKU || raw.sku || 'n/a',
+                id: raw.id || raw.product_id || raw.supplier_sku || 'n/a',
                 title: raw['Product Title'] || raw.name || raw.title || raw['product_title'] || 'Untitled product',
                 image: raw['Product Image'] || raw.image || raw.product_image || raw['product_image'] || '',
-                sku: raw['SKU'] || raw.sku || raw['item_sku'] || raw['sku'] || 'n/a',
-                inventory: raw['Available Inventory'] ?? raw.stock_quantity ?? raw.available_inventory ?? raw.inventory ?? 'N/A',
+                supplierSku: raw.supplier_sku || 'n/a',
+                inventory: raw.stock_quantity ?? 'N/A',
                 status: raw.sync_status || raw['Product Status'] || raw.status || raw['Status'] || (raw.is_published ? 'active' : 'draft'),
                 addedAt: raw['Added Time'] || raw.added_at || raw.created_at || raw['created_at'] || '',
                 price: raw['Retail Price'] || raw.price || raw['Price'] || raw['product_price'] || '—',
@@ -497,7 +497,7 @@
                             </div>
                         </div>
                     </td>
-                    <td>${product.sku}</td>
+                    <td>${product.supplierSku}</td>
                     <td>${product.inventory}</td>
                     <td></td>
                     <td>${formatDate(product.addedAt)}</td>

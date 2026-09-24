@@ -647,7 +647,7 @@ function clearShopFilters() {
 
 function renderShopFilters(products) {
   if (!isShopPage()) return;
-  const origins = Array.from(new Set(products.map(p => (p.origin || 'Global') || 'Global'))).filter(Boolean);
+  const origins = Array.from(new Set(products.map(p => (p.supplier || 'Unknown supplier') || 'Unknown supplier'))).filter(Boolean);
   const priceMax = Math.max(100, Math.ceil((Math.max(...products.map(p => Number(p.price) || 0), AppState.shopFilters.priceMax || 0) || 100) / 100) * 100);
   const currentPrice = typeof AppState.shopFilters.priceMax === 'number' ? AppState.shopFilters.priceMax : priceMax;
   AppState.shopFilters.priceMax = currentPrice;
@@ -718,12 +718,12 @@ function applyShopFilters() {
   if (AppState.shopFilters.search) {
     const query = AppState.shopFilters.search.toLowerCase();
     filtered = filtered.filter((p) => {
-      return [p.name, p.origin, p.category, p.sku, p.description].some(field => (field || '').toString().toLowerCase().includes(query));
+      return [p.name, p.title, p.supplier, p.category, p.supplierSku, p.description].some(field => (field || '').toString().toLowerCase().includes(query));
     });
   }
 
   if (AppState.shopFilters.origins.length) {
-    filtered = filtered.filter(p => AppState.shopFilters.origins.includes(p.origin || 'Global'));
+    filtered = filtered.filter(p => AppState.shopFilters.origins.includes(p.supplier || 'Unknown supplier'));
   }
 
   if (AppState.shopFilters.priceMax) {
@@ -745,8 +745,8 @@ function applyShopFilters() {
       break;
     default:
       filtered.sort((a, b) => {
-        const aDate = new Date(a.added_at || a.added_time || a.created_at || Date.now());
-        const bDate = new Date(b.added_at || b.added_time || b.created_at || Date.now());
+        const aDate = new Date(a.created_at || Date.now());
+        const bDate = new Date(b.created_at || Date.now());
         return bDate - aDate;
       });
       break;
@@ -812,15 +812,15 @@ function removeShopChip(type, label) {
 function normalizeProduct(raw) {
   const price = Number(raw.price ?? raw.base_price ?? raw.total_cost ?? raw.shipping_fee ?? 0);
   const originalPrice = Number(raw.price ?? raw.base_price ?? raw.total_cost ?? raw.original_price ?? raw.originalPrice ?? 0);
-  const inventory = Number(raw.stock ?? raw.inventory_raw ?? raw.inventory ?? raw.cj_inventory_total ?? raw.factory_inventory_total ?? raw.my_inventory_total ?? 0);
+  const inventory = Number(raw.stock_quantity ?? 0);
   const title = raw.title || raw.name || raw.product_title || 'Untitled product';
   const image = raw.image_url || raw.image || raw.thumbnail || raw.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop';
   const status = raw.status || 'On Sale';
   const published = raw.is_published ?? true;
 
   return {
-    id: raw.id || raw.product_id || raw.variant_id || raw.sku || '',
-    product_id: raw.id || raw.product_id || raw.variant_id || raw.sku || '',
+    id: raw.id || raw.supplier_sku || '',
+    product_id: raw.id || raw.supplier_sku || '',
     name: title,
     category: raw.category || raw.category_name || raw.categoryName || 'General',
     price,
@@ -831,15 +831,14 @@ function normalizeProduct(raw) {
     supplier: raw.supplier || raw.brand || raw.source || 'Wimp-Drop Catalog',
     supplierProductId: raw.supplier_product_id || raw.supplierProductId || '',
     supplierVariantId: raw.supplier_variant_id || raw.supplierVariantId || raw.variant_id || '',
-    supplierSku: raw.supplier_sku || raw.supplierSku || raw.sku || '',
+    supplierSku: raw.supplier_sku || '',
     description: raw.description || raw.productDescription || raw.status || '',
-    stock: inventory,
+    stock_quantity: inventory,
     inStock: published && status !== 'Out of Stock' && inventory > 0,
     status,
-    origin: raw.shipping_from || raw.shippingFrom || raw.origin || raw.country || 'Global',
+    supplier: raw.supplier || 'Wimp-Drop Catalog',
     variants: Array.isArray(raw.variants) ? raw.variants : [],
-    sku: raw.sku || raw.variant_sku || raw.item_sku || '',
-    added_at: raw.added_time || raw.added_at || raw.price_update_time || raw.created_at || '',
+    created_at: raw.created_at || '',
     shippingTime: raw.shippingTime || raw.lead_time || 'Standard',
     url: raw.url || raw.detailUrl || raw.product_url || raw.link || '',
     is_published: published
@@ -852,7 +851,7 @@ function groupProductsByProductId(products) {
     // in the flat table (no shared parent id) and would never group
     // variants together. Title is the real signal that rows belong to
     // the same product.
-    const key = (product.name || product.title || product.sku || product.id || '')
+    const key = (product.name || product.title || product.supplierSku || product.id || '')
       .toString()
       .trim()
       .toLowerCase();
@@ -887,7 +886,7 @@ function renderProductGroupCard(group) {
         <h3 class="product-name"><a href="product.html?id=${encodeURIComponent(selected.id)}">${selected.name}</a></h3>
         <div class="product-meta">
           <span class="product-status ${selected.inStock ? 'in-stock' : 'out-stock'}">${stockStatus}</span>
-          <span class="product-origin">${selected.origin}</span>
+          <span class="product-origin">${selected.supplier}</span>
         </div>
         <div class="product-price">
           <span class="price-current">${formatCurrency(lowPrice)}</span>
@@ -1329,7 +1328,7 @@ function renderHomepageSections(products) {
             <h3>${product.name}</h3>
             <p>${product.description || 'Live inventory and origin-aware shipping details are surfaced directly from the catalog.'}</p>
             <div class="hero-slide-meta">
-              <span>${product.origin || 'Global'}</span>
+              <span>${product.supplier || 'Wimp-Drop Catalog'}</span>
               <span>${product.inStock ? 'In stock' : 'Limited stock'}</span>
             </div>
           </div>
@@ -1387,8 +1386,8 @@ function renderHomepageSections(products) {
   }
 
   if (trustOrigin) {
-    const origin = normalizedProducts.find(product => product.origin)?.origin || 'Global';
-    trustOrigin.textContent = `Ships from ${origin}`;
+    const supplier = normalizedProducts.find(product => product.supplier)?.supplier || 'Wimp-Drop Catalog';
+    trustOrigin.textContent = `Supplier: ${supplier}`;
   }
 }
 
@@ -1410,7 +1409,7 @@ function inferCategoryLabel(product) {
 }
 
 function renderHomeProductCard(product) {
-  const pid = product.id || product.product_id || product.sku || product.name;
+  const pid = product.id || product.product_id || product.supplierSku || product.name;
   const pidUrl = encodeURIComponent(pid);
   const hasDiscount = Number(product.originalPrice || 0) > Number(product.price || 0);
   const discountPercent = hasDiscount ? Math.round((1 - (Number(product.price || 0) / Math.max(Number(product.originalPrice || 1), 1))) * 100) : 0;
@@ -1428,7 +1427,7 @@ function renderHomeProductCard(product) {
         <h3 class="product-name"><a href="product.html?id=${pidUrl}">${product.name}</a></h3>
         <div class="product-meta">
           <span class="product-status ${product.inStock ? 'in-stock' : 'out-stock'}">${product.inStock ? 'Available' : 'Limited'}</span>
-          <span class="product-origin">${product.origin || 'Global'}</span>
+          <span class="product-origin">${product.supplier || 'Wimp-Drop Catalog'}</span>
         </div>
         <div class="product-price">
           <span class="price-current">${formatCurrency(product.price)}</span>

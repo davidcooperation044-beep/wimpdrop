@@ -392,51 +392,22 @@ class SupabaseService {
   // ══════════════════════════════════════
 
   getPublicProductSelectColumns() {
-    return [
-      'id',
-      'name',
-      'title',
-      'image_url',
-      'sku',
-      'variant',
-      'shipping_from',
-      'inventory_raw',
-      'stock',
-      'cj_inventory_total',
-      'factory_inventory_total',
-      'my_inventory_total',
-      'cn_warehouse_cj_inventory',
-      'us_warehouse_cj_inventory',
-      'us_warehouse_verified_factory_inventory',
-      'cn_warehouse_unverified_factory_inventory',
-      'price',
-      'supplier',
-      'supplier_product_id',
-      'supplier_variant_id',
-      'supplier_sku',
-      'supplier_cost',
-      'stock_quantity',
-      'sync_status',
-      'added_time',
-      'price_updated',
-      'price_change',
-      'price_update_time',
-      'dimensions_mm',
-      'weight_g',
-      'packing_weight_g',
-      'pickup_supported',
-      'status',
-      'is_published',
-      'created_at',
-      'updated_at'
-    ].join(',');
+    return '*';
   }
 
   async getProducts(filters = {}) {
     try {
       const sb = await this.getClient();
       const selectColumns = this.getPublicProductSelectColumns();
-      const sortField = filters.sortBy === 'newest' ? 'added_time' : filters.sortBy === 'price-low' ? 'price' : filters.sortBy;
+      const sortFields = {
+        newest: 'created_at',
+        'price-low': 'price',
+        'price-high': 'price',
+        rating: 'rating',
+        stock: 'stock_quantity'
+      };
+      const sortField = sortFields[filters.sortBy] || filters.sortBy;
+      const sortAscending = filters.sortBy === 'price-low' || (filters.sortBy !== 'price-high' && filters.sortAsc !== false);
       const includeUnpublished = filters.includeUnpublished === true;
 
       if (sb.from) {
@@ -446,13 +417,13 @@ class SupabaseService {
             query = query.eq('is_published', true);
           }
           if (filters.search) {
-            query = query.or(`title.ilike.%${filters.search}%,sku.ilike.%${filters.search}%,variant.ilike.%${filters.search}%`);
+            query = query.or(`title.ilike.%${filters.search}%,name.ilike.%${filters.search}%,supplier_sku.ilike.%${filters.search}%`);
           }
           if (filters.priceMax) query = query.lte('price', filters.priceMax);
           if (filters.limit) query = query.limit(filters.limit);
           if (filters.offset) query = query.range(filters.offset, filters.offset + (filters.limit || 12) - 1);
           if (withSort && sortField) {
-            query = query.order(sortField, { ascending: filters.sortAsc !== false });
+            query = query.order(sortField, { ascending: sortAscending });
           }
           return query;
         };
@@ -479,12 +450,12 @@ class SupabaseService {
           url += '&is_published=eq.true';
         }
         if (filters.search) {
-          url += `&or=(title.ilike.%${encodeURIComponent(filters.search)}%,sku.ilike.%${encodeURIComponent(filters.search)}%,variant.ilike.%${encodeURIComponent(filters.search)}%)`;
+          url += `&or=(title.ilike.%${encodeURIComponent(filters.search)}%,name.ilike.%${encodeURIComponent(filters.search)}%,supplier_sku.ilike.%${encodeURIComponent(filters.search)}%)`;
         }
         if (filters.priceMax) url += `&price=lte.${filters.priceMax}`;
         if (filters.limit) url += `&limit=${filters.limit}`;
         if (filters.offset) url += `&offset=${filters.offset}`;
-        if (includeOrder && sortField) url += `&order=${encodeURIComponent(`${sortField}.${filters.sortAsc === false ? 'asc' : 'desc'}`)}`;
+        if (includeOrder && sortField) url += `&order=${encodeURIComponent(`${sortField}.${sortAscending ? 'asc' : 'desc'}`)}`;
         return url;
       };
 
@@ -542,10 +513,10 @@ class SupabaseService {
           if (identifier.length === 36 && identifier.includes('-')) {
             query = query.eq('id', identifier);
           } else {
-            query = query.or(`sku.eq.${identifier},title.eq.${identifier}`);
+            query = query.or(`supplier_sku.eq.${identifier},title.eq.${identifier},name.eq.${identifier}`);
           }
         }
-        const { data, error } = await query.order('added_time', { ascending: false });
+        const { data, error } = await query.order('created_at', { ascending: false });
         if (error) throw error;
         return { success: true, products: data || [] };
       }
