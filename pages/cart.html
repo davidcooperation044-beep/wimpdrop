@@ -171,7 +171,7 @@
                 return `
                 <div class="cart-product">
                     <div class="cart-product-image">
-                        <img src="${item.image}" alt="${item.name}">
+                        <img src="${item.image}" alt="${item.name}" loading="lazy" decoding="async" sizes="76px">
                     </div>
                     <div class="cart-product-copy">
                         <h3 class="cart-product-title">${item.name}</h3>
@@ -180,13 +180,13 @@
                             <span class="meta-pill">${stock.label}</span>
                         </div>
                         <div class="quantity-pill">
-                            <button type="button" onclick="handleUpdateQuantity(${id}, ${item.quantity - 1})">−</button>
+                            <button type="button" aria-label="Decrease quantity" onclick="handleUpdateQuantity(${id}, ${item.quantity - 1})">−</button>
                             <span>${item.quantity}</span>
-                            <button type="button" onclick="handleUpdateQuantity(${id}, ${item.quantity + 1})">+</button>
+                            <button type="button" aria-label="Increase quantity" onclick="handleUpdateQuantity(${id}, ${item.quantity + 1})">+</button>
                         </div>
                     </div>
                     <div class="cart-product-actions">
-                        <button class="icon-btn" style="font-size: 1rem; padding: 0.25rem;" onclick="handleRemoveFromCart(${id})" title="Remove item">✕</button>
+                        <button class="icon-btn" style="font-size: 1rem; padding: 0.25rem;" onclick="handleRemoveFromCart(${id})" title="Remove item" aria-label="Remove ${item.name} from cart">✕</button>
                         <div class="cart-product-price">${formatCurrency(item.price * item.quantity)}</div>
                     </div>
                 </div>

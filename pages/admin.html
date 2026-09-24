@@ -395,7 +395,7 @@
                 row.innerHTML = `
                     <td>
                         <div style="display:flex;align-items:center;gap:0.75rem;">
-                            <img src="${product.image || 'https://via.placeholder.com/56'}" alt="${product.title}" class="admin-product-image">
+                            <img src="${product.image || 'https://via.placeholder.com/56'}" alt="${product.title}" loading="lazy" decoding="async" width="56" height="56" class="admin-product-image">
                             <div>
                                 <strong style="color:white;display:block;">${product.title}</strong>
                                 <span style="font-size:0.85rem;color:var(--text-secondary);">${product.vendor || ''}</span>

@@ -125,7 +125,7 @@
 
                         <div class="quantity-selector">
                             <button class="quantity-btn" type="button" onclick="decreaseQuantity()">−</button>
-                            <input type="number" id="quantity" value="1" min="1" max="100" class="quantity-input">
+                            <input type="number" id="quantity" value="1" min="1" max="100" inputmode="numeric" autocomplete="off" class="quantity-input">
                             <button class="quantity-btn" type="button" onclick="increaseQuantity()">+</button>
                         </div>
 
@@ -442,12 +442,12 @@
 
             galleryContainer.innerHTML = galleryImages.map((img, index) => `
                 <button class="thumbnail-item ${index === selectedGalleryIndex ? 'active' : ''}" type="button" data-thumb-index="${index}" onclick="setGalleryImage(${index})">
-                    <img src="${img}" alt="Gallery view ${index + 1}">
+                        <img src="${img}" alt="Gallery view ${index + 1}" loading="lazy" decoding="async" sizes="72px">
                 </button>
             `).join('');
 
             dotsContainer.innerHTML = galleryImages.map((_, index) => `
-                <button class="gallery-dot ${index === selectedGalleryIndex ? 'active' : ''}" type="button" data-index="${index}" onclick="setGalleryImage(${index})"></button>
+                <button class="gallery-dot ${index === selectedGalleryIndex ? 'active' : ''}" type="button" data-index="${index}" aria-label="Show gallery image ${index + 1}" onclick="setGalleryImage(${index})"></button>
             `).join('');
 
             attachSwipeGallery();
@@ -467,15 +467,15 @@
             const stage = document.getElementById('product-image-stage');
             if (!stage) return;
             let touchStartX = 0;
-            stage.onTouchStart = (event) => {
+            stage.addEventListener('touchstart', (event) => {
                 touchStartX = event.touches[0].clientX;
-            };
-            stage.onTouchEnd = (event) => {
+            }, { passive: true });
+            stage.addEventListener('touchend', (event) => {
                 const delta = event.changedTouches[0].clientX - touchStartX;
                 if (Math.abs(delta) < 50) return;
                 const nextIndex = delta < 0 ? (selectedGalleryIndex + 1) % galleryImages.length : (selectedGalleryIndex - 1 + galleryImages.length) % galleryImages.length;
                 setGalleryImage(nextIndex);
-            };
+            }, { passive: true });
         }
 
         function renderSpecsTable(variant) {
@@ -596,7 +596,7 @@
                     ${hasDiscount ? `<div class="discount-badge">-${discountPercent}%</div>` : ''}
                     <div class="product-image">
                         <a href="/pages/product.html?id=${pidUrl}" class="product-link">
-                            <img src="${product.image}" alt="${product.title}" class="product-image-inner">
+                            <img src="${product.image}" alt="${product.title}" loading="lazy" decoding="async" sizes="(max-width: 480px) 100vw, (max-width: 899px) 50vw, 320px" class="product-image-inner">
                         </a>
                     </div>
                     <div class="product-info">

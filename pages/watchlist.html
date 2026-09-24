@@ -158,13 +158,13 @@
                             <article class="wishlist-card">
                                 <div class="product-image">
                                     <a href="/pages/product.html?id=${encodeURIComponent(product.id)}" class="product-link">
-                                        <img src="${product.image}" alt="${product.name}">
+                                        <img src="${product.image}" alt="${product.name}" loading="lazy" decoding="async" sizes="(max-width: 480px) 100vw, 320px">
                                     </a>
                                 </div>
                                 <div class="product-info">
                                     <div class="wishlist-meta">
                                         <span class="wishlist-pill">${product.category || 'Featured'}</span>
-                                        <button class="icon-btn" onclick="toggleWishlist('${product.id}')" title="Remove from watchlist">♡</button>
+                                        <button class="icon-btn" onclick="toggleWishlist('${product.id}')" title="Remove from watchlist" aria-label="Remove ${product.name} from watchlist">♡</button>
                                     </div>
                                     <h3 class="product-name" style="margin: 0; min-height: auto;">${product.name}</h3>
                                     <div class="product-price">

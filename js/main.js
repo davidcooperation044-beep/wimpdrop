@@ -876,7 +876,7 @@ function renderProductGroupCard(group) {
       ${hasDiscount ? `<div class="discount-badge">-${discountPercent}%</div>` : ''}
       <div class="product-image">
         <a href="product.html?id=${encodeURIComponent(selected.id)}" class="product-link">
-          <img src="${selected.image}" alt="${selected.name}" class="product-image-inner">
+          <img src="${selected.image}" alt="${selected.name}" loading="lazy" decoding="async" sizes="(max-width: 480px) 100vw, (max-width: 899px) 50vw, 320px" class="product-image-inner">
         </a>
       </div>
       <div class="product-info">
@@ -925,7 +925,7 @@ function renderProducts(products) {
       <div class="supplier-badge">${product.supplier || ''}</div>
       <div class="product-image">
         <a href="product.html?id=${pidUrl}" class="product-link">
-          <img src="${product.image}" alt="${product.name}" class="product-image-inner">
+          <img src="${product.image}" alt="${product.name}" loading="lazy" decoding="async" sizes="(max-width: 480px) 100vw, (max-width: 899px) 50vw, 320px" class="product-image-inner">
         </a>
       </div>
       <div class="product-info">
@@ -942,8 +942,8 @@ function renderProducts(products) {
         <div class="product-actions">
           <button class="btn btn-primary btn-small flex-1" onclick="addToCart(${pidJson})">Add to Cart</button>
           <button class="btn btn-primary btn-small" onclick="buyNow(${pidJson})">Buy Now</button>
-          <button class="btn btn-outline btn-small" onclick="toggleWishlist(${pidJson})" title="Add to Wishlist">♡</button>
-          <button class="btn btn-outline btn-small" onclick="quickView(${pidJson})" title="Quick view">👁</button>
+          <button class="btn btn-outline btn-small" onclick="toggleWishlist(${pidJson})" title="Add to Wishlist" aria-label="Add ${product.name} to wishlist">♡</button>
+          <button class="btn btn-outline btn-small" onclick="quickView(${pidJson})" title="Quick view" aria-label="Quick view ${product.name}">👁</button>
         </div>
       </div>
     </div>
@@ -1075,6 +1075,9 @@ function getCartItemCount() {
 }
 
 function updateCartBadge() {
+  window.dispatchEvent(new CustomEvent('wimp:cart-state-changed', {
+    detail: { count: getCartItemCount(), items: AppState.cart }
+  }));
   const badge = document.querySelector('[data-cart-badge]');
   if (badge) {
     const count = getCartItemCount();
@@ -1256,7 +1259,7 @@ function renderProducts(products) {
       <div class="supplier-badge">${product.supplier || ''}</div>
       <div class="product-image">
         <a href="product.html?id=${pidUrl}" class="product-link">
-          <img src="${product.image}" alt="${product.name}" class="product-image-inner">
+          <img src="${product.image}" alt="${product.name}" loading="lazy" decoding="async" sizes="(max-width: 480px) 100vw, (max-width: 899px) 50vw, 320px" class="product-image-inner">
         </a>
       </div>
       <div class="product-info">
@@ -1273,8 +1276,8 @@ function renderProducts(products) {
         <div class="product-actions">
           <button class="btn btn-primary btn-small flex-1" onclick="addToCart(${pidJson})">Add to Cart</button>
           <button class="btn btn-primary btn-small" onclick="buyNow(${pidJson})">Buy Now</button>
-          <button class="btn btn-outline btn-small" onclick="toggleWishlist(${pidJson})" title="Add to Wishlist">♡</button>
-          <button class="btn btn-outline btn-small" onclick="quickView(${pidJson})" title="Quick view">👁</button>
+          <button class="btn btn-outline btn-small" onclick="toggleWishlist(${pidJson})" title="Add to Wishlist" aria-label="Add ${product.name} to wishlist">♡</button>
+          <button class="btn btn-outline btn-small" onclick="quickView(${pidJson})" title="Quick view" aria-label="Quick view ${product.name}">👁</button>
         </div>
       </div>
     </div>
@@ -1325,7 +1328,7 @@ function renderHomepageSections(products) {
             </div>
           </div>
           <div class="hero-slide-visual">
-            <img src="${product.image}" alt="${product.name}">
+            <img src="${product.image}" alt="${product.name}" loading="lazy" decoding="async" sizes="(max-width: 480px) 100vw, (max-width: 899px) 50vw, 320px">
           </div>
         </div>
       </div>
@@ -1411,7 +1414,7 @@ function renderHomeProductCard(product) {
       ${hasDiscount ? `<div class="discount-badge">-${discountPercent}%</div>` : ''}
       <div class="product-image">
         <a href="product.html?id=${pidUrl}" class="product-link">
-          <img src="${product.image}" alt="${product.name}" class="product-image-inner">
+          <img src="${product.image}" alt="${product.name}" loading="lazy" decoding="async" sizes="(max-width: 480px) 100vw, (max-width: 899px) 50vw, 320px" class="product-image-inner">
         </a>
       </div>
       <div class="product-info">
