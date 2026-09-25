@@ -1,6 +1,12 @@
 import { db, handleOptions, json } from '../_shared/cj.ts';
 import { getSupplierAdapter } from '../_shared/cj-adapter.ts';
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const THROTTLE_MS = 300;
+
 Deno.serve(async (request) => {
   const options = handleOptions(request);
   if (options) return options;
@@ -16,7 +22,10 @@ Deno.serve(async (request) => {
     const supplier = getSupplierAdapter('cj');
     const { data: products, error } = await db.from('products').select('id,supplier_variant_id,supplier_product_id,supplier_cost,price').eq('supplier', 'cj').not('supplier_variant_id', 'is', null);
     if (error) throw error;
+    let first = true;
     for (const product of products || []) {
+      if (!first) await sleep(THROTTLE_MS);
+      first = false;
       const stockResult = await supplier.getStock(product.supplier_variant_id);
       const supplierCost = product.supplier_product_id ? await supplier.getPrice(product.supplier_product_id) : Number(product.supplier_cost || 0);
       const stock = stockResult.quantity;

@@ -49,6 +49,11 @@ export async function requireAdmin(request: Request): Promise<void> {
     throw new Error('Admin access required');
   }
 }
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function cjFetch(path: string, init: RequestInit = {}): Promise<any> {
   const response = await fetch(`${CJ_BASE_URL}${path}`, {
     ...init,
@@ -61,9 +66,11 @@ async function cjFetch(path: string, init: RequestInit = {}): Promise<any> {
   let body: any;
   try { body = text ? JSON.parse(text) : null; } catch { body = { message: text }; }
   if (!response.ok || body?.result === false || body?.success === false) {
-    const error = new Error(body?.message || `CJ request failed (${response.status})`);
+    const message = body?.message || `CJ request failed (${response.status})`;
+    const error = new Error(message);
     (error as any).status = response.status;
     (error as any).response = body;
+    (error as any).rateLimited = response.status === 429 || /too many requests|ip limit/i.test(message);
     throw error;
   }
   return body;
@@ -87,6 +94,41 @@ async function saveTokens(data: any): Promise<void> {
   if (error) throw error;
 }
 
+// --- Auth lock: prevents concurrent requests from each firing their own
+// CJ getAccessToken call, which is what trips CJ's "N users per IP" cap. ---
+
+const LOCK_TTL_MS = 20000;
+const LOCK_POLL_INTERVAL_MS = 500;
+const LOCK_WAIT_TIMEOUT_MS = 15000;
+
+async function acquireAuthLock(): Promise<boolean> {
+  const cutoff = new Date(Date.now() - LOCK_TTL_MS).toISOString();
+  const { data, error } = await db
+    .from('cj_auth_lock')
+    .update({ locked_at: new Date().toISOString() })
+    .eq('id', true)
+    .or(`locked_at.is.null,locked_at.lt.${cutoff}`)
+    .select('id');
+  if (error) throw error;
+  return Array.isArray(data) && data.length > 0;
+}
+
+async function releaseAuthLock(): Promise<void> {
+  await db.from('cj_auth_lock').update({ locked_at: null }).eq('id', true);
+}
+
+async function waitForFreshToken(since: number): Promise<string | null> {
+  const deadline = Date.now() + LOCK_WAIT_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    await sleep(LOCK_POLL_INTERVAL_MS);
+    const { data } = await db.from('cj_token_cache').select('*').eq('id', true).maybeSingle();
+    if (data && new Date(data.updated_at).getTime() >= since && new Date(data.access_token_expires_at).getTime() > Date.now()) {
+      return data.access_token;
+    }
+  }
+  return null;
+}
+
 export async function getCjAccessToken(forceRefresh = false): Promise<string> {
   const { data, error } = await db.from('cj_token_cache').select('*').eq('id', true).maybeSingle();
   if (error) throw error;
@@ -94,25 +136,44 @@ export async function getCjAccessToken(forceRefresh = false): Promise<string> {
   if (!forceRefresh && data && new Date(data.access_token_expires_at).getTime() > refreshWindow) {
     return data.access_token;
   }
-  if (!data?.refresh_token || new Date(data.refresh_token_expires_at).getTime() <= Date.now()) {
-    const authenticated = await authenticateWithApiKey();
-    return authenticated.data.accessToken;
+
+  const requestStart = Date.now();
+  const gotLock = await acquireAuthLock();
+  if (!gotLock) {
+    // Another invocation is already authenticating/refreshing. Wait for it
+    // instead of also calling CJ, to avoid tripping the per-IP session cap.
+    const token = await waitForFreshToken(requestStart);
+    if (token) return token;
+    // Fell through: the other invocation didn't finish in time or failed.
+    // Try to acquire the lock ourselves before giving up.
+    const gotLockRetry = await acquireAuthLock();
+    if (!gotLockRetry) {
+      throw new Error('CJ authentication is already in progress. Please try again in a few seconds.');
+    }
   }
 
   try {
-    const refreshed = await cjFetch('/authentication/refreshAccessToken', {
-      method: 'POST',
-      body: JSON.stringify({ refreshToken: data.refresh_token })
-    });
-    await saveTokens(refreshed.data);
-    return refreshed.data.accessToken;
-  } catch (error) {
-    const response = (error as any).response;
-    if ((error as any).status === 401 || response?.code === 1600001 || /refresh token/i.test((error as Error).message)) {
+    if (!data?.refresh_token || new Date(data.refresh_token_expires_at).getTime() <= Date.now()) {
       const authenticated = await authenticateWithApiKey();
       return authenticated.data.accessToken;
     }
-    throw error;
+    try {
+      const refreshed = await cjFetch('/authentication/refreshAccessToken', {
+        method: 'POST',
+        body: JSON.stringify({ refreshToken: data.refresh_token })
+      });
+      await saveTokens(refreshed.data);
+      return refreshed.data.accessToken;
+    } catch (err) {
+      const response = (err as any).response;
+      if ((err as any).status === 401 || response?.code === 1600001 || /refresh token/i.test((err as Error).message)) {
+        const authenticated = await authenticateWithApiKey();
+        return authenticated.data.accessToken;
+      }
+      throw err;
+    }
+  } finally {
+    await releaseAuthLock();
   }
 }
 

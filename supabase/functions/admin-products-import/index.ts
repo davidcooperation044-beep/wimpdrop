@@ -45,6 +45,14 @@ Deno.serve(async (request) => {
     }
     return json({ success: true, imported: rows.length, requiresReview: true, source: result });
   } catch (error) {
-    return json({ success: false, error: (error as Error).message }, 400);
+    const err = error as any;
+    if (err?.rateLimited) {
+      return json({
+        success: false,
+        error: 'CJ is rate-limiting this account right now. Please wait a few seconds and try again.',
+        retryable: true
+      }, 429);
+    }
+    return json({ success: false, error: err?.message || String(error) }, 400);
   }
 });
