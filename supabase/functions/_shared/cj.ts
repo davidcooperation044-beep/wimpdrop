@@ -38,13 +38,17 @@ export async function requireAdmin(request: Request): Promise<void> {
 
   const { data, error } = await db.auth.getUser(token);
   if (error || !data.user) throw new Error('Authentication required');
-  const metadata = data.user.app_metadata || {};
-  const userMetadata = data.user.user_metadata || {};
-  if (metadata.is_admin !== true && userMetadata.is_admin !== true && userMetadata.role !== 'admin') {
+
+  const { data: profile, error: profileError } = await db
+    .from('user_profiles')
+    .select('is_admin')
+    .eq('id', data.user.id)
+    .single();
+
+  if (profileError || !profile?.is_admin) {
     throw new Error('Admin access required');
   }
 }
-
 async function cjFetch(path: string, init: RequestInit = {}): Promise<any> {
   const response = await fetch(`${CJ_BASE_URL}${path}`, {
     ...init,
