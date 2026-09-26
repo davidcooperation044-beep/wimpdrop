@@ -437,7 +437,7 @@
             return {
                 id: raw.id || raw.product_id || raw.supplier_sku || 'n/a',
                 title: raw['Product Title'] || raw.name || raw.title || raw['product_title'] || 'Untitled product',
-                image: raw['Product Image'] || raw.image || raw.product_image || raw['product_image'] || '',
+                image: raw['Product Image'] || raw.image_url || raw.image || raw.product_image || raw['product_image'] || '',
                 supplierSku: raw.supplier_sku || 'n/a',
                 inventory: raw.stock_quantity ?? 'N/A',
                 status: raw.sync_status || raw['Product Status'] || raw.status || raw['Status'] || (raw.is_published ? 'active' : 'draft'),
@@ -490,7 +490,7 @@
                 row.innerHTML = `
                     <td>
                         <div style="display:flex;align-items:center;gap:0.75rem;">
-                            <img src="${product.image || 'https://via.placeholder.com/56'}" alt="${product.title}" loading="lazy" decoding="async" width="56" height="56" class="admin-product-image">
+                            <img src="${product.image || 'https://placehold.co/56x56'}" alt="${product.title}" loading="lazy" decoding="async" width="56" height="56" class="admin-product-image">
                             <div>
                                 <strong style="color:white;display:block;">${product.title}</strong>
                                 <span style="font-size:0.85rem;color:var(--text-secondary);">${product.vendor || ''}</span>
@@ -568,8 +568,7 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td><input class="review-checkbox" type="checkbox" value="${product.id}" data-draft-check aria-label="Select ${product.title}"></td>
-                    <td><div style="display:flex;align-items:center;gap:0.75rem;"><img src="${product.image || 'https://via.placeholder.com/56'}" alt="${product.title}" width="56" height="56" class="admin-product-image"><input class="review-edit" data-draft-name value="${String(product.title).replace(/"/g, '&quot;')}" aria-label="Product name"></div></td>
-                    <td>${product.supplierCost}</td>
+                    <td><div style="display:flex;align-items:center;gap:0.75rem;"><img src="${product.image || 'https://placehold.co/56x56'}" alt="${product.title}" width="56" height="56" class="admin-product-image"><input class="review-edit" data-draft-name value="${String(product.title).replace(/"/g, '&quot;')}" aria-label="Product name"></div></td><td>${product.supplierCost}</td>
                     <td><input class="review-edit" data-draft-price type="number" min="0" step="0.01" value="${Number(product.price) || 0}" aria-label="Sell price"></td>
                     <td>${product.inventory}</td>
                     <td><div class="review-actions"><button class="btn btn-outline btn-small" type="button" data-save-draft>Save</button><button class="btn btn-primary btn-small" type="button" data-publish-draft>Publish</button><button class="btn btn-secondary btn-small" type="button" data-delete-draft>Delete</button></div></td>
