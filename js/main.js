@@ -847,14 +847,15 @@ function normalizeProduct(raw) {
 
 function groupProductsByProductId(products) {
   return products.reduce((groups, product) => {
-    // Group by normalized title, since product_id is unique per SKU row
-    // in the flat table (no shared parent id) and would never group
-    // variants together. Title is the real signal that rows belong to
-    // the same product.
-    const key = (product.name || product.title || product.supplierSku || product.id || '')
-      .toString()
-      .trim()
-      .toLowerCase();
+    // Group by the actual product identity, never by title text — CJ's
+    // catalog frequently reuses generic, near-duplicate names across
+    // completely unrelated listings (e.g. multiple different products
+    // all named "26 English Alphabet Silicone Phone Cases"), which used
+    // to merge unrelated rows into one card and show the wrong price.
+    // supplier_product_id ties real variants of the SAME listing together;
+    // falling back to the row's own id means two unrelated rows only ever
+    // group together if they explicitly share a supplier product id.
+    const key = (product.supplierProductId || product.id || '').toString().trim() || `row-${Math.random()}`;
     if (!groups[key]) groups[key] = [];
     groups[key].push(product);
     return groups;
@@ -904,16 +905,24 @@ function renderProductGroupCard(group) {
 }
 
 function renderProducts(products) {
+  if (isHomePage()) {
+    renderHomepageSections(products);
+    return;
+  }
+
   const productList = document.getElementById('product-list');
   if (!productList) return;
 
   if (isShopPage()) {
-    const grouped = groupProductsByProductId(products);
-    const cards = Object.values(grouped).map(group => renderProductGroupCard(group));
+    // products here are already one-per-distinct-product (grouped in
+    // loadProducts), each carrying its full variant list in variantRows.
+    // Re-grouping here would collapse each product back down to just
+    // itself and lose the other variants, so use variantRows directly.
+    const cards = products.map(p => renderProductGroupCard(p.variantRows && p.variantRows.length ? p.variantRows : [p]));
     productList.innerHTML = cards.join('');
     return;
   }
-
+  
   productList.innerHTML = products.map(product => {
     const pid = product.id;
     const pidUrl = encodeURIComponent(pid);
@@ -1230,64 +1239,6 @@ async function loadProducts(filters = {}) {
     console.error('Error loading products:', error);
     showNotification('Failed to load products', 'error');
   }
-}
-
-function renderProducts(products) {
-  if (isHomePage()) {
-    renderHomepageSections(products);
-    return;
-  }
-
-  const productList = document.getElementById('product-list');
-  if (!productList) return;
-
-  if (isShopPage()) {
-    // products here are already one-per-distinct-product (grouped in
-    // loadProducts), each carrying its full variant list in variantRows.
-    // Re-grouping here would collapse each product back down to just
-    // itself and lose the other variants, so use variantRows directly.
-    const cards = products.map(p => renderProductGroupCard(p.variantRows && p.variantRows.length ? p.variantRows : [p]));
-    productList.innerHTML = cards.join('');
-    return;
-  }
-  
-  productList.innerHTML = products.map(product => {
-    const pid = product.id;
-    const pidUrl = encodeURIComponent(pid);
-    const pidJson = JSON.stringify(pid);
-    const stars = '★'.repeat(Math.floor(product.rating)) + '☆'.repeat(5 - Math.floor(product.rating));
-    const hasDiscount = product.originalPrice && product.originalPrice > product.price;
-    const discountPercent = hasDiscount ? Math.round((1 - (product.price / product.originalPrice)) * 100) : 0;
-    return `
-    <div class="product-card">
-      ${hasDiscount ? `<div class="discount-badge">-${discountPercent}%</div>` : ''}
-      <div class="supplier-badge">${product.supplier || ''}</div>
-      <div class="product-image">
-        <a href="product.html?id=${pidUrl}" class="product-link">
-          <img src="${product.image}" alt="${product.name}" loading="lazy" decoding="async" sizes="(max-width: 480px) 100vw, (max-width: 899px) 50vw, 320px" class="product-image-inner">
-        </a>
-      </div>
-      <div class="product-info">
-        <div class="product-category">${product.category}</div>
-        <h3 class="product-name"><a href="product.html?id=${pidUrl}" style="text-decoration: none; color: inherit; cursor: pointer;">${product.name}</a></h3>
-        <div class="product-rating">
-          <span class="stars">${stars}</span>
-          <span class="rating-count">${product.rating} (${product.reviews})</span>
-        </div>
-        <div class="product-price">
-          <span class="price-current">${formatCurrency(product.price)}</span>
-          <span class="price-original">${formatCurrency(product.originalPrice)}</span>
-        </div>
-        <div class="product-actions">
-          <button class="btn btn-primary btn-small flex-1" onclick="addToCart(${pidJson})">Add to Cart</button>
-          <button class="btn btn-primary btn-small" onclick="buyNow(${pidJson})">Buy Now</button>
-          <button class="btn btn-outline btn-small" onclick="toggleWishlist(${pidJson})" title="Add to Wishlist" aria-label="Add ${product.name} to wishlist">♡</button>
-          <button class="btn btn-outline btn-small" onclick="quickView(${pidJson})" title="Quick view" aria-label="Quick view ${product.name}">👁</button>
-        </div>
-      </div>
-    </div>
-  `;
-  }).join('');
 }
 
 function renderHomepageSections(products) {
