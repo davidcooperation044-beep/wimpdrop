@@ -580,7 +580,7 @@
             const updates = {
                 full_name: `${firstNameInput?.value || ''} ${lastNameInput?.value || ''}`.trim(),
                 phone: phoneInput?.value || '',
-                dob: dobInput?.value || ''
+                dob: dobInput?.value || null
             };
 
             if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
