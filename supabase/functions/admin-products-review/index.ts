@@ -43,15 +43,35 @@ Deno.serve(async (request) => {
       return json({ success: false, error: 'Update accepts exactly one productId.' }, 400);
     }
 
-    if (action === 'update') {
+        if (action === 'update') {
       const name = typeof body.name === 'string' ? body.name.trim() : '';
       const price = Number(body.price);
       if (!name || !Number.isFinite(price) || price < 0) {
         return json({ success: false, error: 'Update requires a non-empty name and non-negative numeric price.' }, 400);
       }
-      const { data, error } = await db.from('products').update({ name, title: name, price }).eq('id', productIds[0]).select().single();
-      if (error) throw error;
-      return json({ success: true, action, product: data });
+
+      const { data: current, error: fetchError } = await db
+        .from('products')
+        .select('id,supplier_product_id,variant_size')
+        .eq('id', productIds[0])
+        .single();
+      if (fetchError) throw fetchError;
+
+      // Update this row's name always. Price applies to every variant that
+      // shares the same supplier_product_id AND the same size (so different
+      // colors of the same size all get this price, but other sizes don't).
+      const { error: nameError } = await db.from('products').update({ name, title: name }).eq('id', productIds[0]);
+      if (nameError) throw nameError;
+
+      let priceQuery = db.from('products').update({ price }).eq('supplier_product_id', current.supplier_product_id);
+      priceQuery = current.variant_size === null
+        ? priceQuery.is('variant_size', null)
+        : priceQuery.eq('variant_size', current.variant_size);
+
+      const { data: updated, error: priceError } = await priceQuery.select();
+      if (priceError) throw priceError;
+
+      return json({ success: true, action, updatedCount: updated?.length || 0, product: updated?.find((p: any) => p.id === productIds[0]) });
     }
 
     if (action === 'delete') {
