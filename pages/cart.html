@@ -165,7 +165,13 @@
             }
 
             container.innerHTML = AppState.cart.map(item => {
-                const id = typeof item.id === 'string' ? JSON.stringify(item.id) : item.id;
+                // id is turned into a JS literal (JSON.stringify quotes strings in
+                // double quotes), then those double quotes are entity-escaped so
+                // they don't collide with the onclick="..." attribute's own double
+                // quotes below — that collision was truncating the onclick handler
+                // and silently breaking the +/-/remove buttons.
+                const idLiteral = typeof item.id === 'string' ? JSON.stringify(item.id) : item.id;
+                const id = String(idLiteral).replace(/"/g, '&quot;');
                 const stock = getItemStock(item);
                 const supplier = item.supplier || 'Trusted source';
                 return `
