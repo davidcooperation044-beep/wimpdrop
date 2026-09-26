@@ -391,7 +391,11 @@ async function fetchLiveExchangeRates() {
 }
 
 async function refreshExchangeRates(force = false) {
-  const cacheKey = 'wimp_exchange_rates';
+  // Cache key is versioned so that deploying this fix invalidates any rates
+  // cached by the old fake sine-wave generator — otherwise browsers with a
+  // recent-but-stale cache would keep showing the old fake numbers for up
+  // to an hour after the fix went live.
+  const cacheKey = 'wimp_exchange_rates_v2';
   const cached = localStorage.getItem(cacheKey);
   const parsed = cached ? JSON.parse(cached) : null;
   const now = Date.now();
