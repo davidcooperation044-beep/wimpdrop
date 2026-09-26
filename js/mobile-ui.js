@@ -1,4 +1,4 @@
-// Mobile navigation and interaction enhancements for Wimp-Drop.
+
 (function () {
   const NAV_ITEMS = [
     { label: 'Home', href: '/index.html', match: ['/','/index.html'], icon: 'home' },

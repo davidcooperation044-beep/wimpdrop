@@ -16,7 +16,7 @@ Deno.serve(async (request) => {
       await db.from('orders').update({ tracking_number: tracking.trackingNumber, carrier: tracking.carrier, status: tracking.status, fulfillment_updated_at: new Date().toISOString() }).eq('id', order.id);
       updated += 1;
     } catch {
-      // A single CJ order should not prevent other tracking records from syncing.
+
     }
   }
   return json({ success: true, updated });

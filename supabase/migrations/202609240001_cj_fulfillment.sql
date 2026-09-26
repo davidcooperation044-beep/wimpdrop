@@ -1,5 +1,5 @@
--- CJ supplier catalog, token cache, sync state, and fulfillment state.
--- Additive migration: existing storefront columns are preserved.
+
+
 
 alter table public.products
   add column if not exists supplier text,
@@ -85,5 +85,3 @@ alter table public.integration_settings enable row level security;
 alter table public.cj_token_cache enable row level security;
 alter table public.supplier_sync_runs enable row level security;
 alter table public.fulfillment_events enable row level security;
-
--- These service tables are intentionally service-role-only. No client policy is added.

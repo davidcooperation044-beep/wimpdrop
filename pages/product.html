@@ -251,10 +251,10 @@
         }
 
         async function waitForAppReady() {
-            // main.js (loaded after this inline script) sets window._appReady
-            // shortly after DOMContentLoaded fires. Poll briefly for it to
-            // exist rather than assuming it's already set, since this
-            // script's own DOMContentLoaded listener fires before main.js's.
+
+
+
+
             let attempts = 0;
             while (!window._appReady && attempts < 100) {
                 await new Promise((resolve) => setTimeout(resolve, 20));

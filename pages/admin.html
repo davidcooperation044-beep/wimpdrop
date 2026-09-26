@@ -21,10 +21,10 @@
             gap: 2rem;
             grid-template-columns: minmax(280px, 1fr) minmax(0, 2fr);
             align-items: start;
-            /* Without this, a grid item won't shrink below its content's
-               natural width, which defeats .admin-table-wrapper's
-               overflow-x:auto below and pushes the whole page (and buttons
-               like Publish) off-screen with no way to scroll to them. */
+
+
+
+
             min-width: 0;
         }
         .admin-sidebar,
@@ -171,10 +171,10 @@
             background: rgba(255, 255, 255, 0.05);
             color: var(--text-secondary);
             font-size: 0.95rem;
-            /* Long unbroken strings (URLs, tokens, raw JSON error text) can
-               force this box wider than its container even with min-width:0
-               upstream — break them so they wrap instead of pushing the
-               page sideways. */
+
+
+
+
             overflow-wrap: anywhere;
             word-break: break-word;
         }
@@ -488,21 +488,21 @@
             };
         }
 
-        // ===== Admin price-entry currency toggle =====
-        // Prices are always STORED in NGN (the store's base currency — see
-        // AppState.baseCurrency in main.js). This toggle only changes what
-        // currency the "Sell price" fields accept/display; everything sent
-        // to the server is converted to NGN first.
+
+
+
+
+
         let adminPriceCurrency = 'NGN';
         let lastDraftProducts = [];
 
-        // getExchangeRate/convertAmount/refreshExchangeRates come from main.js,
-        // which is loaded before this inline script and already fetches live
-        // rates on page load via initializePage(). window._appReady resolves
-        // once that's done.
+
+
+
+
         async function ensureRatesReady() {
             if (window._appReady) {
-                try { await window._appReady; } catch (e) { /* main.js already logs this */ }
+                try { await window._appReady; } catch (e) {                                 }
             }
         }
 
@@ -514,7 +514,7 @@
         function adminCurrencyToNgn(amount) {
             const value = Number(amount) || 0;
             if (adminPriceCurrency === 'NGN') return value;
-            // convertAmount goes NGN -> USD, so invert it to go USD -> NGN.
+
             const rate = getExchangeRate(AppState.baseCurrency, 'USD');
             return rate ? value / rate : value;
         }

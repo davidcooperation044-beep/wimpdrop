@@ -135,7 +135,7 @@ function getAdminCreationSecret() {
   return process.env.ADMIN_CREATION_SECRET || envFile.ADMIN_CREATION_SECRET || '';
 }
 
-// Admin: import products to Supabase via REST (uses anon key from .env.local)
+
 async function handleAdminImportProducts(request, response) {
   if (request.method !== 'POST') return sendJson(response, 405, { success: false, error: 'Method not allowed' });
   try {
@@ -174,7 +174,7 @@ async function handleAdminImportProducts(request, response) {
   }
 }
 
-// Admin: create a new admin user using Supabase service role key
+
 async function handleAdminCreateAdmin(request, response) {
   if (request.method !== 'POST') return sendJson(response, 405, { success: false, error: 'Method not allowed' });
   try {
@@ -199,7 +199,7 @@ async function handleAdminCreateAdmin(request, response) {
     const sb = getSupabaseConfig();
     if (!serviceRole || !sb.url) return sendJson(response, 500, { success: false, error: 'Supabase service role key or URL not configured' });
 
-    // Create user via Supabase Admin API
+
     const createUserUrl = `${sb.url.replace(/\/$/, '')}/auth/v1/admin/users`;
     const createResp = await fetch(createUserUrl, {
       method: 'POST',
@@ -220,7 +220,7 @@ async function handleAdminCreateAdmin(request, response) {
     const userId = created?.id;
     if (!userId) return sendJson(response, 500, { success: false, error: 'Failed to parse created user ID' });
 
-    // Insert into user_profiles and mark is_admin true using service role
+
     const profilesUrl = `${sb.url.replace(/\/$/, '')}/rest/v1/user_profiles`;
     const profileResp = await fetch(profilesUrl, {
       method: 'POST',
@@ -246,14 +246,14 @@ async function handleAdminCreateAdmin(request, response) {
   }
 }
 
-// Admin: run connectivity tests for Supabase (read-only)
+
 async function handleAdminRunTests(request, response) {
   try {
     const sb = getSupabaseConfig();
 
     const results = { supabase: null };
 
-    // Supabase test: try a read from public products (REST) using anon key
+
     try {
       if (!sb.url || !sb.anonKey) {
         results.supabase = { ok: false, error: 'Supabase URL or anon key missing' };
@@ -285,7 +285,7 @@ async function handleEmailRequest(request, response) {
     const emailData = JSON.parse(body);
     const resendApiKey = process.env.RESEND_API_KEY;
 
-    // Log email for debugging
+
     console.log('📧 Order confirmation email triggered:', {
       orderId: emailData.orderId,
       userEmail: emailData.userEmail,
@@ -294,12 +294,12 @@ async function handleEmailRequest(request, response) {
       timestamp: new Date().toISOString()
     });
 
-    // Format email content
+
     const orderItems = emailData.orderItems?.map(i => `- ${i.name} x ${i.quantity}`).join('\n') || 'N/A';
     const address = emailData.shippingAddress;
     const addressStr = address ? `${address.street}, ${address.city}, ${address.state} ${address.postalCode}, ${address.country}` : 'Not provided';
 
-    // Admin email HTML
+
     const adminEmailHtml = `
 <!DOCTYPE html>
 <html>
@@ -322,7 +322,7 @@ async function handleEmailRequest(request, response) {
     </div>
     <div class="content">
       <p>A new order has been received on your platform.</p>
-      
+
       <div class="order-details">
         <h3>Order Details</h3>
         <p><strong>Order ID:</strong> ${emailData.orderId}</p>
@@ -354,7 +354,7 @@ async function handleEmailRequest(request, response) {
 </html>
     `;
 
-    // User email HTML
+
     const userEmailHtml = `
 <!DOCTYPE html>
 <html>
@@ -379,7 +379,7 @@ async function handleEmailRequest(request, response) {
     <div class="content">
       <p>Hi there,</p>
       <p>Your order has been confirmed and will be processed shortly. We'll keep you updated every step of the way.</p>
-      
+
       <div class="order-details">
         <h3>Order Confirmation</h3>
         <p><strong>Order ID:</strong> ${emailData.orderId}</p>
@@ -399,9 +399,9 @@ async function handleEmailRequest(request, response) {
       </div>
 
       <p>We'll send you a tracking number as soon as your order ships. This usually happens within 24 hours.</p>
-      
+
       <p>If you have any questions, please contact us at <strong>wimpycooperation@gmail.com</strong></p>
-      
+
       <a href="https://wimp-drop.com" class="button">Track Your Order</a>
     </div>
     <div class="footer">
@@ -412,7 +412,7 @@ async function handleEmailRequest(request, response) {
 </html>
     `;
 
-    // Send emails using Resend if API key is configured
+
     let emailsSent = { admin: false, user: false };
     let emailError = null;
 
@@ -420,7 +420,7 @@ async function handleEmailRequest(request, response) {
       try {
         const resend = new Resend(resendApiKey);
 
-        // Send admin email
+
         try {
           await resend.emails.send({
             from: 'Wimp-Drop <noreply@wimp-drop.com>',
@@ -434,7 +434,7 @@ async function handleEmailRequest(request, response) {
           console.warn('⚠️ Failed to send admin email:', adminError.message);
         }
 
-        // Send user email
+
         try {
           await resend.emails.send({
             from: 'Wimp-Drop <noreply@wimp-drop.com>',

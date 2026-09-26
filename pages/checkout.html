@@ -13,7 +13,7 @@
 </head>
 <body>
     <div id="notification-container"></div>
-    
+
     <header class="site-header">
     <div class="header-container">
         <div class="site-nav-main">
@@ -69,12 +69,12 @@
         </div>
     </div>
 </header>
-    
+
     <section class="section">
         <div class="container">
             <h1>Checkout</h1>
             <p style="color: #dce3f5; margin-bottom: 2rem;">Complete your purchase securely</p>
-            
+
             <ol class="checkout-progress" aria-label="Checkout progress">
                 <li class="is-current" data-progress-step="1">Shipping</li>
                 <li data-progress-step="2">Delivery</li>
@@ -82,9 +82,9 @@
             </ol>
 
             <div class="checkout-layout" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
-                <!-- Checkout Form -->
+
                 <div>
-                    <!-- Step 1: Shipping Address -->
+
                     <div class="checkout-step is-current" data-checkout-step="1" style="background: rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid var(--border-color);">
                         <h3 style="margin-bottom: 1.5rem;">1. Shipping Address</h3>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
@@ -97,22 +97,22 @@
                                 <input id="checkout-last-name" name="lastName" type="text" placeholder="Doe" autocomplete="family-name" required>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <label>Email Address *</label>
                             <input id="checkout-email" name="email" type="email" placeholder="john@example.com" autocomplete="email" required>
                         </div>
-                        
+
                         <div class="form-group">
                             <label>Phone Number *</label>
                             <input id="checkout-phone" name="phone" type="tel" inputmode="tel" placeholder="+1 (555) 000-0000" autocomplete="tel" required>
                         </div>
-                        
+
                         <div class="form-group">
                             <label>Street Address *</label>
                             <input id="checkout-street" name="street" type="text" placeholder="123 Main Street" autocomplete="street-address" required>
                         </div>
-                        
+
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                             <div class="form-group">
                                 <label>City *</label>
@@ -123,7 +123,7 @@
                                 <input id="checkout-state" name="state" type="text" placeholder="NY" autocomplete="address-level1" required>
                             </div>
                         </div>
-                        
+
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                             <div class="form-group">
                                 <label>Postal Code *</label>
@@ -143,8 +143,8 @@
                         <div class="field-error" data-field-error="shipping" role="alert" aria-live="polite"></div>
                         <button class="btn btn-primary btn-block checkout-next" type="button" data-next-step="2">Continue to delivery</button>
                     </div>
-                    
-                    <!-- Step 2: Shipping Method -->
+
+
                     <div class="checkout-step" data-checkout-step="2" style="background: rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid var(--border-color);">
                         <h3 style="margin-bottom: 1.5rem;">2. Shipping Method</h3>
                         <div style="display: flex; flex-direction: column; gap: 1rem;">
@@ -155,7 +155,7 @@
                                     <p style="color: #9fb0d6; font-size: 0.875rem; margin: 0;">$5,000.00</p>
                                 </div>
                             </label>
-                            
+
                             <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ccc; border-radius: 4px; cursor: pointer;">
                                 <input type="radio" name="shipping" value="express" style="margin-right: 1rem;" data-shipping-cost="10000">
                                 <div>
@@ -167,18 +167,18 @@
                         <div class="field-error" data-field-error="shipping-method" role="alert" aria-live="polite"></div>
                         <button class="btn btn-primary btn-block checkout-next" type="button" data-next-step="3">Continue to payment</button>
                     </div>
-                    
-                    <!-- Step 3: Payment -->
+
+
                     <div class="checkout-step" data-checkout-step="3" style="background: rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid var(--border-color);">
                         <h3 style="margin-bottom: 1.5rem;">3. Payment Method</h3>
-                        
+
                         <div style="background: rgba(45,108,223,0.18); border: 1px solid rgba(45,108,223,0.34); padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
                             <p style="margin: 0; color: #084298; font-size: 0.875rem;">
                                 <strong>ðŸ’³ Flutterwave Secure Payment</strong><br/>
                                 Your payment is processed securely through Flutterwave. No card details are stored on our servers.
                             </p>
                         </div>
-                        
+
                         <p style="color: #dce3f5; margin-bottom: 1rem;">
                             You'll be redirected to Flutterwave's secure payment page where you can pay using:
                         </p>
@@ -189,8 +189,8 @@
                             <li>Mobile Money</li>
                         </ul>
                     </div>
-                    
-                    <!-- Agreements -->
+
+
                     <div style="margin-bottom: 2rem;">
                         <label style="display: flex; gap: 0.5rem; cursor: pointer;">
                             <input type="checkbox" required>
@@ -202,21 +202,21 @@
                         </label>
                     </div>
                 </div>
-                
-                <!-- Order Summary -->
+
+
                 <div>
                     <div class="cart-summary checkout-summary-panel" style="position: sticky; top: 100px;">
                         <h3 style="margin-bottom: 1.5rem;">Order Summary</h3>
-                        
+
                         <div id="order-items" style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #ccc;">
-                            <!-- Items will be populated here -->
+
                         </div>
-                        
+
                         <div class="summary-row">
                             <span>Subtotal:</span>
                             <span><span id="checkout-subtotal">0</span></span>
                         </div>
-                        
+
                         <div class="summary-row">
                             <span>Shipping:</span>
                             <span><span id="checkout-shipping">5000</span></span>
@@ -231,17 +231,17 @@
                             <span>Discount:</span>
                             <span>-<span id="checkout-discount">0</span></span>
                         </div>
-                        
+
                         <div class="summary-row">
                             <span>VAT (7.5%):</span>
                             <span><span id="checkout-tax">0</span></span>
                         </div>
-                        
+
                         <div class="summary-row total">
                             <span>Total:</span>
                             <span><span id="checkout-total">0</span></span>
                         </div>
-                        
+
                         <button class="btn btn-primary btn-block btn-large" onclick="processOrder()">Complete Order</button>
                         <a href="/pages/cart.html" class="btn btn-secondary btn-block" style="margin-top: 1rem;">Back to Cart</a>
                     </div>
@@ -249,7 +249,7 @@
             </div>
         </div>
     </section>
-    
+
     <footer>
         <div class="footer-content">
             <div class="footer-section">
@@ -266,13 +266,13 @@
             <p>&copy; 2026 Wimp-Drop. All rights reserved.</p>
         </div>
     </footer>
-    
+
     <script>
         async function initCheckout() {
-            // Wait for the real init chain (main.js) to finish restoring the
-            // session and cart before checking login state — otherwise this
-            // always sees AppState.user as unset and redirects even when the
-            // person is logged in. Same pattern as cart.html's waitForAppReady().
+
+
+
+
             let attempts = 0;
             while (!window._appReady && attempts < 100) {
                 await new Promise((resolve) => setTimeout(resolve, 20));
@@ -282,7 +282,7 @@
                 await window._appReady;
             }
 
-            // Check if user is logged in
+
             if (!AppState.user) {
                 showNotification('Please log in to checkout', 'error');
                 setTimeout(() => {
@@ -290,8 +290,8 @@
                 }, 1500);
                 return;
             }
-            
-            // Render order items
+
+
             const itemsContainer = document.getElementById('order-items');
             itemsContainer.innerHTML = AppState.cart.map(item => `
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
@@ -302,17 +302,17 @@
                     <span>${formatCurrency(item.price * item.quantity)}</span>
                 </div>
             `).join('');
-            
+
             updateCheckoutSummary();
         }
-        
+
         function updateCheckoutSummary() {
             const subtotal = getCartTotal();
             const shippingElement = document.querySelector('input[name="shipping"]:checked');
             const shippingValue = shippingElement ? parseInt(shippingElement.getAttribute('data-shipping-cost')) : 5000;
-            const vat = Math.round(subtotal * 0.075); // 7.5% VAT
+            const vat = Math.round(subtotal * 0.075);
 
-            // Promo discount
+
             let discount = 0;
             if (window.AppState && window.AppState.appliedPromo) {
                 const promo = window.AppState.appliedPromo;
@@ -324,13 +324,13 @@
             }
 
             const total = subtotal + shippingValue + vat - discount;
-            
+
             document.getElementById('checkout-subtotal').textContent = formatCurrency(Math.round(subtotal), AppState.displayCurrency);
             document.getElementById('checkout-shipping').textContent = formatCurrency(shippingValue, AppState.displayCurrency);
             document.getElementById('checkout-tax').textContent = formatCurrency(vat, AppState.displayCurrency);
             document.getElementById('checkout-total').textContent = formatCurrency(total, AppState.displayCurrency);
 
-            // Update promo UI
+
             const promoLine = document.getElementById('promo-line');
             if (promoLine) {
                 if (discount > 0) {
@@ -342,28 +342,28 @@
             }
         }
 
-        // Wire promo apply button
+
         document.addEventListener('DOMContentLoaded', () => {
             const applyBtn = document.getElementById('apply-promo-btn');
             if (applyBtn) applyBtn.addEventListener('click', (e) => { e.preventDefault(); if (typeof applyPromoCode === 'function') applyPromoCode(); });
         });
-        
+
         async function processOrder() {
             try {
-                // Validate user is logged in
+
                 if (!AppState.user) {
                     showNotification('Please log in to complete your purchase', 'error');
                     window.location.href = 'login.html';
                     return;
                 }
-                
-                // Validate cart
+
+
                 if (AppState.cart.length === 0) {
                     showNotification('Your cart is empty', 'error');
                     return;
                 }
-                
-                // Get form data
+
+
                 const firstName = document.querySelector('[name="firstName"]')?.value || '';
                 const lastName = document.querySelector('[name="lastName"]')?.value || '';
                 const email = document.querySelector('[name="email"]')?.value || AppState.user.email || '';
@@ -373,29 +373,29 @@
                 const state = document.querySelector('input[placeholder="NY"]')?.value || '';
                 const postal = document.querySelector('input[placeholder="10001"]')?.value || '';
                 const country = document.querySelector('select[required]')?.value || 'NG';
-                
-                // Validate required fields
+
+
                 if (!firstName || !lastName || !email || !phone || !street || !city) {
                     showNotification('Please fill in all shipping address fields', 'error');
                     return;
                 }
-                
-                // Get shipping method
+
+
                 const shippingMethod = document.querySelector('input[name="shipping"]:checked')?.value || 'standard';
                 const shippingCost = parseInt(document.querySelector('input[name="shipping"]:checked')?.getAttribute('data-shipping-cost')) || 5000;
-                
-                // Calculate totals
+
+
                 const subtotal = getCartTotal();
                 const vat = Math.round(subtotal * 0.075);
                 const total = subtotal + shippingCost + vat;
-                
-                // Validate Flutterwave is initialized
+
+
                 if (!flutterwaveService.isInitialized) {
                     showNotification('Payment service not ready. Please refresh the page.', 'error');
                     return;
                 }
-                
-                // Create Flutterwave payment object
+
+
                 const paymentData = createFlutterwavePayment(
                     AppState.cart,
                     {
@@ -407,8 +407,8 @@
                     },
                     total
                 );
-                
-                // Add shipping and address info to metadata
+
+
                 paymentData.meta = {
                     ...paymentData.meta,
                     shipping_address: {
@@ -435,8 +435,8 @@
                     showNotification(paymentIntent?.error || 'Unable to prepare secure payment.', 'error');
                     return;
                 }
-                
-                // Set up payment success handler
+
+
                 window.onFlutterwaveSuccess = (response) => {
                     showNotification('Payment received. Confirming your order securely...', 'success');
                     clearCart();
@@ -446,27 +446,27 @@
                         window.location.href = '/pages/order-success.html';
                     }, 1000);
                 };
-                
-                // Set up payment failure handler
+
+
                 window.onFlutterwaveFailure = (message) => {
                     showNotification('Payment failed: ' + message, 'error');
                 };
-                
-                // Initiate payment
+
+
                 showNotification('Opening secure payment page...', 'info');
                 const paymentResult = await flutterwaveService.initiatePayment(paymentData);
-                
+
                 if (!paymentResult.success) {
                     showNotification('Failed to initialize payment: ' + paymentResult.error, 'error');
                 }
-                
+
             } catch (error) {
                 console.error('Checkout error:', error);
                 showNotification('Checkout error: ' + error.message, 'error');
             }
         }
-        
-        // Shipping method change listener
+
+
         document.querySelectorAll('input[name="shipping"]').forEach(radio => {
             radio.addEventListener('change', updateCheckoutSummary);
         });
@@ -535,8 +535,8 @@
                 document.querySelector('.checkout-progress')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
         });
-        
-        // Initialize on load
+
+
         document.addEventListener('DOMContentLoaded', () => {
             setCheckoutStep(1);
             initCheckout();

@@ -1,11 +1,11 @@
 #!/bin/bash
-# Quick setup script to initialize environment
+
 
 echo "🚀 Wimp-Drop Environment Setup"
 echo "================================"
 echo ""
 
-# Check if .env.local already exists
+
 if [ -f .env.local ]; then
     echo "✓ .env.local already exists"
     echo ""
@@ -20,7 +20,7 @@ if [ -f .env.local ]; then
     fi
 fi
 
-# Copy template
+
 if [ -f .env.example ]; then
     cp .env.example .env.local
     echo "✓ Created .env.local from .env.example"

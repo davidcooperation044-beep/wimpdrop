@@ -57,9 +57,9 @@ Deno.serve(async (request) => {
         .single();
       if (fetchError) throw fetchError;
 
-      // Update this row's name always. Price applies to every variant that
-      // shares the same supplier_product_id AND the same size (so different
-      // colors of the same size all get this price, but other sizes don't).
+
+
+
       const { error: nameError } = await db.from('products').update({ name, title: name }).eq('id', productIds[0]);
       if (nameError) throw nameError;
 

@@ -1,12 +1,10 @@
 @echo off
-REM Quick setup script for Windows
 
 echo.
 echo 🚀 Wimp-Drop Environment Setup
 echo ================================
 echo.
 
-REM Check if .env.local exists
 if exist .env.local (
     echo ✓ .env.local already exists
     echo.
@@ -26,7 +24,6 @@ if exist .env.local (
     )
 )
 
-REM Copy template
 if exist .env.example (
     copy .env.example .env.local
     echo ✓ Created .env.local from .env.example

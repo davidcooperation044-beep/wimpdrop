@@ -1,6 +1,6 @@
-// ===== ENVIRONMENT CONFIGURATION LOADER =====
-// This module handles loading environment variables and configuration
-// For vanilla JS, we read from .env.local or window variables
+
+
+
 
 class EnvConfig {
   constructor() {
@@ -9,22 +9,22 @@ class EnvConfig {
     this.isDevelopment = true;
   }
 
-  // Load environment variables
+
   async load() {
     try {
-      // Prefer the server-provided runtime config; retain .env.local for file-based development.
+
       if (window.ENV_CONFIG) {
         this.loadFromWindow();
       } else if (this.isDevelopment) {
         await this.loadFromFile();
       }
 
-      // Allow a runtime config assigned while loading to take precedence as well.
+
       this.loadFromWindow();
-      
-      // Set defaults for missing values
+
+
       this.setDefaults();
-      
+
       this.isLoaded = true;
       return this.vars;
     } catch (error) {
@@ -34,7 +34,7 @@ class EnvConfig {
     }
   }
 
-  // Load from .env.local file (requires file to be served)
+
   async loadFromFile() {
     try {
       const rootPath = window.location.origin;
@@ -52,7 +52,7 @@ class EnvConfig {
             break;
           }
         } catch (e) {
-          // ignore and try next
+
         }
       }
 
@@ -60,37 +60,37 @@ class EnvConfig {
         return;
       }
 
-      // content loaded from file
+
       const lines = content.split('\n');
-      
+
       lines.forEach(line => {
         line = line.trim();
-        // Skip comments and empty lines
+
         if (!line || line.startsWith('#')) return;
-        
+
         const [key, value] = line.split('=');
         if (key) {
           this.vars[key.trim()] = this.parseValue(value?.trim() || '');
         }
       });
-      
+
     } catch (error) {
       console.warn('Could not load .env.local:', error.message);
     }
   }
 
-  // Load from window object (set via script tag or console)
+
   loadFromWindow() {
     if (window.ENV_CONFIG) {
       this.vars = { ...this.vars, ...window.ENV_CONFIG };
     }
   }
 
-  // Parse environment variable value
+
   parseValue(value) {
     if (!value) return '';
-    
-    // Handle JSON
+
+
     if (value.startsWith('{') || value.startsWith('[')) {
       try {
         return JSON.parse(value);
@@ -98,18 +98,18 @@ class EnvConfig {
         return value;
       }
     }
-    
-    // Handle booleans
+
+
     if (value === 'true') return true;
     if (value === 'false') return false;
-    
-    // Handle numbers
+
+
     if (!isNaN(value) && value !== '') return Number(value);
-    
+
     return value;
   }
 
-  // Set default values
+
   setDefaults() {
     const defaults = {
       'VITE_SUPABASE_URL': 'https://your-project.supabase.co',
@@ -124,12 +124,12 @@ class EnvConfig {
       'VITE_TAX_RATE': 0.075,
       'VITE_SHIPPING_STANDARD_COST': 5000,
       'VITE_SHIPPING_EXPRESS_COST': 10000,
-      // Local admin override settings (development only)
+
       'VITE_ENABLE_LOCAL_ADMIN_OVERRIDE': false,
       'VITE_LOCAL_ADMIN_EMAIL': '',
       'VITE_LOCAL_ADMIN_PASSWORD': ''
     };
-    
+
     Object.keys(defaults).forEach(key => {
       if (!(key in this.vars)) {
         this.vars[key] = defaults[key];
@@ -137,7 +137,7 @@ class EnvConfig {
     });
   }
 
-  // Get a variable
+
   get(key, defaultValue = null) {
     if (key in this.vars) {
       return this.vars[key];
@@ -145,31 +145,31 @@ class EnvConfig {
     return defaultValue;
   }
 
-  // Get all variables
+
   getAll() {
     return { ...this.vars };
   }
 
-  // Check if variable is missing
+
   isMissing(key) {
     return !this.vars[key] || this.vars[key] === '';
   }
 
-  // Get all missing variables
+
   getMissing() {
     const required = [
       'VITE_SUPABASE_URL',
       'VITE_SUPABASE_ANON_KEY',
       'VITE_FLUTTERWAVE_PUBLIC_KEY'
     ];
-    
+
     return required.filter(key => this.isMissing(key));
   }
 
-  // Validate all required variables
+
   validate() {
     const missing = this.getMissing();
-    
+
     if (missing.length > 0) {
       console.warn('⚠️ Missing environment variables:');
       missing.forEach(key => {
@@ -180,7 +180,7 @@ class EnvConfig {
     return true;
   }
 
-  // Return configuration status without logging credentials.
+
   printStatus() {
     const missing = this.getMissing();
     return {
@@ -193,16 +193,16 @@ class EnvConfig {
   }
 }
 
-// Create global instance
+
 const env = new EnvConfig();
 
-// Initialize on page load
+
 document.addEventListener('DOMContentLoaded', async () => {
   await env.load();
   env.printStatus();
 });
 
-// Export for use
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { EnvConfig, env };
 }

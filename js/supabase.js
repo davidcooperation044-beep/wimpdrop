@@ -1,8 +1,8 @@
-// ===== SUPABASE SERVICE =====
-// Fixed version - uses correct Supabase auth endpoints
-// and official @supabase/supabase-js SDK loaded via CDN
-// Add to every HTML page <head>:
-// <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+
+
+
 
 class SupabaseService {
   constructor() {
@@ -20,13 +20,13 @@ class SupabaseService {
     return this.init();
   }
 
-  // ── Initialize client (called once env is ready) ──
+
   async init() {
     if (this.isInitialized) return this.client;
     if (this._initPromise) return this._initPromise;
 
     this._initPromise = new Promise(async (resolve, reject) => {
-      // Resolve env/config
+
       let supabaseUrl = this.manualUrl || '';
       let supabaseKey = this.manualKey || '';
 
@@ -54,7 +54,7 @@ class SupabaseService {
         return;
       }
 
-      // Require official SDK for realtime-only mode
+
       if (!(window.supabase && window.supabase.createClient)) {
         const msg = 'Supabase JS SDK not found. Realtime mode requires @supabase/supabase-js v2 loaded via CDN.';
         console.error('❌ ' + msg);
@@ -84,7 +84,7 @@ class SupabaseService {
     return this._initPromise;
   }
 
-  // ── Get initialized client ──
+
   async getClient() {
     if (!this.isInitialized) await this.init();
     if (!this.client) throw new Error('Supabase client is not initialized. Realtime mode requires the SDK.');
@@ -95,16 +95,16 @@ class SupabaseService {
     return this.currentUser;
   }
 
-  // ══════════════════════════════════════
-  // AUTHENTICATION
-  // ══════════════════════════════════════
+
+
+
 
   async signUp(email, password, metadata = {}) {
     try {
       const sb = await this.getClient();
 
       if (sb.auth) {
-        // Official SDK path - attempt and gracefully fallback on network/auth fetch errors
+
         try {
           const { data, error } = await sb.auth.signUp({
             email,
@@ -121,9 +121,9 @@ class SupabaseService {
           }
           return { success: true, user: data.user, session: data.session };
         } catch (sdkErr) {
-          // Log detailed SDK error for diagnostics
+
           console.error('Supabase SDK signUp error:', sdkErr);
-          // If it's a fetch/retryable error, fall back to REST endpoint to capture full response
+
           try {
             const restResp = await fetch(`${this.supabaseUrl}/auth/v1/signup`, {
               method: 'POST',
@@ -146,7 +146,7 @@ class SupabaseService {
               return { success: false, error: errMsg };
             }
 
-            // Success path for REST fallback
+
             const user = json?.user || null;
             if (user) {
               this.currentUser = { id: user.id, email: user.email, user_metadata: user.user_metadata || {} };
@@ -159,7 +159,7 @@ class SupabaseService {
         }
       }
 
-      // REST fallback
+
       const response = await fetch(`${this.supabaseUrl}/auth/v1/signup`, {
         method: 'POST',
         headers: {
@@ -184,7 +184,7 @@ class SupabaseService {
       const sb = await this.getClient();
 
       if (sb.auth) {
-        // Official SDK path
+
         const { data, error } = await sb.auth.signInWithPassword({ email, password });
         if (error) throw error;
 
@@ -208,7 +208,7 @@ class SupabaseService {
         return { success: true, user: data.user, session: data.session };
       }
 
-      // REST fallback
+
       const response = await fetch(`${this.supabaseUrl}/auth/v1/token?grant_type=password`, {
         method: 'POST',
         headers: {
@@ -360,7 +360,7 @@ class SupabaseService {
         if (typeof updateUserUI === 'function') updateUserUI();
       }
 
-      // Listen for auth changes
+
       sb.auth.onAuthStateChange((_event, session) => {
         if (typeof AppState === 'undefined') return;
         if (session?.user) {
@@ -387,9 +387,9 @@ class SupabaseService {
     }
   }
 
-  // ══════════════════════════════════════
-  // DATABASE OPERATIONS
-  // ══════════════════════════════════════
+
+
+
 
   getPublicProductSelectColumns() {
     return '*';
@@ -885,7 +885,7 @@ class SupabaseService {
           .single();
         if (error) return { success: false, promoCode: null, error: 'Promo code not found' };
 
-        // Check expiry
+
         if (data.expires_at && new Date(data.expires_at) < new Date()) {
           return { success: false, promoCode: null, error: 'Promo code has expired' };
         }
@@ -926,16 +926,16 @@ class SupabaseService {
     }
   }
 
-  // ── Realtime subscriptions ──
+
   subscribe(table, callback, opts = {}) {
     if (!this.isInitialized || !this.client) throw new Error('Supabase client not initialized. Cannot subscribe.');
     const channelName = `table:${table}`;
     if (this.channels[channelName]) {
-      // already subscribed
+
       return this.channels[channelName];
     }
 
-    const filter = opts.filter || null; // optional filter for postgres_changes
+    const filter = opts.filter || null;
     const match = filter ? { schema: 'public', table, filter } : { schema: 'public', table };
 
     const channel = this.client.channel(channelName, { config: {}})
@@ -965,23 +965,23 @@ class SupabaseService {
 
   unsubscribeAll() {
     Object.keys(this.channels).forEach(name => {
-      try { this.channels[name].unsubscribe(); } catch (e) { /* ignore */ }
+      try { this.channels[name].unsubscribe(); } catch (e) {              }
       delete this.channels[name];
     });
   }
 }
 
-// ── Create singleton ──
+
 const supabaseService = new SupabaseService();
 
-// ── Initialize on page load ──
+
 document.addEventListener('DOMContentLoaded', async () => {
   window._supabaseReady = supabaseService.init();
   await window._supabaseReady;
   await supabaseService.restoreSession();
 });
 
-// Export
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { SupabaseService, supabaseService };
 }

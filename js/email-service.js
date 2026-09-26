@@ -1,5 +1,5 @@
-// ===== EMAIL SERVICE =====
-// Handles sending order confirmation emails to admin and user
+
+
 
 class EmailService {
   constructor() {
@@ -7,15 +7,15 @@ class EmailService {
     this.baseUrl = window.location.origin;
   }
 
-  /**
-   * Send order confirmation emails to admin and user
-   * @param {Object} orderData - Order information
-   * @param {string} userEmail - User's email address
-   * @returns {Promise<Object>} - Result of email sending
-   */
+
+
+
+
+
+
   async sendOrderConfirmation(orderData, userEmail) {
     try {
-      // Prepare email data
+
       const emailPayload = {
         orderId: orderData.id,
         userEmail: userEmail,
@@ -28,10 +28,10 @@ class EmailService {
         paymentRef: orderData.payment_ref
       };
 
-      // Send email via Supabase Edge Function (if available)
-      // Fallback: log to console and simulate success
+
+
       const result = await this._sendEmail(emailPayload);
-      
+
       if (result.success) {
         return { success: true, message: 'Confirmation emails sent' };
       } else {
@@ -39,18 +39,18 @@ class EmailService {
       }
     } catch (error) {
       console.error('Email sending error:', error);
-      // Return success anyway since order was created
+
       return { success: true, message: 'Order created (email retry pending)' };
     }
   }
 
-  /**
-   * Internal method to send email via API
-   * @private
-   */
+
+
+
+
   async _sendEmail(emailPayload) {
     try {
-      // Attempt to call local email endpoint if available
+
       const response = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -60,21 +60,21 @@ class EmailService {
       if (response.ok) {
         return { success: true };
       } else {
-        // Email endpoint not available - this is acceptable for MVP
+
         console.warn('Email endpoint not configured');
         return { success: false };
       }
     } catch (error) {
-      // Network error or endpoint doesn't exist - acceptable for MVP
+
       console.warn('Email service unavailable:', error.message);
       return { success: false };
     }
   }
 
-  /**
-   * Format order email template for admin
-   * @private
-   */
+
+
+
+
   _formatAdminEmail(orderData) {
     return `
       <h2>New Order Received</h2>
@@ -92,10 +92,10 @@ class EmailService {
     `;
   }
 
-  /**
-   * Format order email template for user
-   * @private
-   */
+
+
+
+
   _formatUserEmail(orderData) {
     return `
       <h2>Your Order Confirmation</h2>
@@ -113,10 +113,10 @@ class EmailService {
     `;
   }
 
-  /**
-   * Format address object
-   * @private
-   */
+
+
+
+
   _formatAddress(address) {
     if (!address) return 'Not provided';
     return `
@@ -128,5 +128,5 @@ class EmailService {
   }
 }
 
-// Initialize email service globally
+
 const emailService = new EmailService();

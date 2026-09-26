@@ -1,8 +1,8 @@
-/* ===== LUXURY BLACK, GOLD & BLUE THEME ===== */
-/* Premium eCommerce Design - Completely Redesigned */
+
+
 
 :root {
-  /* Primary Colors - Black, Gold, Blue */
+
   --black: #0a0e27;
   --black-light: #1a1f3a;
   --black-lighter: #2a3050;
@@ -13,8 +13,8 @@
   --blue-light: #0052cc;
   --blue-lighter: #4a90e2;
   --blue-dark: #002147;
-  
-  /* Text & Backgrounds */
+
+
   --text-primary: #ffffff;
   --text-secondary: #b0b8d4;
   --text-muted: #6b7280;
@@ -23,19 +23,19 @@
   --bg-tertiary: #2a3050;
   --border-color: rgba(212, 175, 55, 0.15);
   --border-gold: rgba(212, 175, 55, 0.3);
-  
-  /* Utilities */
+
+
   --success: #10b981;
   --error: #ef4444;
   --warning: #f59e0b;
   --info: #3b82f6;
-  
-  /* Typography */
+
+
   --font-display: 'Poppins', 'Segoe UI', sans-serif;
   --font-body: 'Inter', 'Segoe UI', sans-serif;
   --font-mono: 'Fira Code', monospace;
-  
-  /* Spacing */
+
+
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
@@ -43,22 +43,22 @@
   --spacing-xl: 2rem;
   --spacing-2xl: 3rem;
   --spacing-3xl: 4rem;
-  
-  /* Shadows */
+
+
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
   --shadow-md: 0 4px 6px 0 rgba(0, 0, 0, 0.7);
   --shadow-lg: 0 10px 15px 0 rgba(0, 0, 0, 0.8);
   --shadow-xl: 0 20px 25px 0 rgba(212, 175, 55, 0.15), 0 10px 20px 0 rgba(0, 0, 0, 0.8);
   --shadow-2xl: 0 25px 50px 0 rgba(212, 175, 55, 0.2), 0 15px 30px 0 rgba(0, 0, 0, 0.9);
-  
-  /* Z-index */
+
+
   --z-dropdown: 1000;
   --z-sticky: 1020;
   --z-fixed: 1030;
   --z-modal: 1040;
   --z-tooltip: 1070;
-  
-  /* Breakpoints */
+
+
   --breakpoint-sm: 640px;
   --breakpoint-md: 768px;
   --breakpoint-lg: 1024px;
@@ -66,7 +66,7 @@
   --breakpoint-2xl: 1536px;
 }
 
-/* ===== GLOBAL STYLES ===== */
+
 
 * {
   margin: 0;
@@ -93,9 +93,9 @@ body {
   min-height: 100vh;
 }
 
-/* Sticky footer: footer is pushed to the bottom of the viewport when
-   page content is short, but flows normally after content (and the
-   page scrolls) once content is tall enough to need it. */
+
+
+
 footer {
   margin-top: auto;
 }
@@ -123,7 +123,7 @@ input, textarea, select {
   color: var(--text-primary);
 }
 
-/* ===== HEADER & NAVIGATION ===== */
+
 
 header {
   position: sticky;
@@ -702,7 +702,7 @@ nav a:hover::after {
   font-size: 1.5rem;
 }
 
-/* ===== HERO SECTION ===== */
+
 
 .hero {
   position: relative;
@@ -1132,7 +1132,7 @@ nav a:hover::after {
   flex-shrink: 0;
 }
 
-/* ===== SECTIONS ===== */
+
 
 .section {
   padding: var(--spacing-3xl) var(--spacing-lg);
@@ -1177,7 +1177,7 @@ nav a:hover::after {
   border-radius: 2px;
 }
 
-/* ===== GRID ===== */
+
 
 .grid {
   display: grid;
@@ -1676,8 +1676,8 @@ nav a:hover::after {
   gap: var(--spacing-lg);
 }
 
-/* Account form grids — previously inline styles with no way to
-   override on mobile. Same issue as the account sidebar. */
+
+
 .form-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1697,10 +1697,10 @@ nav a:hover::after {
   }
 }
 
-/* Account page layout — previously hard-coded as an inline
-   grid-template-columns: 250px 1fr with NO way to override on
-   mobile (inline styles beat media queries). Moved to real
-   classes so it can actually collapse below. */
+
+
+
+
 .account-layout {
   display: grid;
   grid-template-columns: 250px 1fr;
@@ -1767,8 +1767,8 @@ nav a:hover::after {
   }
 }
 
-/* Admin table — previously had zero CSS at all, so it rendered
-   unstyled and could overflow badly on mobile with no scroll handling */
+
+
 .admin-table-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -1805,7 +1805,7 @@ nav a:hover::after {
   background: rgba(212, 175, 55, 0.05);
 }
 
-/* ===== Marketplace-style shop page (Alibaba/Temu/Jumia-inspired density) ===== */
+
 
 .market-filter-bar {
   background: rgba(26, 31, 58, 0.55);
@@ -2183,7 +2183,7 @@ nav a:hover::after {
   }
 }
 
-/* ===== CARDS ===== */
+
 
 .card {
   background: rgba(26, 31, 58, 0.5);
@@ -2356,7 +2356,7 @@ nav a:hover::after {
   background: rgba(212, 175, 55, 0.2);
 }
 
-/* ===== CART & WATCHLIST ===== */
+
 
 .cart-shell {
   display: grid;
@@ -2606,7 +2606,7 @@ nav a:hover::after {
   }
 }
 
-/* ===== CATEGORY CARDS ===== */
+
 
 .category-card {
   background: linear-gradient(135deg, rgba(0, 61, 153, 0.15), rgba(212, 175, 55, 0.05));
@@ -2649,7 +2649,7 @@ nav a:hover::after {
   transform: translateY(-10px) scale(1.02);
 }
 
-/* ===== NEWSLETTER ===== */
+
 
 .newsletter-panel {
   background: linear-gradient(135deg, rgba(0, 61, 153, 0.2), rgba(212, 175, 55, 0.1));
@@ -2702,7 +2702,7 @@ nav a:hover::after {
   box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
 }
 
-/* ===== FOOTER ===== */
+
 
 footer {
   background: rgba(10, 14, 39, 0.95);
@@ -2786,7 +2786,7 @@ footer {
   }
 }
 
-/* ===== FORMS ===== */
+
 
 .form-group {
   margin-bottom: var(--spacing-lg);
@@ -2827,7 +2827,7 @@ footer {
   box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
 }
 
-/* ===== AUTH PAGES ===== */
+
 
 .auth-page {
   min-height: calc(100vh - 220px);
@@ -3098,7 +3098,7 @@ footer {
   }
 }
 
-/* ===== UTILITIES ===== */
+
 
 .container {
   max-width: 1400px;
@@ -3135,7 +3135,7 @@ footer {
   display: none;
 }
 
-/* ===== ANIMATIONS ===== */
+
 
 @keyframes slideInLeft {
   from {
@@ -3217,7 +3217,7 @@ footer {
   }
 }
 
-/* ===== SKELETONS ===== */
+
 
 .skeleton {
   background: linear-gradient(90deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05));
@@ -3230,7 +3230,7 @@ footer {
   height: 400px;
 }
 
-/* ===== MOBILE NAVIGATION ===== */
+
 
 .mobile-nav {
   display: none;
@@ -3278,7 +3278,7 @@ footer {
   font-size: 1.3rem;
 }
 
-/* ===== RESPONSIVE ===== */
+
 
 @media (max-width: 1024px) {
   .hero-shell {
@@ -3505,7 +3505,7 @@ footer {
   }
 }
 
-/* ===== PRODUCT PAGE ===== */
+
 
 .product-hero-section {
   padding-top: calc(var(--spacing-3xl) + 1.25rem);
@@ -3857,7 +3857,7 @@ footer {
   display: none;
 }
 
-/* ===== MOBILE BOTTOM NAVIGATION ===== */
+
 
 .mobile-bottom-nav {
   display: none;
@@ -3975,7 +3975,7 @@ footer {
   }
 }
 
-/* ===== MOBILE LAYOUT BASELINE ===== */
+
 
 @media (max-width: 899px) {
   :root {
@@ -4266,7 +4266,7 @@ footer {
   }
 }
 
-/* ===== PRINT STYLES ===== */
+
 
 @media print {
   header,

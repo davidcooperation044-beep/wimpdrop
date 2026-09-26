@@ -1,5 +1,5 @@
-// ===== LUXURY THEME - PREMIUM UI INTERACTIONS =====
-// Enhanced interactions for black, gold & blue theme
+
+
 
 function initializeLuxuryUI() {
   setupHeaderEffects();
@@ -14,7 +14,7 @@ function initializeLuxuryUI() {
   setupFormEnhancements();
 }
 
-// ===== HEADER EFFECTS =====
+
 
 function setupHeaderEffects() {
   const header = document.querySelector('header');
@@ -24,7 +24,7 @@ function setupHeaderEffects() {
 
   function updateHeader() {
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    
+
     if (scrollTop > 50) {
       header.classList.add('scrolled');
     } else {
@@ -42,7 +42,7 @@ function setupHeaderEffects() {
   }, { passive: true });
 }
 
-// ===== SCROLL ANIMATIONS =====
+
 
 function setupScrollAnimations() {
   const options = {
@@ -59,13 +59,13 @@ function setupScrollAnimations() {
     });
   }, options);
 
-  // Observe cards and sections
+
   document.querySelectorAll('.card, .product-card, .section, .category-card').forEach(el => {
     observer.observe(el);
   });
 }
 
-// ===== MOBILE NAVIGATION =====
+
 
 function setupMobileNavigation() {
   const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
@@ -79,7 +79,7 @@ function setupMobileNavigation() {
     }
   });
 
-  // Close menu on link click
+
   document.querySelectorAll('nav a').forEach(link => {
     link.addEventListener('click', () => {
       const nav = document.querySelector('nav');
@@ -91,7 +91,7 @@ function setupMobileNavigation() {
   });
 }
 
-// ===== BUTTON RIPPLES =====
+
 
 function setupButtonRipples() {
   document.querySelectorAll('.btn, .product-actions button').forEach(btn => {
@@ -99,7 +99,7 @@ function setupButtonRipples() {
       const rect = this.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      
+
       const ripple = document.createElement('span');
       ripple.style.position = 'absolute';
       ripple.style.width = '0';
@@ -111,40 +111,40 @@ function setupButtonRipples() {
       ripple.style.top = y + 'px';
       ripple.style.transform = 'translate(-50%, -50%)';
       ripple.style.animation = 'ripple-expand 0.6s ease-out forwards';
-      
+
       this.appendChild(ripple);
-      
+
       setTimeout(() => ripple.remove(), 600);
     });
   });
 }
 
-// ===== CARD HOVER EFFECTS =====
+
 
 function setupCardHovers() {
   const cards = document.querySelectorAll('.card, .product-card, .category-card');
-  
+
   cards.forEach(card => {
     card.addEventListener('mouseenter', function() {
       this.style.transform = 'translateY(-10px) scale(1.02)';
     });
-    
+
     card.addEventListener('mouseleave', function() {
       this.style.transform = '';
     });
   });
 }
 
-// ===== WISHLIST TOGGLE =====
+
 
 function setupWishlistToggle() {
   document.querySelectorAll('.wishlist-btn').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
-      
+
       btn.classList.toggle('active');
-      
+
       if (btn.classList.contains('active')) {
         createHeartBurst(e.pageX, e.pageY);
         showNotification('Added to wishlist', 'success');
@@ -155,11 +155,11 @@ function setupWishlistToggle() {
   });
 }
 
-// ===== HEART BURST ANIMATION =====
+
 
 function createHeartBurst(x, y) {
   const colors = ['#d4af37', '#e8c547', '#ff69b4', '#ffa500'];
-  
+
   for (let i = 0; i < 8; i++) {
     const heart = document.createElement('div');
     heart.innerHTML = '❤️';
@@ -172,20 +172,20 @@ function createHeartBurst(x, y) {
     heart.style.animation = `heart-burst 1s ease-out forwards`;
     heart.style.setProperty('--tx', (Math.random() - 0.5) * 200 + 'px');
     heart.style.setProperty('--ty', Math.random() * -200 + 'px');
-    
+
     document.body.appendChild(heart);
-    
+
     setTimeout(() => heart.remove(), 1000);
   }
 }
 
-// ===== CART INTERACTIONS =====
+
 
 function setupCartInteractions() {
   const cartBtn = document.querySelector('[data-cart-badge]')?.parentElement;
   if (!cartBtn) return;
 
-  // Listen for custom cart events
+
   window.addEventListener('addToCart', (e) => {
     const badge = document.querySelector('[data-cart-badge]');
     if (badge) {
@@ -198,7 +198,7 @@ function setupCartInteractions() {
   });
 }
 
-// ===== SCROLL TO TOP =====
+
 
 function setupScrollToTop() {
   const scrollBtn = document.createElement('button');
@@ -265,7 +265,7 @@ function setupScrollToTop() {
   });
 }
 
-// ===== LAZY LOADING =====
+
 
 function setupLazyLoading() {
   const options = {
@@ -277,7 +277,7 @@ function setupLazyLoading() {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         const img = entry.target;
-        
+
         if (img.dataset.src) {
           img.src = img.dataset.src;
           img.removeAttribute('data-src');
@@ -292,10 +292,10 @@ function setupLazyLoading() {
   });
 }
 
-// ===== FORM ENHANCEMENTS =====
+
 
 function setupFormEnhancements() {
-  // Auto-focus effects
+
   document.querySelectorAll('input, textarea').forEach(field => {
     field.addEventListener('focus', function() {
       this.parentElement.style.borderColor = 'var(--gold)';
@@ -306,7 +306,7 @@ function setupFormEnhancements() {
     });
   });
 
-  // Form validation
+
   document.querySelectorAll('form').forEach(form => {
     form.addEventListener('submit', (e) => {
       let isValid = true;
@@ -328,7 +328,7 @@ function setupFormEnhancements() {
   });
 }
 
-// ===== NOTIFICATIONS =====
+
 
 function showNotification(message, type = 'info') {
   const container = document.getElementById('notification-container');
@@ -365,7 +365,7 @@ function showNotification(message, type = 'info') {
   }, 3000);
 }
 
-// ===== INJECT ANIMATIONS =====
+
 
 function injectAnimationStyles() {
   const style = document.createElement('style');
@@ -421,14 +421,14 @@ function injectAnimationStyles() {
   document.head.appendChild(style);
 }
 
-// ===== INITIALIZE =====
+
 
 document.addEventListener('DOMContentLoaded', () => {
   injectAnimationStyles();
   initializeLuxuryUI();
 });
 
-// Fallback for already loaded DOM
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     injectAnimationStyles();

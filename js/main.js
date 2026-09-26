@@ -1,13 +1,13 @@
-// ===== WIMP-DROP MAIN APPLICATION ===== 
 
-// Configuration - loaded from environment variables
-// Wait for env to be ready
+
+
+
 let CONFIG = {};
 
 async function initializeConfig() {
   if (typeof env !== 'undefined') {
     await env.load();
-    // Fallback: directly fetch /.env.local if loader missed it
+
     try {
       const resp = await fetch('/.env.local');
       if (resp.ok) {
@@ -20,7 +20,7 @@ async function initializeConfig() {
           if (idx > 0) {
             const key = line.slice(0, idx).trim();
             const val = line.slice(idx + 1).trim();
-            // set into env.vars if missing
+
             if (typeof env.vars !== 'undefined' && (!env.vars[key] || env.vars[key] === '')) {
               env.vars[key] = val;
             }
@@ -28,7 +28,7 @@ async function initializeConfig() {
         });
       }
     } catch (e) {
-      // ignore
+
     }
     CONFIG = {
       supabaseUrl: env.get('VITE_SUPABASE_URL'),
@@ -38,14 +38,14 @@ async function initializeConfig() {
       isDevelopment: env.get('VITE_ENVIRONMENT') === 'development',
       debugMode: env.get('VITE_DEBUG_MODE', false)
     };
-    
-    // Validate configuration
+
+
     if (CONFIG.debugMode) {
     }
   }
 }
 
-// State Management
+
 const AppState = {
   user: null,
   cart: [],
@@ -72,51 +72,51 @@ const AppState = {
   exchangeRateLastUpdated: null
 };
 
-// Local Storage Manager
+
 const Storage = {
   getCart() {
     return JSON.parse(localStorage.getItem('wimp_cart')) || [];
   },
-  
+
   setCart(cart) {
     localStorage.setItem('wimp_cart', JSON.stringify(cart));
   },
-  
+
   getWishlist() {
     return JSON.parse(localStorage.getItem('wimp_wishlist')) || [];
   },
-  
+
   setWishlist(wishlist) {
     localStorage.setItem('wimp_wishlist', JSON.stringify(wishlist));
   },
-  
+
   getUser() {
     return JSON.parse(localStorage.getItem('wimp_user')) || null;
   },
-  
+
   setUser(user) {
     localStorage.setItem('wimp_user', JSON.stringify(user));
   },
-  
+
   clearUser() {
     localStorage.removeItem('wimp_user');
   }
 };
 
-// Initialize app on page load
+
 async function initializePage() {
   await initializeConfig();
-  // Currency rates are fetched from a live API below (initializeCurrencySystem).
-  // Deliberately NOT awaited here — cart restore, session restore, and event
-  // wiring must never be blocked by a third-party network call. Prices simply
-  // render in NGN until the live rates arrive, then refreshCurrencyDisplay()
-  // (called at the end of initializeCurrencySystem) updates them in place.
+
+
+
+
+
   initializeCurrencySystem();
   setupLiveTicker();
   setupCounterAnimation();
   setupParallaxMotion();
 
-  // Initialize Supabase client if credentials are present
+
   if (typeof supabaseService !== 'undefined' && CONFIG.supabaseUrl) {
     try {
       await supabaseService.initialize(CONFIG.supabaseUrl, CONFIG.supabaseKey);
@@ -125,7 +125,7 @@ async function initializePage() {
     }
   }
 
-  // Initialize Flutterwave after config load
+
   if (typeof flutterwaveService !== 'undefined' && CONFIG.flutterwaveKey) {
     try {
       await flutterwaveService.initialize(CONFIG.flutterwaveKey);
@@ -142,17 +142,17 @@ async function initializePage() {
   updateWishlistBadge();
   registerPWA();
 
-  // Setup realtime subscriptions (requires Supabase SDK)
+
   try {
     if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
-      // Products table updates
+
       supabaseService.subscribe('products', async (payload) => {
         if (typeof loadProducts === 'function') {
           await loadProducts();
         }
       });
 
-      // Orders updates
+
       supabaseService.subscribe('orders', async (payload) => {
         if (AppState.user && typeof supabaseService.getUserOrders === 'function') {
           const res = await supabaseService.getUserOrders();
@@ -163,7 +163,7 @@ async function initializePage() {
         }
       });
 
-      // User profile updates for current user
+
       if (AppState.user && AppState.user.id) {
         supabaseService.subscribe('user_profiles', async (payload) => {
           const r = await supabaseService.getUserProfile();
@@ -178,15 +178,15 @@ async function initializePage() {
     console.warn('Realtime subscription setup failed', e);
   }
 
-  // NOTE: previously there was a setInterval here force-refreshing exchange
-  // rates every 6 seconds (left over from the old fake "live ticking" price
-  // effect). Removed — real FX rates don't move meaningfully within a
-  // session, hammering a free public API every 6s was causing rate-limit
-  // fallback flapping (visibly "fluctuating" prices), and it had no place
-  // in a real pricing flow. refreshExchangeRates() already caches for an
-  // hour and re-checks on page load.
 
-  // Load mobile UI enhancements when appropriate
+
+
+
+
+
+
+
+
   try {
     if (window.matchMedia && window.matchMedia('(max-width:899px)').matches) {
       const s = document.createElement('script');
@@ -288,7 +288,7 @@ function setupEventListeners() {
     });
   }
 
-  // Mark active navigation links
+
   const currentPath = window.location.pathname.replace(/\/+$|\/index\.html$/i, '/');
   document.querySelectorAll('.site-nav-main .nav-menu a, .site-nav-main .logo, .subnav-links a').forEach((link) => {
     try {
@@ -298,7 +298,7 @@ function setupEventListeners() {
         link.classList.add('active');
       }
     } catch (error) {
-      // ignore invalid URLs
+
     }
   });
 
@@ -316,18 +316,18 @@ async function initializeCurrencySystem() {
   AppState.currencyRegion = detected.region;
   AppState.displayCurrency = detected.currency;
 
-  // refreshExchangeRates() handles its own fallback internally and never
-  // throws (see js/main.js), so no try/catch — and no separate fake-rate
-  // table duplicated here.
+
+
+
   await refreshExchangeRates();
 
   if (typeof updateCurrencyBadge === 'function') {
     updateCurrencyBadge();
   }
 
-  // This function is called without awaiting from initializePage(), so the
-  // page may already be rendered with default NGN prices by the time real
-  // rates arrive. Re-render with the now-current currency/rates.
+
+
+
   if (typeof refreshCurrencyDisplay === 'function') {
     refreshCurrencyDisplay();
   }
@@ -344,8 +344,8 @@ function detectUserCurrency() {
   return { region, currency };
 }
 
-// Offline/last-resort fallback only — used if the live FX API can't be reached
-// and there's no usable cache. Not used under normal conditions.
+
+
 const FALLBACK_EXCHANGE_RATES = {
   NGN: 1,
   USD: 0.00063,
@@ -360,15 +360,15 @@ const FALLBACK_EXCHANGE_RATES = {
   JPY: 0.094
 };
 
-// Live FX rates, base = NGN (matches AppState.baseCurrency). Free, no API key,
-// CORS-enabled. If you outgrow the rate limit or want a paid/more reliable
-// provider (exchangerate-api.com, openexchangerates.org, etc.), swap the URL
-// and keep the same response handling below.
+
+
+
+
 const EXCHANGE_RATE_API_URL = 'https://open.er-api.com/v6/latest/NGN';
 
 async function fetchLiveExchangeRates() {
-  // Hard timeout so a slow/unreachable FX API can never stall the rest of
-  // the app — it just fails fast and refreshExchangeRates() falls back.
+
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 5000);
 
@@ -386,8 +386,8 @@ async function fetchLiveExchangeRates() {
     throw new Error('Exchange rate API returned an unexpected payload.');
   }
 
-  // Keep only the currencies this app actually offers, always with NGN = 1
-  // since NGN is our base currency.
+
+
   const wanted = ['NGN', 'USD', 'EUR', 'GBP', 'GHS', 'KES', 'ZAR', 'INR', 'CAD', 'AUD', 'JPY', 'SEK', 'NOK', 'DKK', 'CHF', 'AED', 'SAR', 'EGP'];
   const rates = {};
   wanted.forEach((code) => {
@@ -399,17 +399,17 @@ async function fetchLiveExchangeRates() {
 }
 
 async function refreshExchangeRates(force = false) {
-  // Cache key is versioned so that deploying this fix invalidates any rates
-  // cached by the old fake sine-wave generator — otherwise browsers with a
-  // recent-but-stale cache would keep showing the old fake numbers for up
-  // to an hour after the fix went live.
+
+
+
+
   const cacheKey = 'wimp_exchange_rates_v2';
   const cached = localStorage.getItem(cacheKey);
   const parsed = cached ? JSON.parse(cached) : null;
   const now = Date.now();
 
-  // Real rates don't move fast enough to justify calling the API on every
-  // page load — cache for an hour, same pattern as before.
+
+
   if (!force && parsed && now - parsed.timestamp < 60 * 60 * 1000) {
     AppState.exchangeRates = parsed.rates;
     AppState.exchangeRateLastUpdated = parsed.timestamp;
@@ -423,7 +423,7 @@ async function refreshExchangeRates(force = false) {
     localStorage.setItem(cacheKey, JSON.stringify({ rates, timestamp: AppState.exchangeRateLastUpdated }));
   } catch (error) {
     console.warn('Live exchange rate fetch failed, falling back.', error);
-    // Prefer a stale cache over the hardcoded table if we have one at all.
+
     if (parsed && parsed.rates) {
       AppState.exchangeRates = parsed.rates;
       AppState.exchangeRateLastUpdated = parsed.timestamp;
@@ -530,23 +530,23 @@ function setupProductAutoRefresh() {
   });
 }
 
-// Initialize the application
+
 function initializeApp() {
-  
-  // Load cart and wishlist from localStorage
+
+
   AppState.cart = Storage.getCart();
   AppState.wishlist = Storage.getWishlist();
 
   setupProductAutoRefresh();
-  
-  // Initialize any visible product lists or homepage rails
+
+
   const productList = document.getElementById('product-list');
   if (productList || isHomePage()) {
     loadProducts();
   }
 }
 
-// Global Event Listeners
+
 function isShopPage() {
   return !!document.querySelector('.shop-product-grid');
 }
@@ -897,14 +897,14 @@ function normalizeProduct(raw) {
 
 function groupProductsByProductId(products) {
   return products.reduce((groups, product) => {
-    // Group by the actual product identity, never by title text — CJ's
-    // catalog frequently reuses generic, near-duplicate names across
-    // completely unrelated listings (e.g. multiple different products
-    // all named "26 English Alphabet Silicone Phone Cases"), which used
-    // to merge unrelated rows into one card and show the wrong price.
-    // supplier_product_id ties real variants of the SAME listing together;
-    // falling back to the row's own id means two unrelated rows only ever
-    // group together if they explicitly share a supplier product id.
+
+
+
+
+
+
+
+
     const key = (product.supplierProductId || product.id || '').toString().trim() || `row-${Math.random()}`;
     if (!groups[key]) groups[key] = [];
     groups[key].push(product);
@@ -913,8 +913,8 @@ function groupProductsByProductId(products) {
 }
 
 function renderProductGroupCard(group) {
-  // Shop cards show ONE product per card, no variant switching here —
-  // variant selection happens on the product detail page instead.
+
+
   const selected = group[0];
   const hasDiscount = selected.originalPrice && selected.originalPrice > selected.price;
   const price = selected.price || 0;
@@ -961,15 +961,15 @@ function renderProducts(products) {
   if (!productList) return;
 
   if (isShopPage()) {
-    // products here are already one-per-distinct-product (grouped in
-    // loadProducts), each carrying its full variant list in variantRows.
-    // Re-grouping here would collapse each product back down to just
-    // itself and lose the other variants, so use variantRows directly.
+
+
+
+
     const cards = products.map(p => renderProductGroupCard(p.variantRows && p.variantRows.length ? p.variantRows : [p]));
     productList.innerHTML = cards.join('');
     return;
   }
-  
+
   productList.innerHTML = products.map(product => {
     const pid = product.id;
     const pidUrl = encodeURIComponent(pid);
@@ -1013,8 +1013,8 @@ function addToCart(productId, quantity = 1) {
   const product = AppState.products.find(p => p.id === productId);
   if (!product) return false;
 
-  // animate product image to cart
-  try { animateAddToCart(productId); } catch (e) { /* ignore animation errors */ }
+
+  try { animateAddToCart(productId); } catch (e) {                               }
 
   const existingItem = AppState.cart.find(item => item.id === productId);
 
@@ -1059,7 +1059,7 @@ function animateAddToCart(productId) {
     clone.style.opacity = '1';
     document.body.appendChild(clone);
 
-    // force layout
+
     clone.getBoundingClientRect();
 
     const translateX = (cartRect.left + cartRect.width/2) - (imgRect.left + imgRect.width/2);
@@ -1145,13 +1145,13 @@ function updateCartBadge() {
     badge.textContent = count;
     badge.parentElement.style.display = count > 0 ? 'block' : 'none';
     try {
-      // animate badge bounce
+
       badge.classList.remove('badge-bounce');
-      // trigger reflow
+
       void badge.offsetWidth;
       if (count > 0) badge.classList.add('badge-bounce');
     } catch (e) {
-      // ignore
+
     }
   }
 }
@@ -1162,14 +1162,14 @@ function clearCart() {
   updateCartBadge();
 }
 
-// ===== WISHLIST MANAGEMENT ===== 
+
 
 function addToWishlist(productId) {
   if (!AppState.wishlist.includes(productId)) {
     AppState.wishlist.push(productId);
     Storage.setWishlist(AppState.wishlist);
 
-    // Sync to Supabase when user is logged in
+
     try {
       if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized && supabaseService.getCurrentUser()) {
         const user = supabaseService.getCurrentUser();
@@ -1187,7 +1187,7 @@ function removeFromWishlist(productId) {
   AppState.wishlist = AppState.wishlist.filter(id => id !== productId);
   Storage.setWishlist(AppState.wishlist);
 
-  // Sync removal to Supabase when user is logged in
+
   try {
     if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized && supabaseService.getCurrentUser()) {
       const user = supabaseService.getCurrentUser();
@@ -1210,21 +1210,21 @@ function updateWishlistBadge() {
   }
 }
 
-// ===== PRODUCT MANAGEMENT ===== 
+
 
 async function loadProducts(filters = {}) {
   try {
     const productList = document.getElementById('product-list');
     if (!productList && !isHomePage()) return;
 
-    // show skeletons while loading
+
     if (isHomePage()) {
       showHomepageSkeletons();
     } else {
       showProductSkeletons(12);
     }
 
-    // Pagination and filters from URL
+
     const urlParams = new URLSearchParams(window.location.search);
     const page = Math.max(1, parseInt(urlParams.get('page')) || 1);
     const perPage = 12;
@@ -1232,12 +1232,12 @@ async function loadProducts(filters = {}) {
     let products = [];
     let totalCount = 0;
 
-    // Load products exclusively from Supabase.
-    // NOTE: we fetch a large batch of raw SKU rows (not just one page's worth),
-    // because multiple rows can share the same product title (variants).
-    // Pagination must happen AFTER grouping variants into distinct products,
-    // otherwise a page can fill up with 12 raw rows that collapse into 1-2
-    // actual products.
+
+
+
+
+
+
     if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
       const queryFilters = { limit: 1000 };
       const category = urlParams.get('category');
@@ -1248,11 +1248,11 @@ async function loadProducts(filters = {}) {
      const res = await supabaseService.getProducts({ ...queryFilters });
       if (res.success && res.products) {
         const allRows = res.products.map(raw => normalizeProduct(raw));
-        // Group variant rows into distinct products by title
+
         const grouped = groupProductsByProductId(allRows);
         const distinctProducts = Object.values(grouped).map(group => {
-          // Use the first variant as the representative card, but attach
-          // all variants so the UI can offer a variant picker.
+
+
           const primary = group[0];
           return { ...primary, variantRows: group };
         });
@@ -1267,7 +1267,7 @@ async function loadProducts(filters = {}) {
       products = [];
     }
 
-    // Fallback: Use mock products if no real products loaded
+
 
     AppState.products = products;
     renderProducts(products);
@@ -1275,13 +1275,13 @@ async function loadProducts(filters = {}) {
     if (typeof window.renderCartItems === 'function') window.renderCartItems();
     if (typeof window.updateOrderSummary === 'function') window.updateOrderSummary();
 
-    // Render pagination
+
     renderPagination(totalCount, page, perPage);
     const resultCountElem = document.getElementById('result-count');
     if (resultCountElem) {
       resultCountElem.textContent = `Showing ${Math.min(perPage, products.length)} of ${totalCount} products`;
     }
-    
+
   } catch (error) {
     console.error('Error loading products:', error);
     showNotification('Failed to load products', 'error');
@@ -1442,12 +1442,12 @@ function renderHomeProductCard(product) {
 
 function buyNow(productId) {
   addToCart(productId, 1);
-  // small delay for animation then navigate to cart
+
   setTimeout(() => { window.location.href = '/pages/cart.html'; }, 450);
 }
 
 function quickView(productId) {
-  // Basic quick view: open product page in new small window; can be upgraded to modal
+
   const url = `/pages/product.html?id=${encodeURIComponent(productId)}`;
   window.open(url, '_blank', 'toolbar=0,location=0,status=0,menubar=0,width=420,height=720');
 }
@@ -1460,10 +1460,10 @@ function renderPagination(totalItems, currentPage, perPage) {
 
   if (!container || !prevBtn || !nextBtn) return;
 
-  // Clear existing
+
   container.innerHTML = '';
 
-  // Render page buttons (limit to 7 buttons)
+
   const start = Math.max(1, currentPage - 3);
   const end = Math.min(totalPages, start + 6);
 
@@ -1478,7 +1478,7 @@ function renderPagination(totalItems, currentPage, perPage) {
     container.appendChild(btn);
   }
 
-  // Prev/Next handlers
+
   prevBtn.disabled = currentPage <= 1;
   nextBtn.disabled = currentPage >= totalPages;
 
@@ -1492,11 +1492,11 @@ function goToPage(page) {
   window.location.href = url.toString();
 }
 
-// ===== AUTHENTICATION ===== 
+
 
 async function handleLogin(email, password) {
   try {
-    // Supabase integration
+
     if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
       const result = await supabaseService.signIn(email, password);
       if (result.success) {
@@ -1542,11 +1542,11 @@ async function handleOAuthLogin(provider) {
 
 async function handleLogout() {
   try {
-    // Supabase logout
+
     if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
       await supabaseService.signOut();
     }
-    
+
     AppState.user = null;
     Storage.clearUser();
     AppState.cart = [];
@@ -1557,8 +1557,8 @@ async function handleLogout() {
     updateCartBadge();
     updateWishlistBadge();
     showNotification('Logged out successfully', 'success');
-    
-    // Redirect to home page
+
+
     setTimeout(() => {
       window.location.href = '../index.html';
     }, 1000);
@@ -1570,7 +1570,7 @@ async function handleLogout() {
 
 async function loadUserFromStorage() {
   try {
-    // First check Supabase session
+
     if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
       await supabaseService.restoreSession();
       if (supabaseService.currentUser) {
@@ -1581,7 +1581,7 @@ async function loadUserFromStorage() {
       }
     }
 
-    // Fall back to localStorage
+
     const user = Storage.getUser();
     if (user) {
       AppState.user = user;
@@ -1613,7 +1613,7 @@ function updateUserUI() {
   });
 }
 
-// ===== PAYMENT INTEGRATION ===== 
+
 
 async function processFlutterwavePayment(amount, email, phone) {
   try {
@@ -1630,7 +1630,7 @@ async function processFlutterwavePayment(amount, email, phone) {
     });
     if (!result.success) throw new Error(result.error || 'Payment could not be started.');
     return result;
-    
+
   } catch (error) {
     console.error('Payment error:', error);
     showNotification(error.message || 'Payment failed', 'error');
@@ -1646,14 +1646,14 @@ function handlePaymentCallback(response) {
   }
 }
 
-// Product sourcing now comes directly from the Supabase `products` table.
 
-// ===== ORDERS MANAGEMENT ===== 
+
+
 
 async function getOrderHistory() {
   try {
-    // TODO: Fetch from Supabase
-    // For now return empty
+
+
     return [];
   } catch (error) {
     console.error('Error fetching orders:', error);
@@ -1663,7 +1663,7 @@ async function getOrderHistory() {
 
 async function trackOrder(orderId) {
   try {
-    // TODO: Integrate tracking with Supabase order records or shipping provider.
+
     return {
       orderId,
       status: 'shipped',
@@ -1676,7 +1676,7 @@ async function trackOrder(orderId) {
   }
 }
 
-// ===== UI UTILITIES ===== 
+
 
 function showNotification(message, type = 'info') {
   const container = document.getElementById('notification-container');
@@ -1686,7 +1686,7 @@ function showNotification(message, type = 'info') {
     newContainer.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 10000;';
     document.body.appendChild(newContainer);
   }
-  
+
   const notification = document.createElement('div');
   notification.className = `alert alert-${type}`;
   notification.style.cssText = 'min-width: 300px; animation: slideUp 0.3s ease;';
@@ -1694,9 +1694,9 @@ function showNotification(message, type = 'info') {
     ${message}
     <button class="alert-close" onclick="this.parentElement.remove()">×</button>
   `;
-  
+
   document.getElementById('notification-container').appendChild(notification);
-  
+
   setTimeout(() => {
     notification.remove();
   }, 5000);
@@ -1731,12 +1731,12 @@ async function handleSearch(e) {
   const query = (e.target?.value || '').trim();
 
   if (!query) {
-    // If search cleared, reload products (first page)
+
     await loadProducts();
     return;
   }
 
-  // If Supabase is available, query backend for matching products
+
   if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
     try {
       const res = await supabaseService.getProducts({ search: query, limit: 24 });
@@ -1757,7 +1757,7 @@ async function handleSearch(e) {
     }
   }
 
-  // Fallback to client-side filtering
+
   const q = query.toLowerCase();
   const filtered = AppState.products.filter(p =>
     p.name.toLowerCase().includes(q) ||
@@ -1770,7 +1770,7 @@ async function handleSearch(e) {
   }
 }
 
-// ===== UTILITIES ===== 
+
 
 function debounce(func, delay) {
   let timeoutId;
@@ -1909,7 +1909,7 @@ if (document.readyState === 'loading') {
   setupSectionReveal();
 }
 
-// ===== PROMO CODES =====
+
 
 async function applyPromoCode() {
   const code = document.getElementById('promo-code-input')?.value?.trim();
@@ -1923,7 +1923,7 @@ async function applyPromoCode() {
     if (res.success && res.promoCode) {
       AppState.appliedPromo = res.promoCode;
       showNotification('Promo code applied', 'success');
-      // If checkout summary exists on page, refresh totals
+
       if (typeof updateCheckoutSummary === 'function') updateCheckoutSummary();
       return;
     } else {
@@ -1935,7 +1935,7 @@ async function applyPromoCode() {
   }
 }
 
-// ===== NEWSLETTER =====
+
 
 async function subscribeNewsletter() {
   const input = document.getElementById('newsletter-email');
@@ -1970,26 +1970,26 @@ async function subscribeNewsletter() {
   if (btn) btn.disabled = false;
 }
 
-// Attach newsletter handler if present
+
 document.addEventListener('DOMContentLoaded', () => {
   const nbtn = document.getElementById('newsletter-btn');
   if (nbtn) nbtn.addEventListener('click', (e) => { e.preventDefault(); subscribeNewsletter(); });
 });
 
-// ===== APP BOOTSTRAP =====
-// This actually starts the app: loads config, initializes Supabase,
-// and triggers the first loadProducts() call. Without this, nothing
-// in initializePage() ever runs.
-// window._appReady is exposed so individual pages (e.g. account.html's
-// login guard) can await the real init chain instead of guessing with
-// an arbitrary setTimeout.
+
+
+
+
+
+
+
 document.addEventListener('DOMContentLoaded', () => {
   window._appReady = initializePage().catch(err => {
     console.error('initializePage failed:', err);
   });
 });
 
-// Export for use in other modules
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { AppState, Storage, addToCart, removeFromCart };
 }

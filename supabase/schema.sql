@@ -1,12 +1,12 @@
--- Wimp-Drop schema for Supabase
--- This file is the canonical database definition for the storefront, CJ supplier flow,
--- payment processing, and admin review features.
+
+
+
 
 create extension if not exists pgcrypto;
 
--- =========================================
--- Auth/profile tables
--- =========================================
+
+
+
 
 create table if not exists public.user_profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -19,9 +19,9 @@ create table if not exists public.user_profiles (
   updated_at timestamptz not null default now()
 );
 
--- =========================================
--- Catalog / product tables
--- =========================================
+
+
+
 
 create table if not exists public.products (
   id uuid primary key default gen_random_uuid(),
@@ -61,9 +61,9 @@ create index if not exists products_supplier_sync_idx
 create index if not exists products_is_published_idx
   on public.products (is_published, sync_status);
 
--- =========================================
--- Checkout / order tables
--- =========================================
+
+
+
 
 create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
@@ -145,9 +145,9 @@ create table if not exists public.admin_alerts (
   created_at timestamptz not null default now()
 );
 
--- =========================================
--- Wishlist / reviews
--- =========================================
+
+
+
 
 create table if not exists public.wishlist (
   id uuid primary key default gen_random_uuid(),
@@ -174,9 +174,9 @@ create table if not exists public.reviews (
 create index if not exists reviews_product_id_idx on public.reviews (product_id);
 create index if not exists reviews_user_id_idx on public.reviews (user_id);
 
--- =========================================
--- Supplier / CJ integration tables
--- =========================================
+
+
+
 
 create table if not exists public.integration_settings (
   key text primary key,
@@ -225,9 +225,9 @@ create table if not exists public.fulfillment_events (
 create index if not exists fulfillment_events_order_id_idx
   on public.fulfillment_events (order_id, created_at);
 
--- =========================================
--- Row Level Security (recommended)
--- =========================================
+
+
+
 
 alter table public.user_profiles enable row level security;
 alter table public.products enable row level security;
@@ -242,11 +242,11 @@ alter table public.fulfillment_events enable row level security;
 alter table public.payment_intents enable row level security;
 alter table public.admin_alerts enable row level security;
 
--- Public read access for published products
+
 create policy "Products can be viewed by everyone" on public.products
 for select using (is_published = true);
 
--- Users may view their own profile/order records and wishlist
+
 create policy "Users can view their own profile" on public.user_profiles
 for select using (auth.uid() = id);
 
@@ -255,6 +255,3 @@ for update using (auth.uid() = id);
 
 create policy "Users can view their own orders" on public.orders
 for select using (auth.uid() = user_id);
-
--- Default deny for service tables; service-role only should be used by Edge Functions.
--- These tables are intentionally not exposed to the browser.

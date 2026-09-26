@@ -9,11 +9,11 @@ function parsePrice(raw: unknown): number {
   return Number.isFinite(num) ? num : 0;
 }
 
-// CJ's variantKey is usually something like "Black-XL" or "Red,S", matching
-// the order of the product's variant property names (e.g. "Color-Size").
-// Since the exact delimiter and order vary by product, we parse defensively:
-// split on common separators, then classify each piece as size or color
-// using keyword lists rather than trusting position.
+
+
+
+
+
 const SIZE_TOKENS = new Set([
   'xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', '2xl', '3xl', '4xl', '5xl',
   'small', 'medium', 'large', 'extra large', 'extra small'
@@ -22,7 +22,7 @@ const SIZE_TOKENS = new Set([
 function looksLikeSize(token: string): boolean {
   const clean = token.trim().toLowerCase();
   if (SIZE_TOKENS.has(clean)) return true;
-  // numeric sizes like "38", "40", "9.5", or "eu 42"
+
   if (/^\d+(\.\d+)?$/.test(clean)) return true;
   if (/^(eu|us|uk)\s?\d+(\.\d+)?$/.test(clean)) return true;
   return false;
@@ -32,7 +32,7 @@ function parseVariantAttributes(variantKey: string | null | undefined, variantNa
   const source = (variantKey || variantNameEn || '').trim();
   if (!source) return { color: null, size: null };
 
-  // Try common delimiters CJ uses between attribute values.
+
   const parts = source.split(/[-,;/]+/).map((p) => p.trim()).filter(Boolean);
 
   let color: string | null = null;
@@ -46,8 +46,8 @@ function parseVariantAttributes(variantKey: string | null | undefined, variantNa
     }
   }
 
-  // If we only found one token and couldn't classify it, treat it as color
-  // by default (color is the more common single-attribute case).
+
+
   if (parts.length === 1 && !size && !color) {
     color = parts[0];
   }
@@ -95,8 +95,8 @@ Deno.serve(async (request) => {
     const markupPercent = Number(settings?.value?.markup_percent ?? 30);
 
     const rows: any[] = [];
-    // Track the sell price already assigned to each (product, size) pair,
-    // so every color sharing that size gets the identical price.
+
+
     const sizePriceMap = new Map<string, number>();
 
     for (const product of products) {
@@ -110,8 +110,8 @@ Deno.serve(async (request) => {
       const variants = await fetchVariants(productId);
 
       if (!variants.length) {
-        // No variant breakdown available — import as a single row, same
-        // behavior as before.
+
+
         const supplierCost = fallbackCost;
         rows.push({
           name: baseName,
@@ -141,9 +141,9 @@ Deno.serve(async (request) => {
         const { color, size } = parseVariantAttributes(variant.variantKey, variant.variantNameEn);
         const supplierCost = parsePrice(variant.variantSellPrice ?? fallbackCost);
 
-        // Determine price: if another variant of this product with the
-        // same size already got a price, reuse it. Otherwise calculate
-        // fresh from this variant's cost.
+
+
+
         const sizeKey = `${productId}::${size ?? '__no_size__'}`;
         let price: number;
         if (sizePriceMap.has(sizeKey)) {

@@ -1,4 +1,4 @@
--- Server-owned payment intents and admin alerts for automated fulfillment.
+
 
 create table if not exists public.payment_intents (
   id uuid primary key default gen_random_uuid(),

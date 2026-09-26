@@ -13,7 +13,7 @@
 </head>
 <body>
     <div id="notification-container"></div>
-    
+
     <header class="site-header">
     <div class="header-container">
         <div class="site-nav-main">
@@ -69,7 +69,7 @@
         </div>
     </div>
 </header>
-    
+
     <section class="section auth-page">
         <div class="container auth-shell">
             <div class="auth-hero-card">
@@ -151,7 +151,7 @@
             </div>
         </div>
     </section>
-    
+
     <footer class="page-footer">
         <div class="footer-content">
             <div class="footer-section">
@@ -271,7 +271,7 @@
                 });
 
                 if (error) throw error;
-                // Browser is redirected to the provider now; nothing else to do here.
+
             } catch (error) {
                 const msg = (error?.message || error || 'Google sign-in failed').toString();
                 setRegisterFeedback(`We could not start Google sign-in: ${msg}`, 'error');

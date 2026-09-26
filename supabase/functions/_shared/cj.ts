@@ -94,8 +94,8 @@ async function saveTokens(data: any): Promise<void> {
   if (error) throw error;
 }
 
-// --- Auth lock: prevents concurrent requests from each firing their own
-// CJ getAccessToken call, which is what trips CJ's "N users per IP" cap. ---
+
+
 
 const LOCK_TTL_MS = 20000;
 const LOCK_POLL_INTERVAL_MS = 500;
@@ -140,12 +140,12 @@ export async function getCjAccessToken(forceRefresh = false): Promise<string> {
   const requestStart = Date.now();
   const gotLock = await acquireAuthLock();
   if (!gotLock) {
-    // Another invocation is already authenticating/refreshing. Wait for it
-    // instead of also calling CJ, to avoid tripping the per-IP session cap.
+
+
     const token = await waitForFreshToken(requestStart);
     if (token) return token;
-    // Fell through: the other invocation didn't finish in time or failed.
-    // Try to acquire the lock ourselves before giving up.
+
+
     const gotLockRetry = await acquireAuthLock();
     if (!gotLockRetry) {
       throw new Error('CJ authentication is already in progress. Please try again in a few seconds.');
