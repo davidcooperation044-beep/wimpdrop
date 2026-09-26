@@ -1,0 +1,263 @@
+/* ============================================================
+   SHOP LAYOUT — category chips + responsive grid/list switch
+   Link this AFTER luxury-theme.css so these rules can override it:
+   <link rel="stylesheet" href="/css/shop-layout.css">
+   ============================================================ */
+
+/* ---------- Category chip row ----------
+   Expects markup like:
+   <div id="category-filters" class="category-chip-row">
+     <button class="category-chip active" data-category="all">All</button>
+     <button class="category-chip" data-category="Electronics">Electronics</button>
+     ...
+   </div>
+   Populating/filtering by these needs a small JS addition — CSS alone
+   can't read your product data. Styling is ready either way. */
+
+.category-chip-row {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.85rem 1rem;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.category-chip-row::-webkit-scrollbar {
+  display: none;
+}
+
+.category-chip {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.14));
+  background: var(--surface-2, rgba(255, 255, 255, 0.04));
+  color: var(--text-secondary, #b8bccb);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.category-chip:active {
+  transform: scale(0.97);
+}
+
+.category-chip.active {
+  background: var(--accent, #d4af37);
+  border-color: var(--accent, #d4af37);
+  color: #10131f;
+}
+
+/* ---------- Dense mobile grid (below ~700px) ---------- */
+
+@media (max-width: 699px) {
+  .shop-product-grid.market-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+    padding: 0 0.6rem;
+  }
+
+  .market-grid .product-group-card {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .market-grid .product-group-card .product-image {
+    aspect-ratio: 1 / 1;
+    width: 100%;
+  }
+
+  .market-grid .product-group-card .product-image-inner {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .market-grid .product-group-card .product-info {
+    padding: 0.55rem 0.6rem 0.7rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  /* Category text is redundant once the chip row is the primary filter */
+  .market-grid .product-group-card .product-category {
+    display: none;
+  }
+
+  .market-grid .product-group-card .product-name {
+    font-size: 0.82rem;
+    line-height: 1.25;
+    font-weight: 500;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .market-grid .product-group-card .product-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    margin: 0.1rem 0;
+  }
+
+  /* Ready for a rating badge once one is rendered into the card */
+  .market-grid .product-group-card .product-rating-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.72rem;
+    color: var(--accent, #d4af37);
+    font-weight: 600;
+  }
+
+  /* Price is the single most prominent thing on the card */
+  .market-grid .product-group-card .product-price {
+    margin-top: 0.15rem;
+  }
+
+  .market-grid .product-group-card .price-current {
+    font-size: 1.05rem;
+    font-weight: 800;
+  }
+
+  .market-grid .product-group-card .price-original {
+    font-size: 0.72rem;
+    opacity: 0.6;
+  }
+
+  .market-grid .product-group-card .product-variant-hint {
+    font-size: 0.68rem;
+    opacity: 0.7;
+  }
+
+  /* Keep card actions compact and out of the way of the price */
+  .market-grid .product-group-card .product-actions {
+    margin-top: 0.4rem;
+    gap: 0.35rem;
+  }
+
+  .market-grid .product-group-card .product-actions .btn {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.72rem;
+  }
+}
+
+/* ---------- List-row layout (700px and above) ----------
+   Same DOM/markup as the grid card — this just reflows it into a
+   horizontal row instead of a stacked card, no JS render change needed. */
+
+@media (min-width: 700px) {
+  .shop-product-grid.market-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .market-grid .product-group-card {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 1rem;
+    padding: 0.75rem;
+    border-radius: 14px;
+  }
+
+  .market-grid .product-group-card .product-image {
+    flex: 0 0 120px;
+    width: 120px;
+    height: 120px;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .market-grid .product-group-card .product-image-inner {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .market-grid .product-group-card .product-info {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto auto auto;
+    align-items: center;
+    column-gap: 1.5rem;
+    row-gap: 0.2rem;
+  }
+
+  .market-grid .product-group-card .product-category {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: 0.72rem;
+    opacity: 0.65;
+  }
+
+  .market-grid .product-group-card .product-name {
+    grid-column: 1;
+    grid-row: 2;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .market-grid .product-group-card .product-meta {
+    grid-column: 1;
+    grid-row: 3;
+    display: flex;
+    gap: 0.6rem;
+    font-size: 0.78rem;
+  }
+
+  .market-grid .product-group-card .product-variant-hint {
+    grid-column: 1;
+    grid-row: 4;
+    font-size: 0.75rem;
+    opacity: 0.7;
+  }
+
+  .market-grid .product-group-card .product-price {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    text-align: right;
+  }
+
+  .market-grid .product-group-card .price-current {
+    font-size: 1.15rem;
+    font-weight: 800;
+    display: block;
+  }
+
+  .market-grid .product-group-card .price-original {
+    font-size: 0.8rem;
+    opacity: 0.6;
+    display: block;
+  }
+
+  .market-grid .product-group-card .product-actions {
+    grid-column: 2;
+    grid-row: 3 / span 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.4rem;
+    min-width: 130px;
+  }
+
+  .market-grid .product-group-card .discount-badge {
+    top: 0.5rem;
+    left: 0.5rem;
+  }
+}
