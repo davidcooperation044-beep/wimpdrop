@@ -1,9 +1,3 @@
-
-
-
-
-
-
 class SupabaseService {
   constructor() {
     this.client = null;
@@ -583,17 +577,26 @@ class SupabaseService {
     }
   }
 
-  async getOrder(orderId) {
+  async getOrder(orderRef) {
     try {
       const sb = await this.getClient();
       if (sb.from) {
-        const { data, error } = await sb.from('orders').select('*').eq('id', orderId).single();
+        // orderRef here is the Flutterwave tx_ref, not the orders.id uuid —
+        // checkout.html only ever has the tx_ref at redirect time, since
+        // the real order row is created later by the payment webhook.
+        // order_number and payment_ref are both set to that same tx_ref
+        // when the webhook creates the row.
+        const { data, error } = await sb.from('orders')
+          .select('*')
+          .or(`order_number.eq.${orderRef},payment_ref.eq.${orderRef}`)
+          .maybeSingle();
         if (error) throw error;
+        if (!data) return { success: false, order: null, error: 'Order not found yet' };
         return { success: true, order: data };
       }
 
       const response = await fetch(
-        `${this.supabaseUrl}/rest/v1/orders?id=eq.${orderId}&select=*`,
+        `${this.supabaseUrl}/rest/v1/orders?or=(order_number.eq.${orderRef},payment_ref.eq.${orderRef})&select=*`,
         { headers: this.headers }
       );
       const data = await response.json();

@@ -173,14 +173,17 @@ async function initializePage() {
     console.warn('Realtime subscription setup failed', e);
   }
 
+  // Re-check the exchange rate every 6 days, not 6 seconds — and without
+  // forcing, so it only actually refetches once the 6-day cache window in
+  // refreshExchangeRates() has genuinely expired.
   setInterval(async () => {
     try {
-      await refreshExchangeRates(true);
+      await refreshExchangeRates(false);
       refreshCurrencyDisplay();
     } catch (error) {
       console.warn('Currency refresh failed', error);
     }
-  }, 6000);
+  }, 6 * 24 * 60 * 60 * 1000);
 
   // Load mobile UI enhancements when appropriate
   try {
@@ -371,7 +374,11 @@ async function refreshExchangeRates(force = false) {
   const parsed = cached ? JSON.parse(cached) : null;
   const now = Date.now();
 
-  if (!force && parsed && now - parsed.timestamp < 5 * 60 * 1000) {
+  // Cache exchange rates for 6 days so displayed prices stay stable for
+  // shoppers and only shift on a slow, predictable schedule rather than
+  // fluctuating during a single visit or between page loads.
+  const SIX_DAYS_MS = 6 * 24 * 60 * 60 * 1000;
+  if (!force && parsed && now - parsed.timestamp < SIX_DAYS_MS) {
     AppState.exchangeRates = parsed.rates;
     AppState.exchangeRateLastUpdated = parsed.timestamp;
     return;
@@ -866,10 +873,12 @@ function renderProductGroupCard(group) {
   // Shop cards show ONE product per card, no variant switching here —
   // variant selection happens on the product detail page instead.
   const selected = group[0];
-  const hasDiscount = selected.originalPrice && selected.originalPrice > selected.price;
-  const price = selected.price || 0;
+  const hasDiscount = group.some(p => p.originalPrice && p.originalPrice > p.price);
+  const validOriginals = group.map(p => p.originalPrice || p.price || 0).filter(Boolean);
+  const lowPrice = Math.min(...group.map(p => p.price || 0));
+  const highPrice = Math.max(...group.map(p => p.price || 0));
   const stockStatus = group.some(p => p.inStock) ? 'Available' : 'Out of stock';
-  const discountPercent = hasDiscount ? Math.round((1 - (price / Math.max(selected.originalPrice, 1))) * 100) : 0;
+  const discountPercent = hasDiscount && validOriginals.length ? Math.round((1 - (lowPrice / Math.max(...validOriginals))) * 100) : 0;
   const variantCount = group.length;
 
   return `
@@ -888,8 +897,9 @@ function renderProductGroupCard(group) {
           <span class="product-origin">${selected.supplier}</span>
         </div>
         <div class="product-price">
-          <span class="price-current">${formatCurrency(price)}</span>
-          ${hasDiscount ? `<span class="price-original">${formatCurrency(selected.originalPrice)}</span>` : ''}
+          <span class="price-current">${formatCurrency(lowPrice)}</span>
+          ${lowPrice !== highPrice ? `<span class="price-range">${formatCurrency(lowPrice)} - ${formatCurrency(highPrice)}</span>` : ''}
+          ${hasDiscount ? `<span class="price-original">${formatCurrency(Math.max(...validOriginals))}</span>` : ''}
         </div>
         ${variantCount > 1 ? `<div class="product-variant-hint">${variantCount} options available</div>` : ''}
         <div class="product-actions">
@@ -1082,13 +1092,7 @@ function updateCartQuantity(productId, quantity) {
 }
 
 function getCartTotal() {
-  // Returns the raw total in the store's base currency (NGN). Every call
-  // site does further NGN-denominated math with this value (flat shipping
-  // fees, the free-shipping threshold, VAT) and it's also the literal
-  // amount charged via Flutterwave (hardcoded to NGN) — so this must never
-  // be currency-converted here. Conversion for on-screen display only
-  // happens once, inside formatCurrency(), at the point of rendering.
-  return AppState.cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+  return AppState.cart.reduce((total, item) => total + convertAmount(item.price * item.quantity), 0);
 }
 
 function getCartItemCount() {
@@ -1608,33 +1612,9 @@ function handlePaymentCallback(response) {
 
 // Product sourcing now comes directly from the Supabase `products` table.
 
-// ===== ORDERS MANAGEMENT ===== 
-
-async function getOrderHistory() {
-  try {
-    // TODO: Fetch from Supabase
-    // For now return empty
-    return [];
-  } catch (error) {
-    console.error('Error fetching orders:', error);
-    return [];
-  }
-}
-
-async function trackOrder(orderId) {
-  try {
-    // TODO: Integrate tracking with Supabase order records or shipping provider.
-    return {
-      orderId,
-      status: 'shipped',
-      trackingNumber: 'TRACK123456789',
-      carrier: 'Local Carrier'
-    };
-  } catch (error) {
-    console.error('Tracking error:', error);
-    return null;
-  }
-}
+// Order history and tracking are handled by the real
+// supabaseService.getUserOrders() / tracking-sync pipeline elsewhere —
+// see pages/account.html and supabase/functions/tracking-sync.
 
 // ===== UI UTILITIES ===== 
 

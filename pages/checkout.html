@@ -440,6 +440,7 @@
                 window.onFlutterwaveSuccess = (response) => {
                     showNotification('Payment received. Confirming your order securely...', 'success');
                     clearCart();
+                    sessionStorage.setItem('lastOrderId', paymentData.tx_ref);
                     sessionStorage.setItem('lastOrderTotal', total);
                     sessionStorage.setItem('lastOrderEmail', email);
                     setTimeout(() => {
