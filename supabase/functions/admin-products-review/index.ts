@@ -39,39 +39,27 @@ Deno.serve(async (request) => {
     if (!productIds.length) {
       return json({ success: false, error: 'productId or productIds is required.' }, 400);
     }
-    if (action === 'update' && productIds.length !== 1) {
-      return json({ success: false, error: 'Update accepts exactly one productId.' }, 400);
-    }
 
-        if (action === 'update') {
+    if (action === 'update') {
       const name = typeof body.name === 'string' ? body.name.trim() : '';
       const price = Number(body.price);
       if (!name || !Number.isFinite(price) || price < 0) {
         return json({ success: false, error: 'Update requires a non-empty name and non-negative numeric price.' }, 400);
       }
 
-      const { data: current, error: fetchError } = await db
+      // The caller (admin UI) already resolves which rows belong together —
+      // e.g. every variant row sharing one supplier_product_id — and passes
+      // that full set of ids here, so this just applies the same name/price
+      // to all of them directly, in one call, instead of us re-deriving
+      // sibling rows from a single id.
+      const { data: updated, error: updateError } = await db
         .from('products')
-        .select('id,supplier_product_id,variant_size')
-        .eq('id', productIds[0])
-        .single();
-      if (fetchError) throw fetchError;
+        .update({ name, title: name, price })
+        .in('id', productIds)
+        .select();
+      if (updateError) throw updateError;
 
-
-
-
-      const { error: nameError } = await db.from('products').update({ name, title: name }).eq('id', productIds[0]);
-      if (nameError) throw nameError;
-
-      let priceQuery = db.from('products').update({ price }).eq('supplier_product_id', current.supplier_product_id);
-      priceQuery = current.variant_size === null
-        ? priceQuery.is('variant_size', null)
-        : priceQuery.eq('variant_size', current.variant_size);
-
-      const { data: updated, error: priceError } = await priceQuery.select();
-      if (priceError) throw priceError;
-
-      return json({ success: true, action, updatedCount: updated?.length || 0, product: updated?.find((p: any) => p.id === productIds[0]) });
+      return json({ success: true, action, updatedCount: updated?.length || 0, products: updated || [] });
     }
 
     if (action === 'delete') {

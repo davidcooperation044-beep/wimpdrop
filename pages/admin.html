@@ -478,6 +478,8 @@
                 title: raw['Product Title'] || raw.name || raw.title || raw['product_title'] || 'Untitled product',
                 image: raw['Product Image'] || raw.image_url || raw.image || raw.product_image || raw['product_image'] || '',
                 supplierSku: raw.supplier_sku || 'n/a',
+                supplierProductId: raw.supplier_product_id || raw.supplierProductId || '',
+                variantSize: raw.variant_size || raw.variantSize || '',
                 inventory: raw.stock_quantity ?? 'N/A',
                 status: raw.sync_status || raw['Product Status'] || raw.status || raw['Status'] || (raw.is_published ? 'active' : 'draft'),
                 addedAt: raw['Added Time'] || raw.added_at || raw.created_at || raw['created_at'] || '',
@@ -486,6 +488,21 @@
                 vendor: raw['Vendor'] || raw.vendor || raw.supplier || '',
                 isPublished: raw.is_published === true
             };
+        }
+
+        // Variants of the same listing (same supplier_product_id — e.g.
+        // different sizes/colors CJ lists as separate rows) get grouped into
+        // one entry, falling back to the row's own id for anything without a
+        // supplier_product_id so it still shows up as its own single-item group.
+        function groupDraftProducts(products) {
+            const groups = new Map();
+            products.forEach((raw) => {
+                const product = normalizeAdminProduct(raw);
+                const key = product.supplierProductId || product.id;
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(product);
+            });
+            return [...groups.values()];
         }
 
 
@@ -607,7 +624,11 @@
         }
 
         function selectedDraftIds() {
-            return [...document.querySelectorAll('[data-draft-check]:checked')].map((input) => input.value);
+            // Each checkbox now represents one variant GROUP, carrying every
+            // underlying product id it stands for in data-ids.
+            return [...document.querySelectorAll('[data-draft-group-check]:checked')].flatMap((input) => {
+                try { return JSON.parse(input.dataset.ids || '[]'); } catch (e) { return []; }
+            });
         }
 
         function updateDraftSelectionState() {
@@ -629,16 +650,18 @@
             }
         }
 
-        async function saveDraft(productId, row) {
+        async function saveDraftGroup(productIds, row) {
             const name = row.querySelector('[data-draft-name]').value.trim();
             const enteredPrice = Number(row.querySelector('[data-draft-price]').value);
             const price = adminCurrencyToNgn(enteredPrice);
-            await reviewProduct('update', [productId], { name, price });
+            // Same name/price gets applied to every variant id in the group —
+            // the edge function updates all of them in one call.
+            await reviewProduct('update', productIds, { name, price });
         }
 
-        async function publishDraft(productId, row) {
-            await saveDraft(productId, row);
-            await reviewProduct('publish', [productId]);
+        async function publishDraftGroup(productIds, row) {
+            await saveDraftGroup(productIds, row);
+            await reviewProduct('publish', productIds);
         }
 
         function renderPendingDrafts(products) {
@@ -652,20 +675,40 @@
                 return;
             }
             empty.style.display = 'none';
-            products.forEach((raw) => {
-                const product = normalizeAdminProduct(raw);
+
+            const groups = groupDraftProducts(products);
+
+            groups.forEach((group) => {
+                const primary = group[0];
+                const groupIds = group.map((p) => p.id);
+                const totalInventory = group.reduce((sum, p) => sum + (Number(p.inventory) || 0), 0);
+                const variantChips = group.map((p) => {
+                    const label = p.variantSize || p.supplierSku || 'Standard';
+                    const stock = Number.isFinite(Number(p.inventory)) ? Number(p.inventory) : 0;
+                    return `<span title="SKU ${p.supplierSku}" style="background:rgba(255,255,255,0.08);border-radius:999px;padding:0.15rem 0.6rem;white-space:nowrap;">${label} · ${stock} in stock</span>`;
+                }).join(' ');
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td><input class="review-checkbox" type="checkbox" value="${product.id}" data-draft-check aria-label="Select ${product.title}"></td>
-                    <td><div style="display:flex;align-items:center;gap:0.75rem;"><img src="${product.image || 'https://placehold.co/56x56'}" alt="${product.title}" width="56" height="56" class="admin-product-image"><input class="review-edit" data-draft-name value="${String(product.title).replace(/"/g, '&quot;')}" aria-label="Product name"></div></td><td>${product.supplierCost}</td>
-                    <td><div style="display:flex;align-items:center;gap:0.35rem;"><span aria-hidden="true">${priceInputLabel()}</span><input class="review-edit" data-draft-price type="number" min="0" step="0.01" value="${ngnToAdminCurrency(product.price).toFixed(2)}" aria-label="Sell price (${adminPriceCurrency})"></div></td>
-                    <td>${product.inventory}</td>
-                    <td><div class="review-actions"><button class="btn btn-outline btn-small" type="button" data-save-draft>Save</button><button class="btn btn-primary btn-small" type="button" data-publish-draft>Publish</button><button class="btn btn-secondary btn-small" type="button" data-delete-draft>Delete</button></div></td>
+                    <td><input class="review-checkbox" type="checkbox" data-draft-group-check data-ids='${JSON.stringify(groupIds)}' aria-label="Select ${primary.title}"></td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:0.75rem;">
+                            <img src="${primary.image || 'https://placehold.co/56x56'}" alt="${primary.title}" loading="lazy" decoding="async" width="56" height="56" class="admin-product-image">
+                            <div style="flex:1;">
+                                <input class="review-edit" data-draft-name value="${String(primary.title).replace(/"/g, '&quot;')}" aria-label="Product name">
+                                ${group.length > 1 ? `<div class="variant-chip-row" style="margin-top:0.35rem;display:flex;flex-wrap:wrap;gap:0.35rem;font-size:0.78rem;color:var(--text-secondary);">${variantChips}</div>` : ''}
+                            </div>
+                        </div>
+                    </td>
+                    <td>${primary.supplierCost}</td>
+                    <td><div style="display:flex;align-items:center;gap:0.35rem;"><span aria-hidden="true">${priceInputLabel()}</span><input class="review-edit" data-draft-price type="number" min="0" step="0.01" value="${ngnToAdminCurrency(primary.price).toFixed(2)}" aria-label="Sell price (${adminPriceCurrency}) for all ${group.length} variant(s)"></div></td>
+                    <td>${totalInventory}${group.length > 1 ? ` <span style="color:var(--text-secondary);font-size:0.8rem;">(${group.length} variants)</span>` : ''}</td>
+                    <td><div class="review-actions"><button class="btn btn-outline btn-small" type="button" data-save-draft>Save</button><button class="btn btn-primary btn-small" type="button" data-publish-draft>Publish${group.length > 1 ? ` all ${group.length}` : ''}</button><button class="btn btn-secondary btn-small" type="button" data-delete-draft>Delete</button></div></td>
                 `;
-                row.querySelector('[data-draft-check]').addEventListener('change', updateDraftSelectionState);
-                row.querySelector('[data-save-draft]').addEventListener('click', () => saveDraft(product.id, row));
-                row.querySelector('[data-publish-draft]').addEventListener('click', () => publishDraft(product.id, row));
-                row.querySelector('[data-delete-draft]').addEventListener('click', () => reviewProduct('delete', [product.id]));
+                row.querySelector('[data-draft-group-check]').addEventListener('change', updateDraftSelectionState);
+                row.querySelector('[data-save-draft]').addEventListener('click', () => saveDraftGroup(groupIds, row));
+                row.querySelector('[data-publish-draft]').addEventListener('click', () => publishDraftGroup(groupIds, row));
+                row.querySelector('[data-delete-draft]').addEventListener('click', () => reviewProduct('delete', groupIds));
                 body.appendChild(row);
             });
             updateDraftSelectionState();

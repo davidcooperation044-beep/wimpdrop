@@ -504,10 +504,20 @@ class SupabaseService {
         }
         if (productIdentifier) {
           const identifier = String(productIdentifier).trim();
-          if (identifier.length === 36 && identifier.includes('-')) {
-            query = query.eq('id', identifier);
+          // supplier_product_id is what actually ties variants of the same
+          // listing together (see groupProductsByProductId in main.js) — a
+          // row's own id is only ever shared by itself. Match on
+          // supplier_product_id whenever we have one; only fall back to
+          // matching the row's own id for a lone product with no
+          // supplier_product_id set (e.g. a manually added item).
+          const looksLikeUuid = identifier.length === 36 && identifier.includes('-');
+          if (looksLikeUuid) {
+            // Could be either a manually added product's own UUID, or (rarely)
+            // a supplier_product_id that happens to be UUID-shaped — match
+            // either column rather than guessing which.
+            query = query.or(`id.eq.${identifier},supplier_product_id.eq.${identifier}`);
           } else {
-            query = query.or(`supplier_sku.eq.${identifier},title.eq.${identifier},name.eq.${identifier}`);
+            query = query.eq('supplier_product_id', identifier);
           }
         }
         const { data, error } = await query.order('created_at', { ascending: false });

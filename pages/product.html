@@ -292,7 +292,7 @@
             }
 
             if (initialProduct) {
-                const lookupId = initialProduct.product_id || initialProduct.productId || productId;
+                const lookupId = initialProduct.supplier_product_id || initialProduct.supplierProductId || initialProduct.product_id || initialProduct.productId || productId;
                 if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
                     try {
                         const result = await supabaseService.getProductVariants(lookupId);
