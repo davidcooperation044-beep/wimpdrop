@@ -418,7 +418,6 @@
 
         function selectVariant(index) {
             selectedVariantIndex = index;
-            selectedGalleryIndex = 0;
             populateProductPage();
         }
 
@@ -432,9 +431,15 @@
             if (!galleryImages.length) {
                 galleryImages = [currentProduct?.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop'];
             }
-            if (selectedGalleryIndex >= galleryImages.length) {
-                selectedGalleryIndex = 0;
-            }
+
+            // Jump the gallery to the newly selected variant's own photo
+            // instead of leaving it pinned at whatever index it was on
+            // before — that's what made every variant look identical when
+            // switching (selectedGalleryIndex used to just get reset to 0,
+            // which is always the same image regardless of which variant
+            // you'd actually picked).
+            const currentImageIndex = galleryImages.indexOf(currentProduct?.image);
+            selectedGalleryIndex = currentImageIndex >= 0 ? currentImageIndex : 0;
 
             mainImage.src = galleryImages[selectedGalleryIndex] || currentProduct?.image || '';
             mainImage.alt = currentProduct?.title || 'Product image';
