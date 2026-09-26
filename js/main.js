@@ -1189,7 +1189,7 @@ async function loadProducts(filters = {}) {
       if (category) queryFilters.category = category;
       if (search) queryFilters.search = search;
 
-      const res = await supabaseService.getProducts({ ...queryFilters, includeUnpublished: true });
+     const res = await supabaseService.getProducts({ ...queryFilters });
       if (res.success && res.products) {
         const allRows = res.products.map(raw => normalizeProduct(raw));
         // Group variant rows into distinct products by title
