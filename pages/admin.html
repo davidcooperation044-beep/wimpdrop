@@ -863,6 +863,7 @@
                 const result = await invokeAdminFunction('admin-products-import', { keyword, size: 20 });
                 appendAdminLog(`Imported ${result.imported || 0} CJ draft products for review.`);
                 await loadAdminProducts();
+                await loadPendingDrafts();
                 await loadSupplierStatus();
             } catch (error) {
                 appendAdminLog(`CJ draft import failed: ${error.message || error}`);
