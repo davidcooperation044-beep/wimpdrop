@@ -347,22 +347,47 @@ function detectUserCurrency() {
   return { region, currency };
 }
 
-function buildLiveExchangeRates() {
-  const now = Date.now();
-  const pulse = Math.sin(now / 60000) * 0.0008 + 0.0002;
-  return {
-    NGN: 1,
-    USD: 0.0025 + pulse,
-    EUR: 0.0023 + pulse * 0.92,
-    GBP: 0.0020 + pulse * 0.84,
-    GHS: 0.016 + pulse * 1.1,
-    KES: 0.25 + pulse * 0.95,
-    ZAR: 0.14 + pulse * 0.78,
-    INR: 0.030 + pulse * 0.9,
-    CAD: 0.0019 + pulse * 0.88,
-    AUD: 0.0016 + pulse * 0.86,
-    JPY: 0.0017 + pulse * 0.75
-  };
+// Offline/last-resort fallback only — used if the live FX API can't be reached
+// and there's no usable cache. Not used under normal conditions.
+const FALLBACK_EXCHANGE_RATES = {
+  NGN: 1,
+  USD: 0.00063,
+  EUR: 0.00058,
+  GBP: 0.00050,
+  GHS: 0.0091,
+  KES: 0.081,
+  ZAR: 0.011,
+  INR: 0.055,
+  CAD: 0.00087,
+  AUD: 0.00096,
+  JPY: 0.094
+};
+
+// Live FX rates, base = NGN (matches AppState.baseCurrency). Free, no API key,
+// CORS-enabled. If you outgrow the rate limit or want a paid/more reliable
+// provider (exchangerate-api.com, openexchangerates.org, etc.), swap the URL
+// and keep the same response handling below.
+const EXCHANGE_RATE_API_URL = 'https://open.er-api.com/v6/latest/NGN';
+
+async function fetchLiveExchangeRates() {
+  const response = await fetch(EXCHANGE_RATE_API_URL);
+  if (!response.ok) throw new Error(`Exchange rate API returned ${response.status}`);
+
+  const data = await response.json();
+  if (data.result !== 'success' || !data.rates) {
+    throw new Error('Exchange rate API returned an unexpected payload.');
+  }
+
+  // Keep only the currencies this app actually offers, always with NGN = 1
+  // since NGN is our base currency.
+  const wanted = ['NGN', 'USD', 'EUR', 'GBP', 'GHS', 'KES', 'ZAR', 'INR', 'CAD', 'AUD', 'JPY', 'SEK', 'NOK', 'DKK', 'CHF', 'AED', 'SAR', 'EGP'];
+  const rates = {};
+  wanted.forEach((code) => {
+    if (typeof data.rates[code] === 'number') rates[code] = data.rates[code];
+  });
+  rates.NGN = 1;
+
+  return rates;
 }
 
 async function refreshExchangeRates(force = false) {
@@ -371,17 +396,30 @@ async function refreshExchangeRates(force = false) {
   const parsed = cached ? JSON.parse(cached) : null;
   const now = Date.now();
 
-  if (!force && parsed && now - parsed.timestamp < 5 * 60 * 1000) {
+  // Real rates don't move fast enough to justify calling the API on every
+  // page load — cache for an hour, same pattern as before.
+  if (!force && parsed && now - parsed.timestamp < 60 * 60 * 1000) {
     AppState.exchangeRates = parsed.rates;
     AppState.exchangeRateLastUpdated = parsed.timestamp;
     return;
   }
 
-  const rates = buildLiveExchangeRates();
-  AppState.exchangeRates = rates;
-  AppState.exchangeRateLastUpdated = Date.now();
-
-  localStorage.setItem(cacheKey, JSON.stringify({ rates, timestamp: AppState.exchangeRateLastUpdated }));
+  try {
+    const rates = await fetchLiveExchangeRates();
+    AppState.exchangeRates = rates;
+    AppState.exchangeRateLastUpdated = Date.now();
+    localStorage.setItem(cacheKey, JSON.stringify({ rates, timestamp: AppState.exchangeRateLastUpdated }));
+  } catch (error) {
+    console.warn('Live exchange rate fetch failed, falling back.', error);
+    // Prefer a stale cache over the hardcoded table if we have one at all.
+    if (parsed && parsed.rates) {
+      AppState.exchangeRates = parsed.rates;
+      AppState.exchangeRateLastUpdated = parsed.timestamp;
+    } else {
+      AppState.exchangeRates = FALLBACK_EXCHANGE_RATES;
+      AppState.exchangeRateLastUpdated = Date.now();
+    }
+  }
 }
 
 function getExchangeRate(fromCurrency = AppState.baseCurrency, toCurrency = AppState.displayCurrency) {
