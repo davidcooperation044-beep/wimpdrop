@@ -1,5 +1,14 @@
 import { cjRequest, db, handleOptions, json, readJson, requireAdmin } from '../_shared/cj.ts';
 
+function parsePrice(raw: unknown): number {
+  if (typeof raw === 'number') return raw;
+  const str = String(raw ?? '').trim();
+  if (!str) return 0;
+  const first = str.split('--')[0].trim();
+  const num = Number(first);
+  return Number.isFinite(num) ? num : 0;
+}
+
 Deno.serve(async (request) => {
   const options = handleOptions(request);
   if (options) return options;
@@ -15,35 +24,46 @@ Deno.serve(async (request) => {
     if (body.countryCode) params.set('countryCode', String(body.countryCode));
 
     const result = await cjRequest(`/product/listV2?${params.toString()}`);
-    const products = Array.isArray(result.data) ? result.data : (result.data?.list || result.data?.content || []);
+
+    // CJ nests the real product list inside data.content[].productList,
+    // with one or more category-grouped wrappers per page.
+    const contentGroups = Array.isArray(result.data?.content) ? result.data.content : [];
+    const products = contentGroups.flatMap((group: any) => {
+      const list = Array.isArray(group.productList) ? group.productList : [];
+      const categoryLookup = new Map(
+        (Array.isArray(group.relatedCategoryList) ? group.relatedCategoryList : []).map((c: any) => [c.id, c.name])
+      );
+      return list.map((product: any) => ({ ...product, __categoryName: categoryLookup.get(product.categoryId) }));
+    });
+
     const { data: settings } = await db.from('integration_settings').select('value').eq('key', 'cj').maybeSingle();
     const markupPercent = Number(settings?.value?.markup_percent ?? 30);
-    const rows = products.flatMap((product: any) => {
-      const variants = Array.isArray(product.variants) && product.variants.length ? product.variants : [product];
-      return variants.map((variant: any) => {
-        const supplierCost = Number(variant.sellPrice || variant.price || product.sellPrice || product.price || 0);
-        return {
-          name: product.productName || product.name || product.title || 'CJ product',
-          description: product.description || '',
-          category: product.categoryName || body.category || 'CJ Import',
-          price: Number((supplierCost * (1 + markupPercent / 100)).toFixed(2)),
-          supplier: 'cj',
-          supplier_product_id: product.pid || product.productId || null,
-          supplier_variant_id: variant.vid || variant.variantId || null,
-          supplier_sku: variant.variantSku || variant.sku || product.productSku || product.sku || null,
-          supplier_cost: supplierCost,
-          stock_quantity: Number(variant.stock || product.stock || product.inventory || 0),
-          image_url: variant.variantImage || product.productImage || product.image || product.thumbnail || null,
-          is_published: false,
-          sync_status: 'draft'
-        };
-      });
-    });
+
+    const rows = products.map((product: any) => {
+      const supplierCost = parsePrice(product.sellPrice ?? product.nowPrice ?? 0);
+      const productId = product.id ?? product.pid ?? null;
+      return {
+        name: product.nameEn || product.name || 'CJ product',
+        description: product.description || '',
+        category: product.__categoryName || body.category || 'CJ Import',
+        price: Number((supplierCost * (1 + markupPercent / 100)).toFixed(2)),
+        supplier: 'cj',
+        supplier_product_id: productId,
+        supplier_variant_id: productId,
+        supplier_sku: product.sku || null,
+        supplier_cost: supplierCost,
+        stock_quantity: Number(product.warehouseInventoryNum || 0),
+        image_url: product.bigImage || null,
+        is_published: false,
+        sync_status: 'draft'
+      };
+    }).filter((row) => row.supplier_variant_id);
+
     if (rows.length) {
       const { error } = await db.from('products').upsert(rows, { onConflict: 'supplier,supplier_variant_id' });
       if (error) throw error;
     }
-    return json({ success: true, imported: rows.length, requiresReview: true, source: result });
+    return json({ success: true, imported: rows.length, requiresReview: true, totalMatches: result.data?.totalRecords ?? rows.length });
   } catch (error) {
     const err = error as any;
     if (err?.rateLimited) {
