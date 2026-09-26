@@ -401,7 +401,12 @@ class SupabaseService {
         stock: 'stock_quantity'
       };
       const sortField = sortFields[filters.sortBy] || filters.sortBy;
-      const sortAscending = filters.sortBy === 'price-low' || (filters.sortBy !== 'price-high' && filters.sortAsc !== false);
+      // Default to descending (newest/highest first) for every sort mode
+      // except an explicit ascending request. The previous logic treated
+      // anything that wasn't 'price-high' as ascending, which silently
+      // made 'newest' sort oldest-first — combined with a row limit, this
+      // hid any product created after the first 100 (oldest) rows.
+      const sortAscending = filters.sortAsc === true || filters.sortBy === 'price-low';
       const includeUnpublished = filters.includeUnpublished === true;
 
       if (sb.from) {
