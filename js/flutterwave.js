@@ -1,6 +1,3 @@
-
-
-
 class FlutterwaveService {
   constructor() {
     this.isInitialized = false;
@@ -19,7 +16,7 @@ class FlutterwaveService {
       this.publicKey = publicKey;
 
 
-      if (typeof FlutterWaveCheckout === 'undefined') {
+      if (typeof FlutterwaveCheckout === 'undefined') {
         const script = document.createElement('script');
         script.src = 'https://checkout.flutterwave.com/v3.js';
         script.async = true;
@@ -94,7 +91,7 @@ class FlutterwaveService {
       }
 
 
-      FlutterWaveCheckout(checkoutConfig);
+      FlutterwaveCheckout(checkoutConfig);
 
       return { success: true };
 
