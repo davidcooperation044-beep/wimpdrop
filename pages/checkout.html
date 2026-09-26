@@ -268,7 +268,20 @@
     </footer>
     
     <script>
-        function initCheckout() {
+        async function initCheckout() {
+            // Wait for the real init chain (main.js) to finish restoring the
+            // session and cart before checking login state — otherwise this
+            // always sees AppState.user as unset and redirects even when the
+            // person is logged in. Same pattern as cart.html's waitForAppReady().
+            let attempts = 0;
+            while (!window._appReady && attempts < 100) {
+                await new Promise((resolve) => setTimeout(resolve, 20));
+                attempts++;
+            }
+            if (window._appReady) {
+                await window._appReady;
+            }
+
             // Check if user is logged in
             if (!AppState.user) {
                 showNotification('Please log in to checkout', 'error');
@@ -540,4 +553,3 @@
     <script src="/js/email-service.js"></script>
 </body>
 </html>
-

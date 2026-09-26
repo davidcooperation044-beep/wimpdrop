@@ -106,7 +106,12 @@ const Storage = {
 // Initialize app on page load
 async function initializePage() {
   await initializeConfig();
-  await initializeCurrencySystem();
+  // Currency rates are fetched from a live API below (initializeCurrencySystem).
+  // Deliberately NOT awaited here — cart restore, session restore, and event
+  // wiring must never be blocked by a third-party network call. Prices simply
+  // render in NGN until the live rates arrive, then refreshCurrencyDisplay()
+  // (called at the end of initializeCurrencySystem) updates them in place.
+  initializeCurrencySystem();
   setupLiveTicker();
   setupCounterAnimation();
   setupParallaxMotion();
@@ -173,14 +178,13 @@ async function initializePage() {
     console.warn('Realtime subscription setup failed', e);
   }
 
-  setInterval(async () => {
-    try {
-      await refreshExchangeRates(true);
-      refreshCurrencyDisplay();
-    } catch (error) {
-      console.warn('Currency refresh failed', error);
-    }
-  }, 6000);
+  // NOTE: previously there was a setInterval here force-refreshing exchange
+  // rates every 6 seconds (left over from the old fake "live ticking" price
+  // effect). Removed — real FX rates don't move meaningfully within a
+  // session, hammering a free public API every 6s was causing rate-limit
+  // fallback flapping (visibly "fluctuating" prices), and it had no place
+  // in a real pricing flow. refreshExchangeRates() already caches for an
+  // hour and re-checks on page load.
 
   // Load mobile UI enhancements when appropriate
   try {
@@ -312,27 +316,20 @@ async function initializeCurrencySystem() {
   AppState.currencyRegion = detected.region;
   AppState.displayCurrency = detected.currency;
 
-  try {
-    await refreshExchangeRates();
-  } catch (error) {
-    console.warn('Currency rates unavailable, using fallback values.', error);
-    AppState.exchangeRates = {
-      NGN: 1,
-      USD: 0.0025,
-      EUR: 0.0023,
-      GBP: 0.0020,
-      GHS: 0.016,
-      KES: 0.25,
-      ZAR: 0.14,
-      INR: 0.030,
-      CAD: 0.0019,
-      AUD: 0.0016,
-      JPY: 0.0017
-    };
-  }
+  // refreshExchangeRates() handles its own fallback internally and never
+  // throws (see js/main.js), so no try/catch — and no separate fake-rate
+  // table duplicated here.
+  await refreshExchangeRates();
 
   if (typeof updateCurrencyBadge === 'function') {
     updateCurrencyBadge();
+  }
+
+  // This function is called without awaiting from initializePage(), so the
+  // page may already be rendered with default NGN prices by the time real
+  // rates arrive. Re-render with the now-current currency/rates.
+  if (typeof refreshCurrencyDisplay === 'function') {
+    refreshCurrencyDisplay();
   }
 }
 
@@ -370,7 +367,18 @@ const FALLBACK_EXCHANGE_RATES = {
 const EXCHANGE_RATE_API_URL = 'https://open.er-api.com/v6/latest/NGN';
 
 async function fetchLiveExchangeRates() {
-  const response = await fetch(EXCHANGE_RATE_API_URL);
+  // Hard timeout so a slow/unreachable FX API can never stall the rest of
+  // the app — it just fails fast and refreshExchangeRates() falls back.
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+  let response;
+  try {
+    response = await fetch(EXCHANGE_RATE_API_URL, { signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
   if (!response.ok) throw new Error(`Exchange rate API returned ${response.status}`);
 
   const data = await response.json();
