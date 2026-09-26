@@ -311,7 +311,7 @@ function setupEventListeners() {
 }
 
 async function initializeCurrencySystem() {
-  const detected = detectUserCurrency();
+  const detected = await detectUserCurrency();
   AppState.currencyRegion = detected.region;
   AppState.displayCurrency = detected.currency;
 
@@ -339,16 +339,73 @@ async function initializeCurrencySystem() {
   }
 }
 
-function detectUserCurrency() {
+const CURRENCY_REGION_MAP = {
+  US: 'USD', CA: 'CAD', GB: 'GBP', AU: 'AUD', JP: 'JPY', IN: 'INR', NG: 'NGN', KE: 'KES', GH: 'GHS', ZA: 'ZAR', DE: 'EUR', FR: 'EUR', IT: 'EUR', ES: 'EUR', NL: 'EUR', BE: 'EUR', IE: 'EUR', PT: 'EUR', AT: 'EUR', GR: 'EUR', FI: 'EUR', LU: 'EUR', SI: 'EUR', MT: 'EUR', CY: 'EUR', EE: 'EUR', LV: 'EUR', LT: 'EUR', SK: 'EUR', HR: 'EUR', PL: 'EUR', CZ: 'EUR', RO: 'EUR', BG: 'EUR', HU: 'EUR', SE: 'SEK', NO: 'NOK', DK: 'DKK', CH: 'CHF', AE: 'AED', SA: 'SAR', EG: 'EGP'
+};
+
+// Detects the shopper's actual currency from their real-world location
+// (via IP geolocation) instead of guessing from the browser's language
+// setting. Browser language is unreliable — many Nigerian (and other
+// non-US) phones/browsers default to "en-US" rather than a region-correct
+// locale, which previously caused the site to assume everyone was
+// American and show dollars regardless of where the shopper actually was.
+//
+// A manual override (set via setPreferredCurrency, see updateCurrencyBadge)
+// always wins so a shopper can correct a wrong guess themselves.
+async function detectUserCurrency() {
+  const manual = localStorage.getItem('wimp_currency_override');
+  if (manual && CURRENCY_REGION_MAP && Object.values(CURRENCY_REGION_MAP).includes(manual)) {
+    return { region: AppState.currencyRegion || '', currency: manual, source: 'manual' };
+  }
+
+  // Cache the geolocation result for the session so we don't hit the IP
+  // lookup service on every page load.
+  const cached = sessionStorage.getItem('wimp_geo_currency');
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached);
+      if (parsed && parsed.currency) return parsed;
+    } catch (e) { /* ignore malformed cache */ }
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+    const response = await fetch('https://ipapi.co/json/', { signal: controller.signal });
+    clearTimeout(timeout);
+    if (response.ok) {
+      const data = await response.json();
+      const region = (data.country_code || data.country || '').toUpperCase();
+      const currency = data.currency || CURRENCY_REGION_MAP[region] || 'USD';
+      const result = { region, currency, source: 'geo' };
+      sessionStorage.setItem('wimp_geo_currency', JSON.stringify(result));
+      return result;
+    }
+  } catch (error) {
+    console.warn('IP-based currency detection failed, falling back to browser locale.', error);
+  }
+
+  // Fallback only if the geolocation lookup itself failed (offline, the
+  // lookup service is blocked, etc.) — not used as the primary signal.
   const locale = (navigator.languages && navigator.languages[0]) || navigator.language || 'en-US';
   const region = (locale.split('-')[1] || '').toUpperCase();
-  const currencyMap = {
-    US: 'USD', CA: 'CAD', GB: 'GBP', AU: 'AUD', JP: 'JPY', IN: 'INR', NG: 'NGN', KE: 'KES', GH: 'GHS', ZA: 'ZAR', DE: 'EUR', FR: 'EUR', IT: 'EUR', ES: 'EUR', NL: 'EUR', BE: 'EUR', IE: 'EUR', PT: 'EUR', AT: 'EUR', GR: 'EUR', FI: 'EUR', LU: 'EUR', SI: 'EUR', MT: 'EUR', CY: 'EUR', EE: 'EUR', LV: 'EUR', LT: 'EUR', SK: 'EUR', HR: 'EUR', PL: 'EUR', CZ: 'EUR', RO: 'EUR', BG: 'EUR', HU: 'EUR', SE: 'SEK', NO: 'NOK', DK: 'DKK', CH: 'CHF', AE: 'AED', SA: 'SAR', EG: 'EGP', ZA: 'ZAR'
-  };
-
-  const currency = currencyMap[region] || 'USD';
-  return { region, currency };
+  const currency = CURRENCY_REGION_MAP[region] || 'USD';
+  return { region, currency, source: 'locale-fallback' };
 }
+
+// Lets a shopper manually correct the detected currency if it's ever wrong,
+// and re-renders every price on the page immediately.
+async function setPreferredCurrency(currency) {
+  localStorage.setItem('wimp_currency_override', currency);
+  const detected = await detectUserCurrency();
+  AppState.currencyRegion = detected.region;
+  AppState.displayCurrency = detected.currency;
+  if (typeof updateCurrencyBadge === 'function') updateCurrencyBadge();
+  if (typeof window.renderCartItems === 'function') window.renderCartItems();
+  if (typeof window.updateOrderSummary === 'function') window.updateOrderSummary();
+  if (typeof loadProducts === 'function') loadProducts();
+}
+window.setPreferredCurrency = setPreferredCurrency;
 
 function buildLiveExchangeRates() {
   const now = Date.now();
@@ -1091,8 +1148,17 @@ function updateCartQuantity(productId, quantity) {
   }
 }
 
+// Returns the cart total in the BASE currency (NGN) — the same unit
+// item.price is stored in. Do not convert here: cart.html and
+// checkout.html do further arithmetic on this value (adding raw-NGN
+// shipping costs, computing VAT, applying discounts) before handing the
+// final figure to formatCurrency(), which converts to the shopper's
+// display currency at the very end. Converting here as well as in
+// formatCurrency() was converting the amount twice, which is why the
+// cart/checkout totals didn't add up (and, more importantly, why the
+// amount actually sent to the payment provider was wrong).
 function getCartTotal() {
-  return AppState.cart.reduce((total, item) => total + convertAmount(item.price * item.quantity), 0);
+  return AppState.cart.reduce((total, item) => total + (item.price * item.quantity), 0);
 }
 
 function getCartItemCount() {
@@ -1179,12 +1245,20 @@ function updateWishlistBadge() {
 async function loadProducts(filters = {}) {
   try {
     const productList = document.getElementById('product-list');
-    if (!productList && !isHomePage()) return;
+
+    // NOTE: we used to bail out here entirely when the page had no
+    // #product-list element (e.g. cart.html, checkout.html). That meant
+    // AppState.products was never populated on those pages, so cart/
+    // checkout stock lookups (AppState.products.find(...)) always came
+    // back empty and fell through to "0 in stock" / "Out of stock" even
+    // for items that were genuinely available. We still fetch products
+    // on every page now; renderProducts() and showProductSkeletons()
+    // already no-op safely when there's no #product-list to render into.
 
     // show skeletons while loading
     if (isHomePage()) {
       showHomepageSkeletons();
-    } else {
+    } else if (productList) {
       showProductSkeletons(12);
     }
 
