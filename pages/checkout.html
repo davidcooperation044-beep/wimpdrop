@@ -303,7 +303,54 @@
                 </div>
             `).join('');
 
+            await prefillDefaultShippingAddress();
+
             updateCheckoutSummary();
+        }
+
+        // Fills the shipping form from the shopper's default saved address
+        // (Account > Addresses) so returning shoppers don't have to retype it
+        // every time. Every field is only set if it's still empty, so this
+        // never clobbers anything the shopper has already typed or edited —
+        // they can freely overwrite any prefilled field to ship somewhere else.
+        async function prefillDefaultShippingAddress() {
+            try {
+                if (typeof supabaseService === 'undefined' || !supabaseService.isInitialized) return;
+
+                const res = await supabaseService.getUserAddresses();
+                if (!res.success || !res.addresses || !res.addresses.length) return;
+
+                const defaultAddress = res.addresses.find(a => a.isDefault) || res.addresses[0];
+                if (!defaultAddress) return;
+
+                const setIfEmpty = (input, value) => {
+                    if (input && !input.value && value) input.value = value;
+                };
+
+                const nameParts = (defaultAddress.recipient || '').trim().split(/\s+/).filter(Boolean);
+                setIfEmpty(document.getElementById('checkout-first-name'), nameParts[0] || '');
+                setIfEmpty(document.getElementById('checkout-last-name'), nameParts.slice(1).join(' '));
+                setIfEmpty(document.getElementById('checkout-email'), AppState.user?.email || '');
+                setIfEmpty(document.getElementById('checkout-phone'), defaultAddress.phone || AppState.user?.user_metadata?.phone || '');
+                setIfEmpty(document.getElementById('checkout-street'), [defaultAddress.line1, defaultAddress.line2].filter(Boolean).join(', '));
+                setIfEmpty(document.getElementById('checkout-city'), defaultAddress.city || '');
+                setIfEmpty(document.getElementById('checkout-state'), defaultAddress.state || '');
+                setIfEmpty(document.getElementById('checkout-postal'), defaultAddress.postalCode || '');
+
+                const countrySelect = document.getElementById('checkout-country');
+                if (countrySelect && defaultAddress.country) {
+                    const raw = defaultAddress.country.trim().toLowerCase();
+                    const match = Array.from(countrySelect.options).find(opt =>
+                        opt.value.toLowerCase() === raw || opt.textContent.toLowerCase() === raw
+                    );
+                    // Only override the country select's own default (Nigeria) if the
+                    // saved address's country actually matches one of the listed
+                    // options; otherwise leave the existing default in place.
+                    if (match) countrySelect.value = match.value;
+                }
+            } catch (error) {
+                console.warn('Could not prefill default shipping address', error);
+            }
         }
 
         function updateCheckoutSummary() {
