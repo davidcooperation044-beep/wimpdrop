@@ -36,6 +36,23 @@
             color: var(--gold);
             margin-bottom: 1rem;
         }
+        .price-currency-toggle {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .price-currency-toggle-label {
+            color: var(--gold);
+            font-weight: 600;
+        }
+        .price-currency-toggle label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            cursor: pointer;
+        }
         .admin-sidebar .sidebar-group {
             display: grid;
             gap: 1rem;
@@ -317,7 +334,12 @@
                         <div class="admin-toolbar">
                             <div>
                                 <h2>Pending Review</h2>
-                                <p class="section-copy">CJ imports stay offline until you approve their name, price, and inventory.</p>
+                                <p class="section-copy">CJ imports stay offline until you approve their name, price, and inventory. Prices are always stored in Naira — use the toggle to type them in USD instead.</p>
+                                <div class="price-currency-toggle" role="radiogroup" aria-label="Enter prices in">
+                                    <span class="price-currency-toggle-label">Enter prices in:</span>
+                                    <label><input type="radio" name="admin-price-currency" value="NGN" checked> ₦ NGN</label>
+                                    <label><input type="radio" name="admin-price-currency" value="USD"> $ USD</label>
+                                </div>
                             </div>
                             <button id="publish-selected-btn" class="btn btn-primary btn-small" type="button" disabled>Publish selected</button>
                         </div>
@@ -449,6 +471,55 @@
             };
         }
 
+        // ===== Admin price-entry currency toggle =====
+        // Prices are always STORED in NGN (the store's base currency — see
+        // AppState.baseCurrency in main.js). This toggle only changes what
+        // currency the "Sell price" fields accept/display; everything sent
+        // to the server is converted to NGN first.
+        let adminPriceCurrency = 'NGN';
+        let lastDraftProducts = [];
+
+        // getExchangeRate/convertAmount/refreshExchangeRates come from main.js,
+        // which is loaded before this inline script and already fetches live
+        // rates on page load via initializePage(). window._appReady resolves
+        // once that's done.
+        async function ensureRatesReady() {
+            if (window._appReady) {
+                try { await window._appReady; } catch (e) { /* main.js already logs this */ }
+            }
+        }
+
+        function ngnToAdminCurrency(ngnAmount) {
+            if (adminPriceCurrency === 'NGN') return Number(ngnAmount) || 0;
+            return convertAmount(Number(ngnAmount) || 0, 'USD');
+        }
+
+        function adminCurrencyToNgn(amount) {
+            const value = Number(amount) || 0;
+            if (adminPriceCurrency === 'NGN') return value;
+            // convertAmount goes NGN -> USD, so invert it to go USD -> NGN.
+            const rate = getExchangeRate(AppState.baseCurrency, 'USD');
+            return rate ? value / rate : value;
+        }
+
+        function priceInputLabel() {
+            return adminPriceCurrency === 'NGN' ? '₦' : '$';
+        }
+
+        async function setAdminPriceCurrency(currency) {
+            adminPriceCurrency = currency === 'USD' ? 'USD' : 'NGN';
+            await ensureRatesReady();
+            if (lastDraftProducts.length) renderPendingDrafts(lastDraftProducts);
+        }
+
+        function initPriceCurrencyToggle() {
+            document.querySelectorAll('input[name="admin-price-currency"]').forEach((input) => {
+                input.addEventListener('change', (event) => {
+                    if (event.target.checked) setAdminPriceCurrency(event.target.value);
+                });
+            });
+        }
+
         function appendAdminLog(message) {
             const logArea = document.getElementById('admin-log-entries');
             if (!logArea) return;
@@ -501,7 +572,7 @@
                     <td>${product.inventory}</td>
                     <td></td>
                     <td>${formatDate(product.addedAt)}</td>
-                    <td>${product.price}</td>
+                    <td>₦${Number(product.price === '—' ? 0 : product.price).toFixed(2)}</td>
                     <td><div class="review-actions"><button class="btn btn-outline btn-small" type="button" data-view-product="${product.id}">View / edit</button>${product.isPublished ? `<button class="btn btn-secondary btn-small" type="button" data-unpublish-product="${product.id}">Unpublish</button>` : ''}</div></td>
                 `;
                 const statusCell = row.querySelector('td:nth-child(4)');
@@ -543,7 +614,8 @@
 
         async function saveDraft(productId, row) {
             const name = row.querySelector('[data-draft-name]').value.trim();
-            const price = Number(row.querySelector('[data-draft-price]').value);
+            const enteredPrice = Number(row.querySelector('[data-draft-price]').value);
+            const price = adminCurrencyToNgn(enteredPrice);
             await reviewProduct('update', [productId], { name, price });
         }
 
@@ -569,7 +641,7 @@
                 row.innerHTML = `
                     <td><input class="review-checkbox" type="checkbox" value="${product.id}" data-draft-check aria-label="Select ${product.title}"></td>
                     <td><div style="display:flex;align-items:center;gap:0.75rem;"><img src="${product.image || 'https://placehold.co/56x56'}" alt="${product.title}" width="56" height="56" class="admin-product-image"><input class="review-edit" data-draft-name value="${String(product.title).replace(/"/g, '&quot;')}" aria-label="Product name"></div></td><td>${product.supplierCost}</td>
-                    <td><input class="review-edit" data-draft-price type="number" min="0" step="0.01" value="${Number(product.price) || 0}" aria-label="Sell price"></td>
+                    <td><div style="display:flex;align-items:center;gap:0.35rem;"><span aria-hidden="true">${priceInputLabel()}</span><input class="review-edit" data-draft-price type="number" min="0" step="0.01" value="${ngnToAdminCurrency(product.price).toFixed(2)}" aria-label="Sell price (${adminPriceCurrency})"></div></td>
                     <td>${product.inventory}</td>
                     <td><div class="review-actions"><button class="btn btn-outline btn-small" type="button" data-save-draft>Save</button><button class="btn btn-primary btn-small" type="button" data-publish-draft>Publish</button><button class="btn btn-secondary btn-small" type="button" data-delete-draft>Delete</button></div></td>
                 `;
@@ -586,7 +658,9 @@
             try {
                 const result = await supabaseService.getProducts({ includeUnpublished: true, limit: 100, sortBy: 'newest' });
                 if (!result.success) throw new Error(result.error || 'Unable to load drafts');
-                renderPendingDrafts((result.products || []).filter((product) => product.sync_status === 'draft'));
+                lastDraftProducts = (result.products || []).filter((product) => product.sync_status === 'draft');
+                await ensureRatesReady();
+                renderPendingDrafts(lastDraftProducts);
             } catch (error) {
                 appendAdminLog(`Draft review load failed: ${error.message || error}`);
             }
@@ -596,11 +670,13 @@
             try {
                 const result = await supabaseService.getProduct(productId);
                 if (!result.success || !result.product) throw new Error(result.error || 'Product not found');
+                await ensureRatesReady();
                 const name = window.prompt('Product name', result.product.name || result.product.title || '');
                 if (name === null) return;
-                const price = window.prompt('Sell price', String(result.product.price || 0));
-                if (price === null) return;
-                await reviewProduct('update', [productId], { name, price: Number(price) });
+                const currentDisplayPrice = ngnToAdminCurrency(result.product.price || 0).toFixed(2);
+                const enteredPrice = window.prompt(`Sell price (${adminPriceCurrency})`, currentDisplayPrice);
+                if (enteredPrice === null) return;
+                await reviewProduct('update', [productId], { name, price: adminCurrencyToNgn(enteredPrice) });
             } catch (error) {
                 window.alert(error.message || error);
             }
@@ -774,6 +850,7 @@
                 updateDraftSelectionState();
             });
             document.getElementById('publish-selected-btn')?.addEventListener('click', () => reviewProduct('publish', selectedDraftIds()));
+            initPriceCurrencyToggle();
 
             await loadAdminProducts();
             await Promise.all([loadPendingDrafts(), loadSupplierStatus(), loadFailedFulfillments()]);
