@@ -485,14 +485,13 @@
 
 
                 window.onFlutterwaveSuccess = (response) => {
+                    // Kept only as a defensive fallback — with redirect_url
+                    // set below, Flutterwave's hosted checkout redirects the
+                    // browser directly on success and does not call this.
+                    // The real post-payment flow lives in order-success.html,
+                    // which reads tx_ref from the redirect URL instead.
                     showNotification('Payment received. Confirming your order securely...', 'success');
                     clearCart();
-                    sessionStorage.setItem('lastOrderId', paymentData.tx_ref);
-                    sessionStorage.setItem('lastOrderTotal', total);
-                    sessionStorage.setItem('lastOrderEmail', email);
-                    setTimeout(() => {
-                        window.location.href = '/pages/order-success.html';
-                    }, 1000);
                 };
 
 

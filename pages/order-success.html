@@ -76,7 +76,7 @@
             </div>
             
             <div style="background: rgba(212,175,55,0.14); border: 1px solid rgba(212,175,55,0.32); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
-                <p style="margin: 0; color: #155724;">Thank you for your purchase. Your order has been confirmed.</p>
+                <p style="margin: 0; color: #155724;" id="order-status-message">Thank you for your purchase. Your order has been confirmed.</p>
             </div>
             
             <div style="background: rgba(255,255,255,0.06); padding: 2rem; border-radius: 8px; margin-bottom: 2rem; text-align: left; border: 1px solid var(--border-color);">
@@ -135,51 +135,85 @@
 
     
     <script>
+        function sleep(ms) {
+            return new Promise((resolve) => setTimeout(resolve, ms));
+        }
+
         async function renderOrderSuccess() {
             const orderNumber = document.getElementById('order-number');
             const orderDate = document.getElementById('order-date');
             const orderTotal = document.getElementById('order-total');
             const confirmationEmail = document.getElementById('confirmation-email');
+            const statusBanner = document.getElementById('order-status-message');
 
-            const lastOrderId = sessionStorage.getItem('lastOrderId');
-            const lastOrderTotal = sessionStorage.getItem('lastOrderTotal');
-            const lastOrderEmail = sessionStorage.getItem('lastOrderEmail');
+            const urlParams = new URLSearchParams(window.location.search);
+            // Flutterwave's redirect_url flow appends these directly to the
+            // URL on the browser redirect — it does NOT call any in-page JS
+            // callback when redirect_url is set, so this is the only
+            // reliable source of the transaction reference on this page.
+            const txRef = urlParams.get('tx_ref');
+            const paymentStatus = urlParams.get('status');
 
-            if (confirmationEmail && lastOrderEmail) {
-                confirmationEmail.textContent = lastOrderEmail;
+            if (confirmationEmail) {
+                // Order rows don't store the shopper's email directly (only
+                // shipping address fields), but they were required to be
+                // logged in to reach checkout, so the session has it.
+                if (window._appReady) await window._appReady;
+                confirmationEmail.textContent = AppState.user?.email || 'your email address';
             }
 
-            if (orderNumber) {
-                orderNumber.textContent = lastOrderId ? `#ORD-${lastOrderId}` : '#ORD-000000';
-            }
-
-            const dateText = new Date().toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            if (orderDate) orderDate.textContent = dateText;
-
-            if (orderTotal) {
-                if (lastOrderTotal) {
-                    orderTotal.textContent = formatCurrency(Number(lastOrderTotal));
-                } else {
-                    orderTotal.textContent = '$0.00';
+            if (paymentStatus && paymentStatus !== 'successful' && paymentStatus !== 'completed') {
+                if (statusBanner) {
+                    statusBanner.textContent = 'Your payment is still being processed. This page will update once it completes — you can also check your order status from your account.';
                 }
             }
 
-            if (lastOrderId && typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
-                const response = await supabaseService.getOrder(lastOrderId);
+            if (!txRef) {
+                if (orderNumber) orderNumber.textContent = 'Order reference unavailable';
+                if (orderTotal) orderTotal.textContent = '—';
+                return;
+            }
+
+            if (typeof supabaseService === 'undefined') return;
+            if (window._appReady) await window._appReady;
+
+            // The webhook that creates the order row runs asynchronously
+            // after Flutterwave verifies the payment, so it may not have
+            // finished yet at the moment this redirect lands. Poll briefly
+            // rather than giving up on the first miss.
+            let order = null;
+            for (let attempt = 0; attempt < 8 && !order; attempt++) {
+                if (attempt > 0) await sleep(1500);
+                const response = await supabaseService.getOrder(txRef);
                 if (response.success && response.order) {
-                    if (orderNumber) orderNumber.textContent = `#ORD-${response.order.id}`;
-                    if (orderDate) orderDate.textContent = new Date(response.order.created_at).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    });
-                    if (orderTotal) orderTotal.textContent = formatCurrency(Number(response.order.total_amount || response.order.total || 0));
+                    order = response.order;
                 }
             }
+
+            if (!order) {
+                if (orderNumber) orderNumber.textContent = `#${txRef}`;
+                if (statusBanner) {
+                    statusBanner.textContent = 'Your payment reference is confirmed, but we\'re still finalizing your order record. Refresh this page in a minute, or check your account for the latest status.';
+                }
+                return;
+            }
+
+            if (orderNumber) orderNumber.textContent = `#${order.order_number || order.id}`;
+            if (orderDate) {
+                orderDate.textContent = new Date(order.created_at).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+            if (orderTotal) {
+                orderTotal.textContent = formatCurrency(Number(order.total_amount || 0));
+            }
+
+            // This is the actual confirmed-success point now (Flutterwave's
+            // redirect_url flow bypasses the in-page callback entirely), so
+            // the cart is cleared here rather than in checkout.html.
+            clearCart();
         }
 
         document.addEventListener('DOMContentLoaded', renderOrderSuccess);
