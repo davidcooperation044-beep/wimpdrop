@@ -20,7 +20,12 @@ Deno.serve(async (request) => {
   let changed = 0;
   try {
     const supplier = getSupplierAdapter('cj');
-    const { data: products, error } = await db.from('products').select('id,supplier_variant_id,supplier_product_id,supplier_cost,price').eq('supplier', 'cj').not('supplier_variant_id', 'is', null);
+    // Only sync products that have already been reviewed and are live
+    // (or were live). Draft rows are pending admin review — this job must
+    // never touch sync_status or is_published on them, or it silently
+    // bypasses the review step and either hides or auto-publishes a
+    // product the admin never approved.
+    const { data: products, error } = await db.from('products').select('id,supplier_variant_id,supplier_product_id,supplier_cost,price').eq('supplier', 'cj').neq('sync_status', 'draft').not('supplier_variant_id', 'is', null);
     if (error) throw error;
     let first = true;
     for (const product of products || []) {
