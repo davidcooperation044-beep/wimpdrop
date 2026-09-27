@@ -985,6 +985,13 @@ nav a:hover::after {
   box-shadow: var(--shadow-sm);
 }
 
+.home-category-chip span,
+.category-chip span {
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
 .home-category-chip:hover,
 .category-chip:hover {
   transform: translateY(-2px);
@@ -1868,6 +1875,10 @@ nav a:hover::after {
   -webkit-overflow-scrolling: touch;
   border: 1px solid rgba(212, 175, 55, 0.16);
   border-radius: 12px;
+}
+
+.is-hidden {
+  display: none !important;
 }
 
 .admin-table {
@@ -2809,6 +2820,14 @@ nav a:hover::after {
 
   .checkout-sticky {
     display: block;
+  }
+
+  .quantity-pill button,
+  .cart-product-actions .icon-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
   }
 
   .wishlist-grid {
@@ -3938,6 +3957,7 @@ footer {
   align-items: flex-start;
   gap: 0.2rem;
   min-width: 140px;
+  min-height: 44px;
   padding: 0.8rem 0.9rem;
   border-radius: 14px;
   border: 1px solid rgba(212, 175, 55, 0.18);
@@ -4203,6 +4223,21 @@ footer {
     padding-bottom: calc(86px + env(safe-area-inset-bottom));
   }
 
+  .hero-home {
+    min-height: auto;
+    padding-top: var(--spacing-2xl);
+    padding-bottom: var(--spacing-xl);
+  }
+
+  .hero-home .hero-shell {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+
+  .hero-copy {
+    padding: var(--spacing-xl);
+  }
+
   .container,
   .header-container {
     width: 100%;
@@ -4252,6 +4287,14 @@ footer {
     min-height: 0;
     aspect-ratio: 1 / 1;
     touch-action: pan-y pinch-zoom;
+  }
+
+  .product-buy-shell {
+    padding: var(--spacing-lg);
+  }
+
+  .buy-box-actions {
+    grid-template-columns: 1fr;
   }
 
   .product-image-stage:hover .product-main-img {
@@ -4323,8 +4366,21 @@ footer {
   }
 
   .mobile-buy-bar {
-    bottom: calc(86px + env(safe-area-inset-bottom) + 8px);
+    display: flex;
+    position: fixed;
+    right: 0;
+    bottom: calc(78px + env(safe-area-inset-bottom));
+    left: 0;
+    z-index: var(--z-fixed);
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
     margin: 0 var(--spacing-sm);
+    padding: 0.75rem 0.85rem;
+    border: 1px solid rgba(212, 175, 55, 0.24);
+    border-radius: 18px;
+    background: rgba(10, 14, 39, 0.95);
+    box-shadow: var(--shadow-lg);
   }
 
   .admin-table-wrapper {
@@ -4424,6 +4480,7 @@ footer {
 
   .mobile-buy-bar .btn {
     min-width: 0;
+    min-height: 44px;
     padding-right: 0.75rem;
     padding-left: 0.75rem;
   }
