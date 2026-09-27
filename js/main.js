@@ -554,11 +554,14 @@ function initializeApp() {
 
   setupProductAutoRefresh();
   
-  // Initialize any visible product lists or homepage rails
-  const productList = document.getElementById('product-list');
-  if (productList || isHomePage()) {
-    loadProducts();
-  }
+  // Always populate AppState.products, not just on pages with a visible
+  // #product-list or the home page. loadProducts() itself already no-ops
+  // safely on pages with nothing to render into (see its comment) — but
+  // this trigger was never updated to match, so pages like product.html
+  // (single-product view, no #product-list) silently got an empty
+  // AppState.products, breaking their own fallback product lookups and
+  // cart/checkout stock checks.
+  loadProducts();
 }
 
 // Global Event Listeners
