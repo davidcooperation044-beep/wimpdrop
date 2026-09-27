@@ -1445,29 +1445,31 @@ p {
 .footer-content {
   width: var(--container);
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1.5rem;
-  padding: 2rem 0 1.1rem;
+  padding: 2rem 0 0.8rem;
 }
-.footer-section h4 { margin-bottom: 0.8rem; }
-.footer-section ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 0.55rem;
 }
-.footer-section a, .footer-section li {
+.footer-links a {
   color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+.footer-links a:hover {
+  color: var(--gold-soft);
 }
 .footer-bottom {
   width: var(--container);
   margin: 0 auto;
-  padding: 1rem 0 2rem;
+  padding: 0.8rem 0 2rem;
   border-top: 1px solid rgba(212,175,55,0.1);
   color: var(--text-secondary);
   font-size: 0.8rem;
+}
+.footer-bottom p {
+  margin: 0;
 }
 
 .empty-state {
