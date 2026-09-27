@@ -1,6 +1,3 @@
-
-
-
 function initializeLuxuryUI() {
   setupHeaderEffects();
   setupScrollAnimations();
@@ -166,7 +163,7 @@ function createHeartBurst(x, y) {
     heart.style.position = 'fixed';
     heart.style.left = x + 'px';
     heart.style.top = y + 'px';
-    heart.style.font Size = '1.5rem';
+    heart.style.fontSize = '1.5rem';
     heart.style.pointerEvents = 'none';
     heart.style.zIndex = '9999';
     heart.style.animation = `heart-burst 1s ease-out forwards`;
