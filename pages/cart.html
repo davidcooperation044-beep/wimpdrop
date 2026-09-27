@@ -153,11 +153,25 @@
             const mobileTotal = document.getElementById('mobile-total');
 
             if (AppState.cart.length === 0) {
+                const recentlyViewed = getRecentlyViewedProductIds();
+                const suggested = (AppState.products || []).filter(product => !recentlyViewed.includes(String(product.id))).slice(0, 3);
                 container.innerHTML = `
                     <div class="empty-state" style="text-align: center;">
                         <h3 style="margin-bottom: 0.5rem;">Your cart is empty</h3>
                         <p style="margin-bottom: 1rem;">Save a few premium picks and return here whenever you are ready to check out.</p>
-                        <a href="/pages/shop.html" class="btn btn-primary">Browse the catalog</a>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 1rem; margin-top: 1rem; text-align:left;">
+                            ${(suggested.length ? suggested : AppState.products.slice(0,3)).map(product => `
+                                <article class="product-group-card">
+                                  <div class="product-image"><a href="/pages/product.html?id=${encodeURIComponent(product.id)}"><img src="${product.image}" alt="${product.name}" loading="lazy"></a></div>
+                                  <div class="product-info">
+                                    <h3 class="product-name"><a href="/pages/product.html?id=${encodeURIComponent(product.id)}">${product.name}</a></h3>
+                                    <div class="product-price"><span class="price-current">${formatCurrency(product.price)}</span></div>
+                                    <div class="product-actions"><button class="btn btn-primary btn-small" onclick="addToCart('${product.id}',1,${JSON.stringify(product)})">Add</button></div>
+                                  </div>
+                                </article>
+                            `).join('')}
+                        </div>
+                        <div style="margin-top: 1rem;"><a href="/pages/shop.html" class="btn btn-primary">Browse the catalog</a></div>
                     </div>
                 `;
                 if (countCopy) countCopy.textContent = '0 items ready to ship';
@@ -195,10 +209,31 @@
                     </div>
                     <div class="cart-product-actions">
                         <button class="icon-btn" style="font-size: 1rem; padding: 0.25rem;" onclick="handleRemoveFromCart(${id})" title="Remove item" aria-label="Remove ${item.name} from cart">✕</button>
+                        <button class="btn btn-secondary btn-small" style="margin-top: 0.5rem;" onclick="toggleWishlist('${item.id}')">Save for later</button>
                         <div class="cart-product-price">${formatCurrency(item.price * item.quantity)}</div>
                     </div>
                 </div>
             `}).join('');
+
+            const related = (AppState.products || []).filter(product => !AppState.cart.some(item => String(item.id) === String(product.id))).slice(0, 3);
+            const relatedHtml = related.length ? `
+                <div style="margin-top: 2rem;">
+                  <h3 style="margin-bottom: 1rem;">You might also like</h3>
+                  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:1rem;">
+                    ${related.map(product => `
+                      <article class="product-group-card">
+                        <div class="product-image"><a href="/pages/product.html?id=${encodeURIComponent(product.id)}"><img src="${product.image}" alt="${product.name}" loading="lazy"></a></div>
+                        <div class="product-info">
+                          <h3 class="product-name"><a href="/pages/product.html?id=${encodeURIComponent(product.id)}">${product.name}</a></h3>
+                          <div class="product-price"><span class="price-current">${formatCurrency(product.price)}</span></div>
+                          <div class="product-actions"><button class="btn btn-primary btn-small" onclick="addToCart('${product.id}',1,${JSON.stringify(product)})">Add</button></div>
+                        </div>
+                      </article>
+                    `).join('')}
+                  </div>
+                </div>
+            ` : '';
+            container.insertAdjacentHTML('beforeend', relatedHtml);
 
             if (countCopy) countCopy.textContent = `${AppState.cart.length} item${AppState.cart.length > 1 ? 's' : ''} ready to ship`;
             if (mobileTotal) mobileTotal.textContent = formatCurrency(getCartTotal());
@@ -218,9 +253,16 @@
         function updateOrderSummary() {
             const subtotal = Math.round(getCartTotal());
             const suppliers = [...new Set(AppState.cart.map(item => item.supplier || 'Trusted source'))];
-            const shipping = subtotal > 0 ? (subtotal >= 100000 ? 0 : 1200 + suppliers.length * 350) : 0;
+            const freeShippingThreshold = 100000;
+            const shipping = subtotal > 0 ? (subtotal >= freeShippingThreshold ? 0 : 1200 + suppliers.length * 350) : 0;
             const vat = Math.round(subtotal * 0.075);
             const total = subtotal + shipping + vat;
+            const savings = AppState.cart.reduce((sum, item) => {
+              const product = AppState.products.find((p) => String(p.id) === String(item.id));
+              const original = Number(product?.originalPrice || item.originalPrice || item.price || 0);
+              const itemSavings = original > Number(item.price || 0) ? (original - Number(item.price || 0)) * Number(item.quantity || 1) : 0;
+              return sum + itemSavings;
+            }, 0);
 
             document.getElementById('origin-summary').textContent = suppliers.length
                 ? `Grouped for dispatch from ${suppliers.join(' • ')}`
@@ -231,6 +273,17 @@
             document.getElementById('total').textContent = formatCurrency(total, AppState.displayCurrency);
             const mobileTotal = document.getElementById('mobile-total');
             if (mobileTotal) mobileTotal.textContent = formatCurrency(total);
+
+            const summaryNote = document.getElementById('origin-summary');
+            if (summaryNote) {
+              if (savings > 0) {
+                summaryNote.textContent = `You're saving ${formatCurrency(savings)} • ${subtotal >= freeShippingThreshold ? '✓ Free shipping unlocked' : `Add ${formatCurrency(freeShippingThreshold - subtotal)} more for free shipping`}`;
+              } else if (subtotal >= freeShippingThreshold) {
+                summaryNote.textContent = '✓ Free shipping unlocked';
+              } else {
+                summaryNote.textContent = `Add ${formatCurrency(freeShippingThreshold - subtotal)} more for free shipping`;
+              }
+            }
         }
 
         window.renderCartItems = renderCartItems;

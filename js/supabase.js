@@ -386,7 +386,80 @@ class SupabaseService {
 
 
   getPublicProductSelectColumns() {
-    return '*';
+    return `
+      id,
+      name,
+      title,
+      description,
+      category,
+      price,
+      cost,
+      image_url,
+      images,
+      variants,
+      supplier,
+      supplier_product_id,
+      supplier_variant_id,
+      supplier_sku,
+      supplier_cost,
+      stock_quantity,
+      rating,
+      reviews_count,
+      sold_count,
+      is_verified,
+      is_active,
+      is_published,
+      sync_status,
+      sync_error,
+      last_synced_at,
+      created_at,
+      updated_at
+    `;
+  }
+
+  async getProductDeals(productId) {
+    try {
+      const sb = await this.getClient();
+      if (!sb.from) return { success: true, deals: [] };
+
+      const { data, error } = await sb.from('product_deals')
+        .select('*')
+        .eq('product_id', productId)
+        .eq('is_active', true);
+
+      if (error) throw error;
+
+      const now = Date.now();
+      const deals = (data || []).filter((deal) => {
+        if (!deal.ends_at) return true;
+        return new Date(deal.ends_at).getTime() > now;
+      });
+
+      return { success: true, deals };
+    } catch (error) {
+      console.warn('Get product deals error:', error);
+      return { success: false, deals: [], error: error.message };
+    }
+  }
+
+  async getProductReviews(productId, limit = 5) {
+    try {
+      const sb = await this.getClient();
+      if (!sb.from) return { success: true, reviews: [] };
+
+      const { data, error } = await sb.from('reviews')
+        .select('*')
+        .eq('product_id', productId)
+        .eq('is_approved', true)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return { success: true, reviews: data || [] };
+    } catch (error) {
+      console.warn('Get product reviews error:', error);
+      return { success: false, reviews: [], error: error.message };
+    }
   }
 
   async getProducts(filters = {}) {

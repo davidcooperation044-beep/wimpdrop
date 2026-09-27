@@ -149,19 +149,8 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr style="border-bottom: 1px solid #e0e0e0;">
-                                        <td style="padding: 1rem;">#ORD-001234</td>
-                                        <td style="padding: 1rem;">Dec 15, 2025</td>
-                                        <td style="padding: 1rem;">$129,990.00</td>
-                                        <td style="padding: 1rem;"><span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Delivered</span></td>
-                                        <td style="padding: 1rem;"><a href="#" style="color: #e63a2e;">View Details</a></td>
-                                    </tr>
-                                    <tr style="border-bottom: 1px solid #e0e0e0;">
-                                        <td style="padding: 1rem;">#ORD-001233</td>
-                                        <td style="padding: 1rem;">Dec 10, 2025</td>
-                                        <td style="padding: 1rem;">$79,990.00</td>
-                                        <td style="padding: 1rem;"><span style="background: #cfe2ff; color: #084298; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Shipped</span></td>
-                                        <td style="padding: 1rem;"><a href="#" style="color: #e63a2e;">Track Order</a></td>
+                                    <tr>
+                                        <td colspan="5" style="padding: 1.25rem; color: var(--text-secondary);">Loading your real order history…</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -676,26 +665,28 @@
 
             if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
                 try {
-                    const res = await supabaseService.getUserOrders(AppState.user.id);
+                    const res = await supabaseService.getUserOrders();
                     if (res.success && res.orders.length > 0) {
-                        tbody.innerHTML = res.orders.map(order => {
-                            const date = new Date(order.created_at).toLocaleDateString('en-NG', { year: 'numeric', month: 'short', day: 'numeric' });
+                        tbody.innerHTML = res.orders.map((order) => {
+                            const date = new Date(order.created_at || Date.now()).toLocaleDateString('en-NG', { year: 'numeric', month: 'short', day: 'numeric' });
                             const total = formatCurrency(Number(order.total_amount || order.total || 0));
+                            const status = String(order.status || 'pending').toLowerCase();
                             const statusColor = {
                                 pending: ['#fff3cd','#856404'],
                                 processing: ['#cfe2ff','#084298'],
                                 shipped: ['#cfe2ff','#084298'],
                                 delivered: ['#d4edda','#155724'],
                                 cancelled: ['#f8d7da','#721c24']
-                            }[order.status] || ['#e0e0e0','#333'];
+                            }[status] || ['#e0e0e0','#333'];
+                            const orderNumber = order.order_number || order.id || 'N/A';
 
                             return `
                                 <tr style="border-bottom: 1px solid #e0e0e0;">
-                                    <td style="padding: 1rem;">#${order.id}</td>
+                                    <td style="padding: 1rem;">#${orderNumber}</td>
                                     <td style="padding: 1rem;">${date}</td>
                                     <td style="padding: 1rem;">${total}</td>
-                                    <td style="padding: 1rem;"><span style="background: ${statusColor[0]}; color: ${statusColor[1]}; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">${order.status}</span></td>
-                                    <td style="padding: 1rem;"><a href="#" onclick="viewOrderDetails(${order.id})" style="color: #e63a2e;">View Details</a></td>
+                                    <td style="padding: 1rem;"><span style="background: ${statusColor[0]}; color: ${statusColor[1]}; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">${status}</span></td>
+                                    <td style="padding: 1rem;"><a href="#" onclick="viewOrderDetails('${String(order.id)}')" style="color: #e63a2e;">View Details</a></td>
                                 </tr>
                             `;
                         }).join('');
@@ -712,7 +703,6 @@
         }
 
         function viewOrderDetails(orderId) {
-            // Save order id and open order details page or modal
             sessionStorage.setItem('viewOrderId', orderId);
             window.location.href = 'order-success.html';
         }

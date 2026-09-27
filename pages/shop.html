@@ -90,6 +90,7 @@
                     <div class="market-search-inline">
                         <label for="shop-search" class="sr-only">Search products</label>
                         <input id="shop-search" type="search" placeholder="Search title, variant, origin…" class="shop-search" autocomplete="off">
+                        <div class="search-suggestions" id="shop-search-suggestions" aria-live="polite"></div>
                     </div>
                     <button id="open-sheet" class="btn btn-outline btn-small mobile-only" type="button">Filters</button>
                     <button id="clear-filters" class="btn btn-outline btn-small">Clear filters</button>
@@ -110,6 +111,21 @@
             </div>
             <div id="result-count" class="result-count" aria-live="polite">Showing 0 products</div>
             <div id="shop-marketplace-sections" class="shop-marketplace-sections"></div>
+            <div id="recently-viewed-section" class="shop-marketplace-sections"></div>
+            <div class="trust-strip inline shop-trust-strip">
+                <div class="trust-pill">
+                    <strong>Secure checkout</strong>
+                    <span>Encrypted payments and real order tracking.</span>
+                </div>
+                <div class="trust-pill">
+                    <strong>Buyer protection</strong>
+                    <span>Transparent delivery & guided returns.</span>
+                </div>
+                <div class="trust-pill">
+                    <strong>Live stock</strong>
+                    <span>Availability is pulled from the live catalog.</span>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -145,6 +161,8 @@
             <button class="btn btn-secondary" id="pagination-next">Next →</button>
         </div>
     </section>
+
+    <div id="quick-view-modal" class="quick-view-modal" aria-hidden="true"></div>
 
     <footer>
         <div class="footer-content">

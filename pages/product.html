@@ -213,7 +213,7 @@
             const productId = raw.product_id || raw.productId || raw.id || fallbackProductId || '';
             const image = raw.image_url || raw.image || raw.thumbnail || raw.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop';
             const price = Number(raw.price || raw.sale_price || raw.current_price || 0);
-            const originalPrice = Number(raw.base_price || raw.original_price || raw.list_price || raw.compare_at_price || raw.price || 0);
+            const originalPrice = Number(raw.original_price || raw.base_price || raw.list_price || raw.compare_at_price || raw.price || 0);
             const stock = Number(raw.stock_quantity || 0);
             const status = raw.status || raw.product_status || 'On Sale';
             const shippingFrom = raw.supplier || 'Wimp-Drop Catalog';
@@ -222,6 +222,8 @@
             const sku = raw.supplier_sku || '';
             const variantLabel = raw.title || raw.name || 'Standard';
             const inStock = stock > 0 && status === 'On Sale';
+            const soldCount = Number(raw.sold_count || raw.soldCount || 0);
+            const verified = Boolean(raw.is_verified || raw.verified || false);
 
             return {
                 id: raw.id || raw.product_id || sku || '',
@@ -235,6 +237,8 @@
                 image,
                 supplier: raw.supplier || raw.brand || 'Wimp-Drop Catalog',
                 stock_quantity: stock,
+                sold_count: soldCount,
+                is_verified: verified,
                 status,
                 inStock,
                 shippingFrom,
@@ -242,7 +246,7 @@
                 weightG,
                 description: raw.description || raw.product_description || '',
                 rating: Number(raw.rating || 4.5),
-                reviews: Number(raw.reviews || raw.reviews_count || 0)
+                reviews: Number(raw.reviews_count ?? raw.reviews ?? raw.review_count ?? raw.reviewCount ?? 0)
             };
         }
 
@@ -339,20 +343,23 @@
             document.getElementById('product-name').textContent = variant.title;
             document.getElementById('product-category').textContent = variant.category || 'Electronics';
             document.getElementById('product-description').textContent = buildDescriptionCopy(variant.title);
+            const soldCount = Number(variant.sold_count || 0);
+            const verifiedSeller = Boolean(variant.is_verified);
             document.getElementById('product-price').textContent = formatCurrency(variant.price);
             document.getElementById('product-original-price').textContent = formatCurrency(variant.originalPrice || variant.price);
-            document.getElementById('product-supplier').textContent = variant.supplier || 'Wimp-Drop Catalog';
+            document.getElementById('product-supplier').textContent = `${variant.supplier || 'Wimp-Drop Catalog'}${verifiedSeller ? ' • Verified supplier' : ''}`;
             document.getElementById('product-stars').textContent = buildStars(variant.rating || 4.5);
             document.getElementById('product-rating-count').textContent = `(${variant.reviews || 0} reviews)`;
 
-                const stockPill = document.getElementById('stock-pill');
+            const stockPill = document.getElementById('stock-pill');
             if (stockPill) {
                 stockPill.textContent = variant.inStock ? 'In stock' : 'Out of stock';
                 stockPill.classList.toggle('is-low', variant.stock_quantity > 0 && variant.stock_quantity <= 5);
             }
 
-            document.getElementById('stock-line').textContent = buildStockLine(variant);
-            document.getElementById('shipping-line').textContent = buildShippingLine(variant.shippingFrom);
+            const savings = Number(variant.originalPrice || 0) > Number(variant.price || 0) ? Number(variant.originalPrice || 0) - Number(variant.price || 0) : 0;
+            document.getElementById('stock-line').textContent = `${buildStockLine(variant)}${soldCount > 0 ? ` • ${soldCount} sold` : ''}`;
+            document.getElementById('shipping-line').textContent = `${buildShippingLine(variant.shippingFrom)}${savings > 0 ? ` • Save ${formatCurrency(savings)}` : ''}`;
             document.getElementById('trust-origin-pill').textContent = `Ships from ${variant.shippingFrom || 'Global'}`;
             document.getElementById('selected-variant-summary').textContent = `${variant.variantLabel}${variant.supplier_sku ? ` • ${variant.supplier_sku}` : ''}`;
 

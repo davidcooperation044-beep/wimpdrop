@@ -58,6 +58,7 @@ const AppState = {
   shopFilters: {
     origins: [],
     category: 'all',
+    priceMin: 0,
     priceMax: 100000,
     sortBy: 'newest',
     search: '',
@@ -104,6 +105,148 @@ const Storage = {
   }
 };
 
+function getRecentSearches() {
+  try {
+    return JSON.parse(localStorage.getItem('wimp_recent_searches') || '[]');
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveRecentSearch(query) {
+  const trimmed = String(query || '').trim();
+  if (!trimmed) return;
+  const searches = getRecentSearches().filter(item => item && item.toLowerCase() !== trimmed.toLowerCase());
+  searches.unshift(trimmed);
+  localStorage.setItem('wimp_recent_searches', JSON.stringify(searches.slice(0, 6)));
+}
+
+function getRecentlyViewedProductIds() {
+  try {
+    return JSON.parse(localStorage.getItem('wimp_recently_viewed') || '[]');
+  } catch (error) {
+    return [];
+  }
+}
+
+function trackRecentlyViewedProduct(productId) {
+  if (!productId) return;
+  const ids = getRecentlyViewedProductIds().filter(id => id && id !== productId);
+  ids.unshift(String(productId));
+  localStorage.setItem('wimp_recently_viewed', JSON.stringify(ids.slice(0, 10)));
+}
+
+function getRecentlyViewedProducts(products) {
+  const ids = getRecentlyViewedProductIds();
+  if (!ids.length) return [];
+  const lookup = new Set(ids.map(String));
+  const seen = new Set();
+  return products.filter((product) => {
+    const id = String(product.id || product.product_id || product.supplierSku || '');
+    if (!lookup.has(id) || seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  }).map(product => normalizeProduct(product));
+}
+
+function renderShopSearchSuggestions(query = '') {
+  const suggestionsEl = document.getElementById('shop-search-suggestions');
+  if (!suggestionsEl) return;
+
+  const trimmed = String(query || '').trim();
+  if (!trimmed) {
+    const recent = getRecentSearches();
+    suggestionsEl.innerHTML = recent.length
+      ? recent.map((term) => `<button type="button" class="search-suggestion" data-suggestion-value="${String(term).replace(/"/g, '&quot;')}">${term}</button>`).join('')
+      : '<div class="search-suggestion-empty">Recent searches</div>';
+    suggestionsEl.classList.toggle('is-open', recent.length > 0);
+    return;
+  }
+
+  const fallbackMatches = (AppState.products || []).filter((product) => {
+    const haystack = [product.name, product.title, product.category, product.supplier].join(' ').toLowerCase();
+    return haystack.includes(trimmed.toLowerCase());
+  }).slice(0, 5);
+
+  const renderMatches = (matches) => {
+    suggestionsEl.innerHTML = matches.length
+      ? matches.map((product) => `
+          <button type="button" class="search-suggestion" data-suggestion-value="${String(product.name || product.title || '').replace(/"/g, '&quot;')}">
+            <span class="thumb"><img src="${product.image || ''}" alt="${product.name || product.title || 'Product'}" loading="lazy"></span>
+            <span class="meta"><strong>${product.name || product.title || 'Product'}</strong><small>${formatCurrency(product.price || 0)}</small></span>
+          </button>
+        `).join('')
+      : '<div class="search-suggestion-empty">No products match that search.</div>';
+    suggestionsEl.classList.toggle('is-open', matches.length > 0);
+  };
+
+  if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
+    supabaseService.getProducts({ search: trimmed, limit: 5 }).then((res) => {
+      if (res.success && Array.isArray(res.products) && res.products.length) {
+        renderMatches(res.products.map((product) => normalizeProduct(product)).slice(0, 5));
+      } else {
+        renderMatches(fallbackMatches);
+      }
+    }).catch(() => renderMatches(fallbackMatches));
+    return;
+  }
+
+  renderMatches(fallbackMatches);
+}
+
+function renderRecentlyViewedSection() {
+  const container = document.getElementById('recently-viewed-section');
+  if (!container) return;
+  const recentProducts = getRecentlyViewedProducts(Array.isArray(AppState.products) ? AppState.products : []);
+  if (!recentProducts.length) {
+    container.innerHTML = '';
+    return;
+  }
+
+  const cards = recentProducts.map((product) => `
+    <article class="product-group-card market-card">
+      <div class="product-image">
+        <a href="product.html?id=${encodeURIComponent(product.id)}" class="product-link">
+          <img src="${product.image}" alt="${product.name}" loading="lazy" decoding="async" sizes="(max-width: 480px) 100vw, (max-width: 899px) 50vw, 320px" class="product-image-inner">
+        </a>
+      </div>
+      <div class="product-info">
+        <div class="product-category">${product.category || 'Recent'}</div>
+        <h3 class="product-name"><a href="product.html?id=${encodeURIComponent(product.id)}">${product.name}</a></h3>
+        <div class="product-price">
+          <span class="price-current">${formatCurrency(product.price)}</span>
+        </div>
+        <div class="product-actions compact-actions">
+          <button class="btn btn-primary btn-small" onclick="addToCart('${product.id}')">Add</button>
+          <button class="btn btn-outline btn-small" onclick="quickView('${product.id}')">View</button>
+        </div>
+      </div>
+    </article>
+  `).join('');
+
+  container.innerHTML = `
+    <div class="market-section-block">
+      <div class="market-section-header">
+        <h2>Recently viewed</h2>
+      </div>
+      <div class="market-product-rail">${cards}</div>
+    </div>
+  `;
+}
+
+function handleInlineAddToCart(button, productId) {
+  const ok = addToCart(productId);
+  if (!ok || !button) return;
+  const prevText = button.dataset.originalText || button.textContent;
+  button.dataset.originalText = prevText;
+  button.disabled = true;
+  button.textContent = 'Added ✓';
+  setTimeout(() => {
+    button.disabled = false;
+    button.textContent = prevText;
+  }, 1000);
+}
+
 // Initialize app on page load
 async function initializePage() {
   await initializeConfig();
@@ -132,6 +275,13 @@ async function initializePage() {
 
   initializeApp();
   setupEventListeners();
+
+  if (window.location.pathname.endsWith('/product.html')) {
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('id');
+    if (productId) trackRecentlyViewedProduct(productId);
+  }
+
   await loadUserFromStorage();
   updateUserUI();
   updateCartBadge();
@@ -579,9 +729,12 @@ function setupShopPage() {
   window.shopPageSetupDone = true;
 
   const shopSearch = document.getElementById('shop-search');
+  const shopSearchSuggestions = document.getElementById('shop-search-suggestions');
   const originFilters = document.getElementById('origin-filters');
   const sheetOriginFilters = document.getElementById('sheet-origin-filters');
   const priceRange = document.getElementById('price-range');
+  const priceRangeMin = document.getElementById('price-range-min');
+  const priceRangeMax = document.getElementById('price-range-max');
   const sheetPriceRange = document.getElementById('sheet-price-range');
   const priceValue = document.getElementById('price-range-value');
   const sheetPriceValue = document.getElementById('sheet-price-value');
@@ -595,13 +748,68 @@ function setupShopPage() {
   const shopChips = document.getElementById('product-chips');
 
   if (shopSearch) {
-    shopSearch.addEventListener('input', debounce(handleShopSearch, 250));
+    shopSearch.addEventListener('focus', () => renderShopSearchSuggestions(shopSearch.value.trim()));
+    shopSearch.addEventListener('input', debounce((event) => {
+      const value = (event.target.value || '').trim();
+      AppState.shopFilters.search = value;
+      renderShopSearchSuggestions(value);
+      applyShopFilters();
+    }, 220));
+    shopSearch.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        const query = shopSearch.value.trim();
+        if (query) saveRecentSearch(query);
+        renderShopSearchSuggestions(query);
+        applyShopFilters();
+      }
+    });
+  }
+
+  if (shopSearchSuggestions) {
+    shopSearchSuggestions.addEventListener('click', (event) => {
+      const item = event.target.closest('[data-suggestion-value]');
+      if (!item) return;
+      const value = item.dataset.suggestionValue || '';
+      if (shopSearch) shopSearch.value = value;
+      AppState.shopFilters.search = value;
+      saveRecentSearch(value);
+      renderShopSearchSuggestions(value);
+      applyShopFilters();
+    });
   }
 
   if (priceRange) {
     priceRange.addEventListener('input', (event) => {
       const value = Number(event.target.value);
       AppState.shopFilters.priceMax = value;
+      if (priceValue) priceValue.textContent = formatCurrency(value);
+      if (sheetPriceRange) sheetPriceRange.value = value;
+      if (sheetPriceValue) sheetPriceValue.textContent = formatCurrency(value);
+      applyShopFilters();
+    });
+  }
+
+  if (priceRangeMin) {
+    priceRangeMin.addEventListener('input', (event) => {
+      const value = Number(event.target.value);
+      AppState.shopFilters.priceMin = value;
+      if (value > Number(AppState.shopFilters.priceMax || 0)) {
+        AppState.shopFilters.priceMax = value;
+        if (priceRange) priceRange.value = value;
+        if (sheetPriceRange) sheetPriceRange.value = value;
+      }
+      applyShopFilters();
+    });
+  }
+
+  if (priceRangeMax) {
+    priceRangeMax.addEventListener('input', (event) => {
+      const value = Number(event.target.value);
+      AppState.shopFilters.priceMax = value;
+      if (value < Number(AppState.shopFilters.priceMin || 0)) {
+        AppState.shopFilters.priceMin = value;
+        if (priceRangeMin) priceRangeMin.value = value;
+      }
       if (priceValue) priceValue.textContent = formatCurrency(value);
       if (sheetPriceRange) sheetPriceRange.value = value;
       if (sheetPriceValue) sheetPriceValue.textContent = formatCurrency(value);
@@ -616,6 +824,7 @@ function setupShopPage() {
       if (sheetPriceValue) sheetPriceValue.textContent = formatCurrency(value);
       if (priceRange) priceRange.value = value;
       if (priceValue) priceValue.textContent = formatCurrency(value);
+      applyShopFilters();
     });
   }
 
@@ -1023,23 +1232,37 @@ function buildMockProducts() {
 
 function normalizeProduct(raw) {
   const price = Number(raw.price ?? raw.base_price ?? raw.total_cost ?? raw.shipping_fee ?? 0);
-  const originalPrice = Number(raw.price ?? raw.base_price ?? raw.total_cost ?? raw.original_price ?? raw.originalPrice ?? 0);
   const inventory = Number(raw.stock_quantity ?? 0);
   const title = raw.title || raw.name || raw.product_title || 'Untitled product';
   const image = raw.image_url || raw.image || raw.thumbnail || raw.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop';
   const status = raw.status || 'On Sale';
   const published = raw.is_published ?? true;
 
+  const activeDeal = Array.isArray(raw.product_deals)
+    ? raw.product_deals.find((deal) => deal.is_active && (!deal.ends_at || new Date(deal.ends_at).getTime() > Date.now())) || null
+    : null;
+  const dealPrice = activeDeal ? Number(activeDeal.deal_price ?? activeDeal.price ?? price) : price;
+  const originalPrice = activeDeal
+    ? Number(activeDeal.original_price ?? raw.original_price ?? raw.originalPrice ?? Math.max(price, dealPrice))
+    : Number(raw.original_price ?? raw.originalPrice ?? raw.price ?? raw.base_price ?? raw.total_cost ?? price);
+
   return {
     id: raw.id || raw.supplier_sku || '',
     product_id: raw.id || raw.supplier_sku || '',
     name: title,
     category: raw.category || raw.category_name || raw.categoryName || 'General',
-    price,
-    originalPrice,
+    price: dealPrice,
+    originalPrice: originalPrice || dealPrice,
     image,
     rating: Number(raw.rating || raw.stars || 4.5),
-    reviews: Number(raw.reviews || raw.review_count || raw.reviewCount || 0),
+    reviews: Number(raw.reviews_count ?? raw.reviews ?? raw.review_count ?? raw.reviewCount ?? 0),
+    sold_count: Number(raw.sold_count ?? raw.soldCount ?? 0),
+    soldCount: Number(raw.sold_count ?? raw.soldCount ?? 0),
+    is_verified: Boolean(raw.is_verified ?? raw.isVerified ?? raw.verified ?? false),
+    verified: Boolean(raw.is_verified ?? raw.isVerified ?? raw.verified ?? false),
+    deal: activeDeal,
+    dealPrice,
+    deal_active: Boolean(activeDeal),
     supplier: raw.supplier || raw.brand || raw.source || 'Wimp-Drop Catalog',
     supplierProductId: raw.supplier_product_id || raw.supplierProductId || '',
     supplierVariantId: raw.supplier_variant_id || raw.supplierVariantId || raw.variant_id || '',
@@ -1048,7 +1271,6 @@ function normalizeProduct(raw) {
     stock_quantity: inventory,
     inStock: published && status !== 'Out of Stock' && inventory > 0,
     status,
-    supplier: raw.supplier || 'Wimp-Drop Catalog',
     variants: Array.isArray(raw.variants) ? raw.variants : [],
     created_at: raw.created_at || '',
     shippingTime: raw.shippingTime || raw.lead_time || 'Standard',
@@ -1079,6 +1301,7 @@ function buildProductCardMeta(product) {
   const originalPrice = Number(product.originalPrice || 0);
   const rating = Number(product.rating || product.stars || 0) || 0;
   const reviews = Number(product.reviews || product.review_count || product.reviewCount || 0) || 0;
+  const soldCount = Number(product.sold_count || product.soldCount || 0) || 0;
   const stockLeft = Number(product.stock_quantity || 0);
   const hasDiscount = originalPrice > price;
   const discountPercent = hasDiscount ? Math.round((1 - (price / Math.max(originalPrice, 1))) * 100) : 0;
@@ -1094,10 +1317,11 @@ function buildProductCardMeta(product) {
     discountPercent,
     rating,
     reviews,
+    soldCount,
     starsHtml,
     stockLeft,
     lowStock,
-    verifiedSeller: Boolean(product.supplier)
+    verifiedSeller: Boolean(product.is_verified || product.verified)
   };
 }
 
@@ -1175,7 +1399,13 @@ function renderMarketplaceSections(products) {
     </a>
   `).join('');
 
+  const bestSellers = normalized
+    .filter((product) => (Number(product.sold_count || product.soldCount || 0) || 0) > 0)
+    .sort((a, b) => (Number(b.sold_count || b.soldCount || 0) || 0) - (Number(a.sold_count || a.soldCount || 0) || 0))
+    .slice(0, 8);
+
   const sections = [
+    bestSellers.length ? buildMarketplaceSection('Best sellers', bestSellers, 'flash') : '',
     deals.length ? buildMarketplaceSection('Flash Deals', deals, 'flash') : '',
     clearance.length ? buildMarketplaceSection('Almost Sold Out', clearance, 'clearance') : '',
     categories.length ? `
@@ -1203,10 +1433,13 @@ function renderProductGroupCard(group) {
   const stockStatus = group.some(p => p.inStock) ? 'Available' : 'Out of stock';
   const discountPercent = hasDiscount && validOriginals.length ? Math.round((1 - (lowPrice / Math.max(...validOriginals))) * 100) : 0;
   const variantCount = group.length;
+  const soldCount = Number(selected.sold_count || selected.soldCount || 0) || 0;
+  const verifiedSeller = Boolean(selected.is_verified || selected.verified);
 
   return `
     <article class="product-group-card">
       ${hasDiscount ? `<div class="discount-badge">-${discountPercent}%</div>` : ''}
+      ${verifiedSeller ? '<div class="supplier-badge">Verified supplier</div>' : ''}
       <div class="product-image">
         <a href="product.html?id=${encodeURIComponent(selected.id)}" class="product-link">
           <img src="${selected.image}" alt="${selected.name}" loading="lazy" decoding="async" sizes="(max-width: 480px) 100vw, (max-width: 899px) 50vw, 320px" class="product-image-inner">
@@ -1219,6 +1452,7 @@ function renderProductGroupCard(group) {
           <span class="product-status ${selected.inStock ? 'in-stock' : 'out-stock'}">${stockStatus}</span>
           <span class="product-origin">${selected.supplier}</span>
         </div>
+        ${soldCount > 0 ? `<div class="product-sold-count">${soldCount} sold</div>` : ''}
         <div class="product-price">
           <span class="price-current">${formatCurrency(lowPrice)}</span>
           ${lowPrice !== highPrice ? `<span class="price-range">${formatCurrency(lowPrice)} - ${formatCurrency(highPrice)}</span>` : ''}
@@ -1245,6 +1479,7 @@ function renderProducts(products) {
 
   if (isShopPage()) {
     renderMarketplaceSections(products);
+    renderRecentlyViewedSection();
     const cards = products.map(p => renderProductGroupCard(p.variantRows && p.variantRows.length ? p.variantRows : [p]));
     productList.innerHTML = cards.join('');
     return;
@@ -1262,6 +1497,7 @@ function renderProducts(products) {
     return `
     <div class="product-card">
       ${hasDiscount ? `<div class="discount-badge">-${discountPercent}%</div>` : ''}
+      <button class="wishlist-toggle ${isInWishlist(pid) ? 'active' : ''}" type="button" aria-label="Toggle wishlist" data-wishlist-toggle="${pid}">${isInWishlist(pid) ? '♥' : '♡'}</button>
       <div class="supplier-badge">${product.supplier || ''}</div>
       <div class="product-image">
         <a href="product.html?id=${pidUrl}" class="product-link">
@@ -1277,9 +1513,23 @@ function renderProducts(products) {
           ${hasDiscount ? `<span class="price-original">${formatCurrency(product.originalPrice)}</span>` : ''}
         </div>
         ${lowStock ? `<div class="limited-stock-tag">Only ${product.stock_quantity} left</div>` : ''}
+        <div class="product-actions">
+          <button class="btn btn-primary btn-small flex-1" data-add-to-cart="${pid}" onclick="handleInlineAddToCart(this, '${pid}')">Add to Cart</button>
+          <button class="btn btn-outline btn-small" onclick="quickView('${pid}')">Quick view</button>
+        </div>
+      </div>
     </div>
   `;
   }).join('');
+
+  document.querySelectorAll('[data-wishlist-toggle]').forEach((button) => {
+    button.addEventListener('click', () => {
+      toggleWishlist(button.dataset.wishlistToggle);
+      const active = isInWishlist(button.dataset.wishlistToggle);
+      button.classList.toggle('active', active);
+      button.textContent = active ? '♥' : '♡';
+    });
+  });
 }
 
 function addToCart(productId, quantity = 1, productOverride = null) {
@@ -1592,6 +1842,8 @@ function renderHomepageSections(products) {
   const categoriesContainer = document.getElementById('home-categories');
   const dealsContainer = document.getElementById('home-deals-rail');
   const arrivalsContainer = document.getElementById('home-new-arrivals');
+  const recentlyViewedContainer = document.getElementById('home-recently-viewed');
+  const relatedContainer = document.getElementById('home-related');
   const trustOrigin = document.getElementById('trust-origin');
 
   const normalizedProducts = products.map(product => normalizeProduct(product));
@@ -1601,6 +1853,22 @@ function renderHomepageSections(products) {
     acc[label] = (acc[label] || 0) + 1;
     return acc;
   }, {});
+
+  const recentIds = new Set(getRecentlyViewedProductIds().map(String));
+  const recentlyViewed = normalizedProducts.filter((product) => recentIds.has(String(product.id || product.product_id || product.supplierSku || ''))).slice(0, 4);
+
+  const wishlistCategories = AppState.wishlist.length
+    ? AppState.products
+        .filter((product) => AppState.wishlist.includes(product.id) || AppState.wishlist.includes(product.product_id))
+        .map((product) => inferCategoryLabel(product))
+    : [];
+  const categoryHint = wishlistCategories.length ? wishlistCategories[0] : (recentlyViewed[0]?.category || normalizedProducts[0]?.category || 'Essentials');
+  const related = normalizedProducts
+    .filter((product) => {
+      const productCategory = String(product.category || 'Essentials');
+      return productCategory === categoryHint && !recentIds.has(String(product.id || product.product_id || product.supplierSku || ''));
+    })
+    .slice(0, 4);
 
   const deals = [...normalizedProducts]
     .filter(product => Number(product.originalPrice || 0) > Number(product.price || 0))
@@ -1678,6 +1946,15 @@ function renderHomepageSections(products) {
     arrivalsContainer.innerHTML = arrivals.length ? arrivals.map(product => renderHomeProductCard(product)).join('') : '<div class="empty-state">New arrivals will appear here once live catalog data is available.</div>';
   }
 
+  if (recentlyViewedContainer) {
+    recentlyViewedContainer.innerHTML = recentlyViewed.length ? recentlyViewed.map(product => renderHomeProductCard(product)).join('') : '<div class="empty-state">Your recent views will appear here once you browse the catalog.</div>';
+  }
+
+  if (relatedContainer) {
+    const relatedProducts = related.length ? related : normalizedProducts.slice(0, 4);
+    relatedContainer.innerHTML = relatedProducts.length ? relatedProducts.map(product => renderHomeProductCard(product)).join('') : '<div class="empty-state">More category picks will appear as your browsing activity grows.</div>';
+  }
+
   if (trustOrigin) {
     const supplier = normalizedProducts.find(product => product.supplier)?.supplier || 'Wimp-Drop Catalog';
     trustOrigin.textContent = `Supplier: ${supplier}`;
@@ -1706,10 +1983,13 @@ function renderHomeProductCard(product) {
   const pidUrl = encodeURIComponent(pid);
   const hasDiscount = Number(product.originalPrice || 0) > Number(product.price || 0);
   const discountPercent = hasDiscount ? Math.round((1 - (Number(product.price || 0) / Math.max(Number(product.originalPrice || 1), 1))) * 100) : 0;
+  const verifiedSeller = Boolean(product.is_verified || product.verified);
+  const soldCount = Number(product.sold_count || product.soldCount || 0) || 0;
 
   return `
     <article class="product-group-card home-product-card">
       ${hasDiscount ? `<div class="discount-badge">-${discountPercent}%</div>` : ''}
+      ${verifiedSeller ? '<div class="supplier-badge">Verified supplier</div>' : ''}
       <div class="product-image">
         <a href="product.html?id=${pidUrl}" class="product-link">
           <img src="${product.image}" alt="${product.name}" loading="lazy" decoding="async" sizes="(max-width: 480px) 100vw, (max-width: 899px) 50vw, 320px" class="product-image-inner">
@@ -1722,6 +2002,7 @@ function renderHomeProductCard(product) {
           <span class="product-status ${product.inStock ? 'in-stock' : 'out-stock'}">${product.inStock ? 'Available' : 'Limited'}</span>
           <span class="product-origin">${product.supplier || 'Wimp-Drop Catalog'}</span>
         </div>
+        ${soldCount > 0 ? `<div class="product-sold-count">${soldCount} sold</div>` : ''}
         <div class="product-price">
           <span class="price-current">${formatCurrency(product.price)}</span>
           ${hasDiscount ? `<span class="price-original">${formatCurrency(product.originalPrice)}</span>` : ''}
@@ -1742,9 +2023,44 @@ function buyNow(productId) {
 }
 
 function quickView(productId) {
-  // Basic quick view: open product page in new small window; can be upgraded to modal
-  const url = `/pages/product.html?id=${encodeURIComponent(productId)}`;
-  window.open(url, '_blank', 'toolbar=0,location=0,status=0,menubar=0,width=420,height=720');
+  const product = AppState.products.find(p => String(p.id) === String(productId)) || AppState.products.find(p => String(p.product_id) === String(productId));
+  const selected = product || (typeof supabaseService !== 'undefined' && supabaseService.getProduct ? null : null);
+  const modal = document.getElementById('quick-view-modal');
+  if (!modal) {
+    const fallbackUrl = `/pages/product.html?id=${encodeURIComponent(productId)}`;
+    window.location.href = fallbackUrl;
+    return;
+  }
+
+  const source = selected || { id: productId, name: 'Product', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=900&h=900&fit=crop', price: 0, originalPrice: 0, category: 'Featured', description: 'Product details are available on the product page.', supplier: 'Wimp-Drop Catalog' };
+
+  modal.innerHTML = `
+    <div class="quick-view-backdrop" data-close-quick-view="true"></div>
+    <div class="quick-view-panel">
+      <button type="button" class="quick-view-close" data-close-quick-view="true" aria-label="Close quick view">×</button>
+      <div class="quick-view-media">
+        <img src="${source.image}" alt="${source.name}" loading="lazy" decoding="async">
+      </div>
+      <div class="quick-view-copy">
+        <span class="product-category">${source.category || 'Featured'}</span>
+        <h3 class="product-name">${source.name}</h3>
+        <div class="product-price">
+          <span class="price-current">${formatCurrency(source.price || 0)}</span>
+          ${Number(source.originalPrice || 0) > Number(source.price || 0) ? `<span class="price-original">${formatCurrency(source.originalPrice)}</span>` : ''}
+        </div>
+        <p>${source.description || 'Real product details continue on the product page.'}</p>
+        <div class="product-actions compact-actions">
+          <button class="btn btn-primary btn-small" onclick="handleInlineAddToCart(this, '${productId}')">Add to cart</button>
+          <a class="btn btn-outline btn-small" href="/pages/product.html?id=${encodeURIComponent(productId)}">View details</a>
+        </div>
+      </div>
+    </div>
+  `;
+  modal.classList.add('active');
+
+  modal.querySelectorAll('[data-close-quick-view]').forEach((node) => {
+    node.addEventListener('click', () => modal.classList.remove('active'));
+  });
 }
 
 function renderPagination(totalItems, currentPage, perPage) {
