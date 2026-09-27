@@ -567,6 +567,7 @@
             const alert = document.getElementById('admin-access-panel');
             if (!alert) return;
             alert.innerHTML = `<strong>Restricted admin area</strong><p>${message}</p><p><a href="/pages/login.html" class="link-reset">Go to login page</a></p>`;
+            alert.classList.remove('is-hidden');
             alert.style.display = 'block';
         }
 
@@ -895,8 +896,12 @@
                 return;
             }
 
-            document.getElementById('admin-dashboard-grid').style.display = 'grid';
-            document.getElementById('admin-access-panel').style.display = 'none';
+            const dashboardGrid = document.getElementById('admin-dashboard-grid');
+            const accessPanel = document.getElementById('admin-access-panel');
+            dashboardGrid.classList.remove('is-hidden');
+            dashboardGrid.style.display = 'grid';
+            accessPanel.classList.add('is-hidden');
+            accessPanel.style.display = 'none';
             document.getElementById('admin-welcome')?.textContent;
             appendAdminLog(`Admin session detected for ${currentUser.email}.`);
 
