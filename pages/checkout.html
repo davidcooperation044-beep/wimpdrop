@@ -85,9 +85,9 @@
 
                 <div>
 
-                    <div class="checkout-step is-current" data-checkout-step="1" style="background: rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid var(--border-color);">
-                        <h3 style="margin-bottom: 1.5rem;">1. Shipping Address</h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="checkout-step is-current" data-checkout-step="1">
+                        <h3>1. Shipping Address</h3>
+                        <div class="checkout-double-grid">
                             <div class="form-group">
                                 <label>First Name *</label>
                                 <input id="checkout-first-name" name="firstName" type="text" placeholder="John" autocomplete="given-name" required>
@@ -113,7 +113,7 @@
                             <input id="checkout-street" name="street" type="text" placeholder="123 Main Street" autocomplete="street-address" required>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="checkout-double-grid">
                             <div class="form-group">
                                 <label>City *</label>
                                 <input id="checkout-city" name="city" type="text" placeholder="New York" autocomplete="address-level2" required>
@@ -124,7 +124,7 @@
                             </div>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="checkout-double-grid">
                             <div class="form-group">
                                 <label>Postal Code *</label>
                                 <input id="checkout-postal" name="postal" type="text" inputmode="numeric" placeholder="10001" autocomplete="postal-code" required>
@@ -145,22 +145,22 @@
                     </div>
 
 
-                    <div class="checkout-step" data-checkout-step="2" style="background: rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid var(--border-color);">
-                        <h3 style="margin-bottom: 1.5rem;">2. Shipping Method</h3>
+                    <div class="checkout-step" data-checkout-step="2">
+                        <h3>2. Shipping Method</h3>
                         <div style="display: flex; flex-direction: column; gap: 1rem;">
-                            <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #e63a2e; border-radius: 4px; cursor: pointer; background: rgba(230, 58, 46, 0.05);">
-                                <input type="radio" name="shipping" value="standard" checked style="margin-right: 1rem;" data-shipping-cost="5000">
+                            <label class="checkout-method-option" style="border-color: rgba(212, 175, 55, 0.6); background: rgba(212, 175, 55, 0.08);">
+                                <input type="radio" name="shipping" value="standard" checked data-shipping-cost="5000">
                                 <div>
                                     <strong>Standard Shipping (7-14 days)</strong>
-                                    <p style="color: #9fb0d6; font-size: 0.875rem; margin: 0;">$5,000.00</p>
+                                    <p>$5,000.00</p>
                                 </div>
                             </label>
 
-                            <label style="display: flex; align-items: center; padding: 1rem; border: 2px solid #ccc; border-radius: 4px; cursor: pointer;">
-                                <input type="radio" name="shipping" value="express" style="margin-right: 1rem;" data-shipping-cost="10000">
+                            <label class="checkout-method-option">
+                                <input type="radio" name="shipping" value="express" data-shipping-cost="10000">
                                 <div>
                                     <strong>Express Shipping (3-5 days)</strong>
-                                    <p style="color: #9fb0d6; font-size: 0.875rem; margin: 0;">$10,000.00</p>
+                                    <p>$10,000.00</p>
                                 </div>
                             </label>
                         </div>
@@ -169,12 +169,12 @@
                     </div>
 
 
-                    <div class="checkout-step" data-checkout-step="3" style="background: rgba(255,255,255,0.06); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid var(--border-color);">
-                        <h3 style="margin-bottom: 1.5rem;">3. Payment Method</h3>
+                    <div class="checkout-step" data-checkout-step="3">
+                        <h3>3. Payment Method</h3>
 
-                        <div style="background: rgba(45,108,223,0.18); border: 1px solid rgba(45,108,223,0.34); padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
-                            <p style="margin: 0; color: #084298; font-size: 0.875rem;">
-                                <strong>ðŸ’³ Flutterwave Secure Payment</strong><br/>
+                        <div style="background: rgba(45,108,223,0.18); border: 1px solid rgba(45,108,223,0.34); padding: 1rem; border-radius: 14px; margin-bottom: 1.5rem;">
+                            <p style="margin: 0; color: var(--text-primary); font-size: 0.875rem;">
+                                <strong>Flutterwave Secure Payment</strong><br/>
                                 Your payment is processed securely through Flutterwave. No card details are stored on our servers.
                             </p>
                         </div>
@@ -208,7 +208,7 @@
                     <div class="cart-summary checkout-summary-panel" style="position: sticky; top: 100px;">
                         <h3 style="margin-bottom: 1.5rem;">Order Summary</h3>
 
-                        <div id="order-items" style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #ccc;">
+                        <div id="order-items" style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid rgba(212, 175, 55, 0.14);">
 
                         </div>
 
@@ -222,8 +222,8 @@
                             <span><span id="checkout-shipping">5000</span></span>
                         </div>
 
-                        <div class="summary-row" style="margin-top: 1rem; display:flex; gap:0.5rem; align-items:center;">
-                            <input type="text" id="promo-code-input" placeholder="Promo code" style="flex:1; padding:0.5rem; border:1px solid #ccc; border-radius:4px;">
+                        <div class="summary-row checkout-promo-row" style="margin-top: 1rem;">
+                            <input type="text" id="promo-code-input" placeholder="Promo code">
                             <button class="btn btn-secondary" id="apply-promo-btn">Apply</button>
                         </div>
 

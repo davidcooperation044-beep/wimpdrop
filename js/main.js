@@ -57,6 +57,7 @@ const AppState = {
   },
   shopFilters: {
     origins: [],
+    category: 'all',
     priceMax: 100000,
     sortBy: 'newest',
     search: '',
@@ -583,6 +584,7 @@ function setupShopPage() {
   const sheetPriceValue = document.getElementById('sheet-price-value');
   const sortSelect = document.getElementById('sort-select');
   const sortPills = Array.from(document.querySelectorAll('.sort-pill'));
+  const categoryFilters = document.getElementById('category-filters');
   const clearFilters = document.getElementById('clear-filters');
   const openSheet = document.getElementById('open-sheet');
   const closeSheet = document.getElementById('close-sheet');
@@ -631,6 +633,16 @@ function setupShopPage() {
       applyShopFilters();
     });
   });
+
+  if (categoryFilters) {
+    categoryFilters.addEventListener('click', (event) => {
+      const chip = event.target.closest('[data-category]');
+      if (!chip) return;
+      const nextCategory = chip.dataset.category || 'all';
+      AppState.shopFilters.category = nextCategory === 'all' ? 'all' : nextCategory;
+      applyShopFilters();
+    });
+  }
 
   if (clearFilters) {
     clearFilters.addEventListener('click', clearShopFilters);
@@ -682,6 +694,7 @@ function syncOriginSelections() {
 
 function clearShopFilters() {
   AppState.shopFilters.origins = [];
+  AppState.shopFilters.category = 'all';
   AppState.shopFilters.priceMax = Number(document.getElementById('price-range')?.max || 100000);
   AppState.shopFilters.sortBy = 'newest';
   AppState.shopFilters.search = '';
@@ -712,12 +725,14 @@ function clearShopFilters() {
 function renderShopFilters(products) {
   if (!isShopPage()) return;
   const origins = Array.from(new Set(products.map(p => (p.supplier || 'Unknown supplier') || 'Unknown supplier'))).filter(Boolean);
+  const categories = Array.from(new Set(products.map(p => (p.category || 'General') || 'General').filter(Boolean))).sort((a, b) => a.localeCompare(b));
   const priceMax = Math.max(100, Math.ceil((Math.max(...products.map(p => Number(p.price) || 0), AppState.shopFilters.priceMax || 0) || 100) / 100) * 100);
   const currentPrice = typeof AppState.shopFilters.priceMax === 'number' ? AppState.shopFilters.priceMax : priceMax;
   AppState.shopFilters.priceMax = currentPrice;
 
   const originContainer = document.getElementById('origin-filters');
   const sheetOriginContainer = document.getElementById('sheet-origin-filters');
+  const categoryContainer = document.getElementById('category-filters');
   const priceRange = document.getElementById('price-range');
   const sheetPriceRange = document.getElementById('sheet-price-range');
   const priceValue = document.getElementById('price-range-value');
@@ -731,6 +746,13 @@ function renderShopFilters(products) {
     </label>
   `).join('');
   if (sheetOriginContainer) sheetOriginContainer.innerHTML = originContainer?.innerHTML || '';
+  if (categoryContainer) {
+    const allLabel = 'All';
+    categoryContainer.innerHTML = [allLabel, ...categories].map((label) => {
+      const isActive = (AppState.shopFilters.category || 'all') === label || (AppState.shopFilters.category === 'all' && label === allLabel);
+      return `<button type="button" class="category-chip ${isActive ? 'active' : ''}" data-category="${label === allLabel ? 'all' : label}">${label}</button>`;
+    }).join('');
+  }
 
   if (priceRange) {
     priceRange.max = priceMax;
@@ -786,6 +808,10 @@ function applyShopFilters() {
     });
   }
 
+  if (AppState.shopFilters.category && AppState.shopFilters.category !== 'all') {
+    filtered = filtered.filter((p) => (p.category || 'General') === AppState.shopFilters.category);
+  }
+
   if (AppState.shopFilters.origins.length) {
     filtered = filtered.filter(p => AppState.shopFilters.origins.includes(p.supplier || 'Unknown supplier'));
   }
@@ -832,6 +858,9 @@ function buildFilterChips() {
   if (AppState.shopFilters.search) {
     chips.push({ label: `Search: ${AppState.shopFilters.search}`, type: 'search' });
   }
+  if (AppState.shopFilters.category && AppState.shopFilters.category !== 'all') {
+    chips.push({ label: `Category: ${AppState.shopFilters.category}`, type: 'category' });
+  }
   if (AppState.shopFilters.origins.length) {
     AppState.shopFilters.origins.forEach(origin => chips.push({ label: origin, type: 'origin' }));
   }
@@ -851,6 +880,10 @@ function removeShopChip(type, label) {
     AppState.shopFilters.search = '';
     const shopSearch = document.getElementById('shop-search');
     if (shopSearch) shopSearch.value = '';
+  }
+
+  if (type === 'category') {
+    AppState.shopFilters.category = 'all';
   }
 
   if (type === 'origin') {
