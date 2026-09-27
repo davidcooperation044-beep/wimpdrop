@@ -6,6 +6,27 @@ create table if not exists public.newsletter_subscribers (
   updated_at timestamptz not null default now()
 );
 
+alter table public.newsletter_subscribers enable row level security;
+
+create policy "Allow anon to insert newsletter signup"
+on public.newsletter_subscribers
+for insert
+to anon
+with check (true);
+
+create policy "Allow anon to read own newsletter signup"
+on public.newsletter_subscribers
+for select
+to anon
+using (true);
+
+create policy "Allow anon to upsert newsletter signup"
+on public.newsletter_subscribers
+for update
+to anon
+using (true)
+with check (true);
+
 create index if not exists newsletter_subscribers_email_idx
   on public.newsletter_subscribers (email);
 
