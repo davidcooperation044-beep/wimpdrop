@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details - Wimp-Drop</title>
+    <meta name="description" content="Shop premium products from Wimp-Drop with secure checkout, transparent pricing, and live stock details.">
+    <meta name="robots" content="index,follow">
+    <meta property="og:title" content="Wimp-Drop Product Details">
+    <meta property="og:description" content="View details, shipping origin, and pricing for premium products on Wimp-Drop.">
+    <meta property="og:type" content="product">
+    <meta property="og:image" content="/images/wimp.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="canonical" href="https://wimpdrop.com.ng/pages/product.html">
     <link rel="icon" type="image/png" href="/images/wimp.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -332,6 +340,58 @@
             loadRelatedProducts();
         }
 
+        function setPageMetadata(productName, productDescription, productImage) {
+            const title = `${productName} | Wimp-Drop`;
+            document.title = title;
+            const setMeta = (selector, content, attribute = 'content') => {
+                let tag = document.head.querySelector(selector);
+                if (!tag) {
+                    tag = document.createElement('meta');
+                    tag.setAttribute(attribute === 'content' ? 'name' : attribute, selector.replace(/^meta\[|\]$/g, ''));
+                    document.head.appendChild(tag);
+                }
+                tag.setAttribute('content', content);
+            };
+
+            const description = productDescription || 'Premium products from Wimp-Drop with transparent pricing and secure checkout.';
+            const image = productImage || '/images/wimp.png';
+
+            document.querySelector('meta[name="description"]')?.setAttribute('content', description);
+            document.querySelector('meta[property="og:title"]')?.setAttribute('content', title);
+            document.querySelector('meta[property="og:description"]')?.setAttribute('content', description);
+            document.querySelector('meta[property="og:image"]')?.setAttribute('content', image);
+            document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', title);
+            document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', description);
+
+            const structuredData = {
+                '@context': 'https://schema.org',
+                '@type': 'Product',
+                name: productName,
+                image: [image],
+                description,
+                brand: {
+                    '@type': 'Brand',
+                    name: 'Wimp-Drop'
+                },
+                offers: {
+                    '@type': 'Offer',
+                    priceCurrency: 'NGN',
+                    price: Number(currentProduct?.price || 0),
+                    availability: currentProduct?.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+                    itemCondition: 'https://schema.org/NewCondition'
+                }
+            };
+
+            let jsonScript = document.getElementById('product-json-ld');
+            if (!jsonScript) {
+                jsonScript = document.createElement('script');
+                jsonScript.id = 'product-json-ld';
+                jsonScript.type = 'application/ld+json';
+                document.head.appendChild(jsonScript);
+            }
+            jsonScript.textContent = JSON.stringify(structuredData);
+        }
+
         function populateProductPage() {
             if (!currentProductVariants.length) return;
 
@@ -342,7 +402,9 @@
 
             document.getElementById('product-name').textContent = variant.title;
             document.getElementById('product-category').textContent = variant.category || 'Electronics';
-            document.getElementById('product-description').textContent = buildDescriptionCopy(variant.title);
+            const descriptionCopy = buildDescriptionCopy(variant.title);
+            document.getElementById('product-description').textContent = descriptionCopy;
+            setPageMetadata(variant.title, descriptionCopy, variant.image);
             const soldCount = Number(variant.sold_count || 0);
             const verifiedSeller = Boolean(variant.is_verified);
             document.getElementById('product-price').textContent = formatCurrency(variant.price);
