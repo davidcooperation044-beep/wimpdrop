@@ -1,5 +1,46 @@
 import { cjRequest, db, handleOptions, json, readJson, requireAdmin } from '../_shared/cj.ts';
 
+const SITE_CATEGORY_RULES = [
+  { label: 'Electronics', keywords: ['earbud', 'earbuds', 'headphone', 'headphones', 'speaker', 'bluetooth', 'phone', 'smartphone', 'camera', 'laptop', 'tablet', 'monitor', 'charger', 'console', 'keyboard', 'mouse', 'usb', 'adapter', 'projector', 'printer', 'drone', 'watch', 'smartwatch', 'gaming', 'router'] },
+  { label: 'Beauty & Personal Care', keywords: ['beauty', 'skin', 'serum', 'cream', 'makeup', 'lip', 'cosmetic', 'perfume', 'hair', 'nail', 'skincare', 'body wash', 'face mask', 'toiletry', 'essential oil'] },
+  { label: 'Home & Kitchen', keywords: ['lamp', 'chair', 'sofa', 'bed', 'mug', 'kitchen', 'cook', 'pan', 'plate', 'bottle', 'storage', 'shelf', 'table', 'decor', 'home', 'furniture', 'blanket', 'towel', 'bathroom', 'cleaning', 'cabinet'] },
+  { label: 'Accessories', keywords: ['keychain', 'watch', 'bracelet', 'ring', 'earring', 'bag', 'backpack', 'purse', 'wallet', 'case', 'travel pouch', 'sunglass', 'belt', 'hat', 'travel bag'] },
+  { label: 'Fashion', keywords: ['jacket', 'jumper', 'hoodie', 'shirt', 'dress', 'jeans', 'shoe', 'sandal', 'helmet', 'fashion', 'clothing', 'top', 'trouser', 'blazer', 'coat', 'socks', 'underwear', 'swimsuit', 'scarf'] },
+  { label: 'Sports & Outdoors', keywords: ['yoga', 'fitness', 'sport', 'tennis', 'camping', 'hiking', 'outdoor', 'cycle', 'cycling', 'basketball', 'football', 'gym', 'tent', 'travel', 'water bottle', 'exercise'] },
+  { label: 'Toys & Games', keywords: ['toy', 'game', 'puzzle', 'lego', 'doll', 'board game', 'playset', 'kids', 'educational', 'action figure'] },
+  { label: 'Office & Stationery', keywords: ['notebook', 'pen', 'planner', 'calendar', 'stapler', 'folder', 'desk', 'office', 'stationery', 'printer paper', 'marker', 'clipboard', 'file organizer'] },
+  { label: 'Automotive', keywords: ['car', 'automotive', 'truck', 'brake', 'tire', 'seat', 'mirror', 'dashboard', 'tool kit', 'motorcycle', 'scooter', 'garage'] }
+];
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function classifySiteCategory(input: any): string {
+  const haystack = [
+    input?.name,
+    input?.nameEn,
+    input?.title,
+    input?.category,
+    input?.__categoryName,
+    input?.description,
+    input?.shortDescription,
+    input?.productName,
+    input?.supplierCategory,
+    input?.subcategory
+  ].filter((value): value is string => typeof value === 'string' && value.trim().length > 0).join(' ').toLowerCase();
+
+  if (!haystack) return 'Essentials';
+
+  for (const rule of SITE_CATEGORY_RULES) {
+    if (rule.keywords.some((keyword) => new RegExp(`\\b${escapeRegex(keyword)}\\b`, 'i').test(haystack))) {
+      return rule.label;
+    }
+  }
+
+  return 'Essentials';
+}
+
 function parsePrice(raw: unknown): number {
   if (typeof raw === 'number') return raw;
   const str = String(raw ?? '').trim();
@@ -72,6 +113,29 @@ Deno.serve(async (request) => {
   try {
     await requireAdmin(request);
     const body = await readJson(request);
+
+    if (body?.reclassify === true) {
+      const { data: products, error: fetchError } = await db
+        .from('products')
+        .select('id,name,title,description,category,subcategory');
+      if (fetchError) throw fetchError;
+
+      let reclassified = 0;
+      for (const row of products || []) {
+        const nextCategory = classifySiteCategory(row);
+        const previousCategory = typeof row.category === 'string' ? row.category.trim() : '';
+        const rawSubcategory = previousCategory && previousCategory !== nextCategory ? previousCategory : row.subcategory || previousCategory || null;
+        const updatePayload: Record<string, string | null> = { category: nextCategory };
+        if (rawSubcategory && rawSubcategory !== nextCategory) updatePayload.subcategory = rawSubcategory;
+        else updatePayload.subcategory = null;
+
+        const { error } = await db.from('products').update(updatePayload).eq('id', row.id);
+        if (!error) reclassified += 1;
+      }
+
+      return json({ success: true, reclassified, updated: reclassified });
+    }
+
     const params = new URLSearchParams({
       page: String(body.page || 1),
       size: String(Math.min(Number(body.size || 20), 100))
@@ -96,28 +160,28 @@ Deno.serve(async (request) => {
 
     const rows: any[] = [];
 
-
     const sizePriceMap = new Map<string, number>();
 
     for (const product of products) {
       const productId = product.id ?? product.pid ?? null;
       if (!productId) continue;
 
-      const category = product.__categoryName || body.category || 'CJ Import';
+      const rawCategory = String(product.__categoryName || product.categoryName || product.category || body.category || 'CJ Import').trim();
+      const category = classifySiteCategory({ name: product.nameEn || product.name || 'CJ product', title: product.nameEn || product.name || 'CJ product', description: product.description || '', category: rawCategory, __categoryName: rawCategory });
+      const subcategory = rawCategory && rawCategory !== category ? rawCategory : null;
       const baseName = product.nameEn || product.name || 'CJ product';
       const fallbackCost = parsePrice(product.sellPrice ?? product.nowPrice ?? 0);
 
       const variants = await fetchVariants(productId);
 
       if (!variants.length) {
-
-
         const supplierCost = fallbackCost;
         rows.push({
           name: baseName,
           title: baseName,
           description: product.description || '',
           category,
+          subcategory,
           price: Number((supplierCost * (1 + markupPercent / 100)).toFixed(2)),
           supplier: 'cj',
           supplier_product_id: productId,
@@ -141,9 +205,6 @@ Deno.serve(async (request) => {
         const { color, size } = parseVariantAttributes(variant.variantKey, variant.variantNameEn);
         const supplierCost = parsePrice(variant.variantSellPrice ?? fallbackCost);
 
-
-
-
         const sizeKey = `${productId}::${size ?? '__no_size__'}`;
         let price: number;
         if (sizePriceMap.has(sizeKey)) {
@@ -158,6 +219,7 @@ Deno.serve(async (request) => {
           title: baseName,
           description: product.description || '',
           category,
+          subcategory,
           price,
           supplier: 'cj',
           supplier_product_id: productId,

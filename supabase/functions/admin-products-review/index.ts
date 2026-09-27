@@ -43,18 +43,19 @@ Deno.serve(async (request) => {
     if (action === 'update') {
       const name = typeof body.name === 'string' ? body.name.trim() : '';
       const price = Number(body.price);
+      const category = typeof body.category === 'string' ? body.category.trim() : '';
+      const subcategory = typeof body.subcategory === 'string' ? body.subcategory.trim() : '';
       if (!name || !Number.isFinite(price) || price < 0) {
         return json({ success: false, error: 'Update requires a non-empty name and non-negative numeric price.' }, 400);
       }
 
-      // The caller (admin UI) already resolves which rows belong together —
-      // e.g. every variant row sharing one supplier_product_id — and passes
-      // that full set of ids here, so this just applies the same name/price
-      // to all of them directly, in one call, instead of us re-deriving
-      // sibling rows from a single id.
+      const updateFields: Record<string, string | number | null> = { name, title: name, price };
+      if (category) updateFields.category = category;
+      if (subcategory || category) updateFields.subcategory = subcategory || category || null;
+
       const { data: updated, error: updateError } = await db
         .from('products')
-        .update({ name, title: name, price })
+        .update(updateFields)
         .in('id', productIds)
         .select();
       if (updateError) throw updateError;

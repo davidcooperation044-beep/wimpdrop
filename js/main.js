@@ -46,6 +46,20 @@ async function initializeConfig() {
 }
 
 // State Management
+const SITE_SEARCH_DEBOUNCE_MS = 220;
+const SHOP_CATEGORY_LABELS = [
+  'Electronics',
+  'Fashion',
+  'Home & Kitchen',
+  'Beauty & Personal Care',
+  'Accessories',
+  'Sports & Outdoors',
+  'Toys & Games',
+  'Office & Stationery',
+  'Automotive',
+  'Essentials'
+];
+
 const AppState = {
   user: null,
   cart: [],
@@ -373,6 +387,173 @@ function setupEventListeners() {
     }
   };
 
+  const handleSearch = (query) => {
+    const cleanQuery = String(query || '').trim();
+    if (!cleanQuery) return;
+    const url = new URL(window.location.href);
+    url.pathname = '/pages/shop.html';
+    url.searchParams.set('search', cleanQuery);
+    window.location.href = url.toString();
+  };
+
+  const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[char] || char));
+
+  const closeHeaderSuggestionPanels = () => {
+    if (searchSuggestions) {
+      searchSuggestions.classList.remove('is-open');
+      searchSuggestions.innerHTML = '';
+    }
+    if (mobileSearchSuggestions) {
+      mobileSearchSuggestions.classList.remove('is-open');
+      mobileSearchSuggestions.innerHTML = '';
+    }
+  };
+
+  const buildSuggestionMarkup = (products, query) => {
+    const safeQuery = escapeHtml(query);
+    if (!products.length) {
+      return `<div class="search-suggestion-empty">No products found for "${safeQuery}"</div>`;
+    }
+
+    const suggestionHtml = products.map((product) => {
+      const normalized = normalizeProduct(product);
+      const pid = String(normalized.id || normalized.product_id || normalized.supplierSku || '');
+      const name = escapeHtml(normalized.name || normalized.title || 'Product');
+      const price = formatCurrency(Number(normalized.price || 0));
+      const img = normalized.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop';
+      return `
+        <button type="button" class="search-suggestion" data-product-id="${escapeHtml(pid)}" data-product-name="${name}">
+          <span class="thumb"><img src="${img}" alt="${name}" loading="lazy"></span>
+          <span class="meta"><strong>${name}</strong><small>${price}</small></span>
+        </button>
+      `;
+    }).join('');
+
+    return `${suggestionHtml}<a href="/pages/shop.html?search=${encodeURIComponent(query)}" class="search-suggestion-footer">See all results for "${safeQuery}"</a>`;
+  };
+
+  const renderHeaderSuggestions = (container, inputEl, query) => {
+    const cleanQuery = String(query || '').trim();
+    if (!container || !inputEl) return;
+    if (!cleanQuery) {
+      container.classList.remove('is-open');
+      container.innerHTML = '';
+      return;
+    }
+
+    const requestId = Date.now() + Math.random();
+    if (inputEl.dataset.searchRequestId) {
+      inputEl.dataset.searchRequestId = String(requestId);
+    } else {
+      inputEl.dataset.searchRequestId = String(requestId);
+    }
+    const activeRequestId = Number(inputEl.dataset.searchRequestId);
+
+    if (typeof supabaseService === 'undefined' || !supabaseService.isInitialized) {
+      const fallback = (AppState.products || []).filter((product) => {
+        const haystack = [product.name, product.title, product.category, product.description, product.supplier].join(' ').toLowerCase();
+        return haystack.includes(cleanQuery.toLowerCase());
+      }).slice(0, 6);
+      container.innerHTML = buildSuggestionMarkup(fallback, cleanQuery);
+      container.classList.toggle('is-open', fallback.length > 0 || cleanQuery.length > 0);
+      return;
+    }
+
+    const controller = new AbortController();
+    inputEl.dataset.searchAbortController = String(controller);
+    supabaseService.getProducts({ search: cleanQuery, limit: 6 })
+      .then((res) => {
+        if (Number(inputEl.dataset.searchRequestId) !== activeRequestId) return;
+        if (!res.success || !Array.isArray(res.products) || !res.products.length) {
+          container.innerHTML = `<div class="search-suggestion-empty">No products found for "${escapeHtml(cleanQuery)}"</div>`;
+          container.classList.add('is-open');
+          return;
+        }
+        container.innerHTML = buildSuggestionMarkup(res.products, cleanQuery);
+        container.classList.add('is-open');
+      })
+      .catch(() => {
+        if (Number(inputEl.dataset.searchRequestId) !== activeRequestId) return;
+        container.innerHTML = `<div class="search-suggestion-empty">No products found for "${escapeHtml(cleanQuery)}"</div>`;
+        container.classList.add('is-open');
+      });
+  };
+
+  const bindSearchInput = (inputEl, suggestionsEl, focusQuery = '') => {
+    if (!inputEl || !suggestionsEl) return;
+
+    const handleInput = debounce((event) => {
+      const value = String(event.target.value || '').trim();
+      renderHeaderSuggestions(suggestionsEl, inputEl, value);
+    }, SITE_SEARCH_DEBOUNCE_MS);
+
+    inputEl.addEventListener('input', handleInput);
+    inputEl.addEventListener('focus', () => {
+      const value = String(inputEl.value || '').trim();
+      if (value) renderHeaderSuggestions(suggestionsEl, inputEl, value);
+    });
+    inputEl.addEventListener('keydown', (event) => {
+      const items = Array.from(suggestionsEl.querySelectorAll('.search-suggestion'));
+      if (!items.length) {
+        if (event.key === 'Enter') handleSearch(inputEl.value.trim());
+        return;
+      }
+
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        const currentIndex = items.findIndex((item) => item.classList.contains('is-active'));
+        const direction = event.key === 'ArrowDown' ? 1 : -1;
+        const nextIndex = currentIndex < 0 ? (direction > 0 ? 0 : items.length - 1) : (currentIndex + direction + items.length) % items.length;
+        items.forEach((item, itemIndex) => item.classList.toggle('is-active', itemIndex === nextIndex));
+        return;
+      }
+
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        const activeItem = items.find((item) => item.classList.contains('is-active')) || items[0];
+        if (activeItem) {
+          activeItem.click();
+          return;
+        }
+        handleSearch(inputEl.value.trim());
+      }
+
+      if (event.key === 'Escape') {
+        closeHeaderSuggestionPanels();
+      }
+    });
+
+    suggestionsEl.addEventListener('click', (event) => {
+      const item = event.target.closest('.search-suggestion');
+      if (!item) {
+        const allResults = event.target.closest('.search-suggestion-footer');
+        if (allResults) {
+          handleSearch(String(inputEl.value || '').trim());
+        }
+        return;
+      }
+      const productId = item.dataset.productId || '';
+      const productName = item.dataset.productName || '';
+      if (productId) {
+        window.location.href = `/pages/product.html?id=${encodeURIComponent(productId)}`;
+      } else if (productName) {
+        handleSearch(productName);
+      }
+      closeHeaderSuggestionPanels();
+    });
+
+    if (focusQuery) {
+      inputEl.value = focusQuery;
+      renderHeaderSuggestions(suggestionsEl, inputEl, focusQuery);
+    }
+  };
+
   if (navMenuTrigger && siteNavMenu) {
     navMenuTrigger.addEventListener('click', (event) => {
       event.stopPropagation();
@@ -393,26 +574,28 @@ function setupEventListeners() {
     if (!event.target.closest('.nav-menu-trigger') && !event.target.closest('#site-nav-menu')) {
       updateNavOpenState(false);
     }
+    if (searchSuggestions && !event.target.closest('.site-search')) {
+      searchSuggestions.classList.remove('is-open');
+      searchSuggestions.innerHTML = '';
+    }
+    if (mobileSearchSuggestions && !event.target.closest('#mobile-search-panel')) {
+      mobileSearchSuggestions.classList.remove('is-open');
+      mobileSearchSuggestions.innerHTML = '';
+    }
   });
 
-  const handleSearch = (query) => {
-    if (!query) return;
-    const url = new URL(window.location.href);
-    url.pathname = '/pages/shop.html';
-    url.searchParams.set('search', query);
-    window.location.href = url.toString();
-  };
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeHeaderSuggestionPanels();
+    }
+  });
 
   if (searchSubmit && searchInput) {
     searchSubmit.addEventListener('click', () => handleSearch(searchInput.value.trim()));
   }
 
   if (searchInput) {
-    searchInput.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        handleSearch(searchInput.value.trim());
-      }
-    });
+    bindSearchInput(searchInput, searchSuggestions);
   }
 
   if (mobileSearchToggle && mobileSearchPanel && mobileSearchInput && mobileSearchSubmit) {
@@ -425,17 +608,14 @@ function setupEventListeners() {
     mobileSearchClose.addEventListener('click', () => {
       mobileSearchPanel.classList.remove('active');
       mobileSearchPanel.setAttribute('aria-hidden', 'true');
+      closeHeaderSuggestionPanels();
     });
 
     mobileSearchSubmit.addEventListener('click', () => {
       handleSearch(mobileSearchInput.value.trim());
     });
 
-    mobileSearchInput.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        handleSearch(mobileSearchInput.value.trim());
-      }
-    });
+    bindSearchInput(mobileSearchInput, mobileSearchSuggestions);
   }
 
   // Mark active navigation links
@@ -1962,18 +2142,37 @@ function renderHomepageSections(products) {
 }
 
 function inferCategoryLabel(product) {
-  const haystack = `${product.name} ${product.category} ${product.description}`.toLowerCase();
-  if (/(earbud|headphone|speaker|phone|camera|laptop|tablet|monitor|charger|console|keyboard|mouse|watch|smart)/.test(haystack)) {
+  const haystack = `${product.name || ''} ${product.title || ''} ${product.category || ''} ${product.description || ''}`.toLowerCase();
+  if (!haystack) return 'Essentials';
+
+  const hasKeyword = (keyword) => new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(haystack);
+
+  if (['earbud', 'earbuds', 'headphone', 'headphones', 'speaker', 'bluetooth', 'phone', 'smartphone', 'camera', 'laptop', 'tablet', 'monitor', 'charger', 'console', 'keyboard', 'mouse', 'usb', 'adapter', 'projector', 'printer', 'drone', 'watch', 'smartwatch', 'gaming', 'router'].some(hasKeyword)) {
     return 'Electronics';
   }
-  if (/(jacket|shoe|bag|watch|shirt|dress|sunglass|hat|belt|fashion|accessory)/.test(haystack)) {
+  if (['beauty', 'skin', 'serum', 'cream', 'makeup', 'lip', 'cosmetic', 'perfume', 'hair', 'nail', 'skincare', 'body wash', 'face mask', 'toiletry', 'essential oil'].some(hasKeyword)) {
+    return 'Beauty & Personal Care';
+  }
+  if (['lamp', 'chair', 'sofa', 'bed', 'mug', 'kitchen', 'cook', 'pan', 'plate', 'bottle', 'storage', 'shelf', 'table', 'decor', 'home', 'furniture', 'blanket', 'towel', 'bathroom', 'cleaning', 'cabinet'].some(hasKeyword)) {
+    return 'Home & Kitchen';
+  }
+  if (['travel bag', 'wallet', 'case', 'purse', 'keychain', 'watch', 'bracelet', 'ring', 'earring', 'bag', 'backpack', 'sunglass', 'hat', 'belt'].some(hasKeyword) && !['phone', 'laptop', 'tablet', 'keyboard', 'mouse', 'speaker', 'monitor'].some(hasKeyword)) {
+    return 'Accessories';
+  }
+  if (['jacket', 'jumper', 'hoodie', 'shirt', 'dress', 'jeans', 'shoe', 'sandal', 'helmet', 'wallet', 'belt', 'hat', 'sunglass', 'gloves', 'backpack', 'watch', 'bracelet', 'ring', 'earring', 'fashion', 'purse'].some(hasKeyword) && !['phone', 'laptop', 'tablet', 'keyboard', 'mouse', 'speaker', 'monitor'].some(hasKeyword)) {
     return 'Fashion';
   }
-  if (/(lamp|chair|sofa|bed|mug|kitchen|home|decor|storage|organizer|tool)/.test(haystack)) {
-    return 'Home';
+  if (['yoga', 'fitness', 'sport', 'tennis', 'camping', 'hiking', 'outdoor', 'cycle', 'cycling', 'basketball', 'football', 'gym', 'tent', 'travel', 'water bottle', 'sneaker', 'exercise'].some(hasKeyword)) {
+    return 'Sports & Outdoors';
   }
-  if (/(beauty|skin|cosmetic|perfume|cream|serum|makeup)/.test(haystack)) {
-    return 'Beauty';
+  if (['toy', 'game', 'puzzle', 'lego', 'doll', 'board game', 'playset', 'kids', 'educational', 'action figure'].some(hasKeyword)) {
+    return 'Toys & Games';
+  }
+  if (['notebook', 'pen', 'planner', 'calendar', 'stapler', 'folder', 'desk', 'office', 'stationery', 'printer paper', 'marker', 'clipboard', 'file organizer'].some(hasKeyword)) {
+    return 'Office & Stationery';
+  }
+  if (['car', 'automotive', 'truck', 'brake', 'tire', 'seat', 'mirror', 'dashboard', 'tool kit', 'motorcycle', 'scooter', 'garage'].some(hasKeyword)) {
+    return 'Automotive';
   }
   return 'Essentials';
 }

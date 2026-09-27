@@ -29,6 +29,7 @@ create table if not exists public.products (
   title text,
   description text,
   category text,
+  subcategory text,
   price numeric(12,2) not null default 0,
   cost numeric(12,2) default 0,
   image_url text,

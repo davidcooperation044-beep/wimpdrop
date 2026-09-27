@@ -302,7 +302,8 @@ p {
   color: var(--text-secondary);
 }
 .search-suggestions a:hover,
-.search-suggestion:hover {
+.search-suggestion:hover,
+.search-suggestion.is-active {
   background: rgba(212, 175, 55, 0.08);
   color: var(--text-primary);
 }
@@ -311,6 +312,12 @@ p {
   display: flex;
   align-items: center;
   gap: 0.7rem;
+}
+.search-suggestion-footer {
+  display: block;
+  padding: 0.8rem 0.9rem;
+  color: var(--gold-soft);
+  border-top: 1px solid rgba(212, 175, 55, 0.12);
 }
 .search-suggestion .thumb {
   width: 42px;

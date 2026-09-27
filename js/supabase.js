@@ -392,6 +392,7 @@ class SupabaseService {
       title,
       description,
       category,
+      subcategory,
       price,
       cost,
       image_url,

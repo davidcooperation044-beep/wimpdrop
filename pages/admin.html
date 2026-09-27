@@ -571,6 +571,7 @@
                                 <button id="refresh-catalog-btn" class="btn btn-primary btn-large">Refresh product catalog</button>
                                 <button id="run-tests-btn" class="btn btn-secondary btn-large">Run Supabase health check</button>
                                 <button id="sync-stock-btn" class="btn btn-secondary btn-large">Sync CJ stock now</button>
+                                <button id="reclassify-products-btn" class="btn btn-secondary btn-large">Reclassify catalog</button>
                             </div>
                             <div class="supplier-control-row">
                                 <input id="cj-import-keyword" type="search" placeholder="CJ product keyword" autocomplete="off">
@@ -1039,7 +1040,15 @@
                 const currentDisplayPrice = ngnToAdminCurrency(result.product.price || 0).toFixed(2);
                 const enteredPrice = window.prompt(`Sell price (${adminPriceCurrency})`, currentDisplayPrice);
                 if (enteredPrice === null) return;
-                await reviewProduct('update', [productId], { name, price: adminCurrencyToNgn(enteredPrice) });
+                const currentCategory = result.product.category || 'Essentials';
+                const category = window.prompt('Category', currentCategory);
+                if (category === null) return;
+                await reviewProduct('update', [productId], {
+                    name,
+                    price: adminCurrencyToNgn(enteredPrice),
+                    category: category || currentCategory,
+                    subcategory: result.product.subcategory || result.product.category || currentCategory
+                });
             } catch (error) {
                 window.alert(error.message || error);
             }
@@ -1173,6 +1182,22 @@
             } finally {
                 button.disabled = false;
                 button.textContent = 'Import CJ drafts';
+            }
+        }
+
+        async function reclassifyProducts() {
+            const button = document.getElementById('reclassify-products-btn');
+            button.disabled = true;
+            button.textContent = 'Reclassifying…';
+            try {
+                const result = await invokeAdminFunction('admin-products-import', { reclassify: true });
+                appendAdminLog(`Reclassified ${result.reclassified || 0} products.`);
+                await loadAdminProducts();
+            } catch (error) {
+                appendAdminLog(`Catalog reclassification failed: ${error.message || error}`);
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Reclassify catalog';
             }
         }
 
@@ -1358,6 +1383,7 @@
             document.getElementById('refresh-catalog-btn')?.addEventListener('click', loadAdminProducts);
             document.getElementById('run-tests-btn')?.addEventListener('click', runAdminHealthCheck);
             document.getElementById('sync-stock-btn')?.addEventListener('click', syncCjStock);
+            document.getElementById('reclassify-products-btn')?.addEventListener('click', reclassifyProducts);
             document.getElementById('import-products-btn')?.addEventListener('click', importCjDrafts);
             document.getElementById('select-all-drafts')?.addEventListener('change', (event) => {
                 document.querySelectorAll('[data-draft-check]').forEach((input) => {
