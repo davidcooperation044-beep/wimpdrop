@@ -1254,7 +1254,7 @@ function showHomepageSkeletons() {
     const container = document.getElementById(id);
     if (!container) return;
     if (id === 'home-hero-carousel') {
-      container.innerHTML = '<div class="hero-slide active"><div class="hero-slide-card"><div class="hero-slide-copy"><div class="skeleton text" style="width:60%;height:18px;margin-bottom:12px"></div><div class="skeleton text" style="width:90%;height:12px;margin-bottom:6px"></div><div class="skeleton text" style="width:70%;height:12px"></div></div></div></div>';
+      container.innerHTML = '<div class="hero-slide is-active"><div class="hero-slide-media" style="background-image:linear-gradient(135deg, rgba(9,17,29,0.25), rgba(9,17,29,0.7)), url(https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80)"></div><div class="hero-slide-overlay"></div><div class="hero-slide-content"><div class="skeleton text" style="width:60%;height:18px;margin-bottom:12px"></div><div class="skeleton text" style="width:90%;height:12px;margin-bottom:6px"></div><div class="skeleton text" style="width:70%;height:12px"></div></div></div>';
       return;
     }
     if (id === 'home-categories') {
@@ -1509,32 +1509,29 @@ function renderHomepageSections(products) {
 
   if (heroContainer) {
     heroContainer.innerHTML = featuredProducts.length ? featuredProducts.map((product, index) => `
-      <div class="hero-slide ${index === 0 ? 'active' : ''}">
-        <div class="hero-slide-card">
-          <div class="hero-slide-copy">
-            <span class="hero-slide-label">${product.category}</span>
-            <h3>${product.name}</h3>
-            <p>${product.description || 'Live inventory and origin-aware shipping details are surfaced directly from the catalog.'}</p>
-            <div class="hero-slide-meta">
-              <span>${product.supplier || 'Wimp-Drop Catalog'}</span>
-              <span>${product.inStock ? 'In stock' : 'Limited stock'}</span>
-            </div>
-          </div>
-          <div class="hero-slide-visual">
-            <img src="${product.image}" alt="${product.name}" loading="lazy" decoding="async" sizes="(max-width: 480px) 100vw, (max-width: 899px) 50vw, 320px">
+      <div class="hero-slide ${index === 0 ? 'is-active' : ''}">
+        <div class="hero-slide-media" style="background-image: linear-gradient(135deg, rgba(9,17,29,0.25), rgba(9,17,29,0.7)), url('${product.image}');"></div>
+        <div class="hero-slide-overlay"></div>
+        <div class="hero-slide-content">
+          <span class="hero-slide-label">${product.category}</span>
+          <h3>${product.name}</h3>
+          <p>${product.description || 'Live inventory and origin-aware shipping details are surfaced directly from the catalog.'}</p>
+          <div class="hero-slide-meta">
+            <span>${product.supplier || 'Wimp-Drop Catalog'}</span>
+            <span>${product.inStock ? 'In stock' : 'Limited stock'}</span>
           </div>
         </div>
       </div>
-    `).join('') : '<div class="hero-slide active"><div class="hero-slide-card"><div class="hero-slide-copy"><h3>Curated catalog loading</h3><p>Products will appear as soon as the storefront data is available.</p></div></div></div>';
+    `).join('') : '<div class="hero-slide is-active"><div class="hero-slide-media" style="background-image: linear-gradient(135deg, rgba(9,17,29,0.25), rgba(9,17,29,0.7)), url(https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80);"></div><div class="hero-slide-overlay"></div><div class="hero-slide-content"><h3>Curated catalog loading</h3><p>Products will appear as soon as the storefront data is available.</p></div></div>';
 
     if (heroDots) {
-      heroDots.innerHTML = featuredProducts.length ? featuredProducts.map((_, index) => `<button class="hero-dot ${index === 0 ? 'active' : ''}" type="button" data-slide-index="${index}"></button>`).join('') : '';
+      heroDots.innerHTML = featuredProducts.length ? featuredProducts.map((_, index) => `<button class="hero-dot ${index === 0 ? 'is-active' : ''}" type="button" data-slide-index="${index}"></button>`).join('') : '';
       heroDots.querySelectorAll('.hero-dot').forEach((dot) => {
         dot.addEventListener('click', () => {
           const index = Number(dot.dataset.slideIndex || 0);
           const slides = heroContainer.querySelectorAll('.hero-slide');
-          slides.forEach((slide, slideIndex) => slide.classList.toggle('active', slideIndex === index));
-          heroDots.querySelectorAll('.hero-dot').forEach((dotButton, dotIndex) => dotButton.classList.toggle('active', dotIndex === index));
+          slides.forEach((slide, slideIndex) => slide.classList.toggle('is-active', slideIndex === index));
+          heroDots.querySelectorAll('.hero-dot').forEach((dotButton, dotIndex) => dotButton.classList.toggle('is-active', dotIndex === index));
         });
       });
     }
@@ -1546,8 +1543,8 @@ function renderHomepageSections(products) {
         const current = Number(heroContainer.dataset.activeIndex || 0);
         const next = (current + 1) % slides.length;
         heroContainer.dataset.activeIndex = String(next);
-        slides.forEach((slide, slideIndex) => slide.classList.toggle('active', slideIndex === next));
-        heroDots.querySelectorAll('.hero-dot').forEach((dotButton, dotIndex) => dotButton.classList.toggle('active', dotIndex === next));
+        slides.forEach((slide, slideIndex) => slide.classList.toggle('is-active', slideIndex === next));
+        heroDots.querySelectorAll('.hero-dot').forEach((dotButton, dotIndex) => dotButton.classList.toggle('is-active', dotIndex === next));
       }, 4500);
     }
   }
