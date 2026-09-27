@@ -1449,13 +1449,16 @@ p {
 }
 .footer-links {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.55rem;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 .footer-links a {
   color: var(--text-secondary);
   font-size: 0.95rem;
+  white-space: nowrap;
 }
 .footer-links a:hover {
   color: var(--gold-soft);
