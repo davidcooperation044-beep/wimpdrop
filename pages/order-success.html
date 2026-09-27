@@ -69,49 +69,42 @@
 </header>
     
     <section class="section" style="min-height: 60vh; display: flex; align-items: center;">
-        <div class="container" style="text-align: center; max-width: 600px;">
-            <div style="margin-bottom: 2rem;">
-                <div style="font-size: 5rem; margin-bottom: 1rem;">✓</div>
-                <h1 style="color: #155724;">Order Placed Successfully!</h1>
-            </div>
-            
-            <div style="background: rgba(212,175,55,0.14); border: 1px solid rgba(212,175,55,0.32); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
-                <p style="margin: 0; color: #155724;">Thank you for your purchase. Your order has been confirmed.</p>
-            </div>
-            
-            <div style="background: rgba(255,255,255,0.06); padding: 2rem; border-radius: 8px; margin-bottom: 2rem; text-align: left; border: 1px solid var(--border-color);">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="container success-shell" style="max-width: 700px;">
+            <div class="success-panel">
+                <div class="success-badge">✓</div>
+                <p class="eyebrow">Payment received</p>
+                <h1>Order placed successfully</h1>
+                <p class="success-summary">Thank you for your purchase. Your order has been confirmed and the fulfillment team has been notified.</p>
+
+                <div class="success-detail-grid">
                     <div>
-                        <p style="font-size: 0.875rem; color: #9fb0d6; margin: 0;">Order Number</p>
-                        <p style="font-size: 1.25rem; font-weight: 700; margin: 0.5rem 0 0 0;" id="order-number">#ORD-001234</p>
+                        <span class="detail-label">Order Number</span>
+                        <strong id="order-number">#ORD-001234</strong>
                     </div>
                     <div>
-                        <p style="font-size: 0.875rem; color: #9fb0d6; margin: 0;">Order Date</p>
-                        <p style="font-size: 1.25rem; font-weight: 700; margin: 0.5rem 0 0 0;" id="order-date"></p>
+                        <span class="detail-label">Order Date</span>
+                        <strong id="order-date">-</strong>
+                    </div>
+                    <div class="detail-wide">
+                        <span class="detail-label">Order Total</span>
+                        <strong id="order-total" class="success-total">$0.00</strong>
                     </div>
                 </div>
-                
-                <div style="border-top: 1px solid #e0e0e0; padding-top: 1.5rem;">
-                    <p style="font-size: 0.875rem; color: #9fb0d6; margin: 0 0 0.5rem 0;">Total Amount</p>
-                    <p id="order-total" style="font-size: 2rem; font-weight: 700; color: #e63a2e; margin: 0;">$0.00</p>
+
+                <div class="success-message-box">
+                    <p id="order-status-message"><strong>📧 Confirmation email:</strong> A receipt has been sent to <span id="confirmation-email">your inbox</span>.</p>
+                    <p><strong>📋 Next steps:</strong> We are processing your order and will send tracking details as soon as it ships.</p>
+                    <ul>
+                        <li>Order processing within 24 hours</li>
+                        <li>Expected delivery: 7–14 business days</li>
+                        <li>Support available for order follow-up</li>
+                    </ul>
                 </div>
-            </div>
-            
-            <div style="background: rgba(45,108,223,0.18); border: 1px solid rgba(45,108,223,0.34); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; text-align: left;">
-                <p style="font-weight: 600; margin: 0 0 0.75rem 0;">📧 Order Confirmation Email:</p>
-                <p style="margin: 0 0 1rem 0; color: #dce3f5;">A confirmation email has been sent to <strong id="confirmation-email"></strong> with order details. The admin team has also been notified and will begin processing your order.</p>
-                <p style="font-weight: 600; margin: 0 0 0.75rem 0;">📋 Next Steps:</p>
-                <ul style="list-style: none; margin: 0; padding: 0;">
-                    <li style="margin-bottom: 0.5rem;">• Check your email for order confirmation and tracking</li>
-                    <li style="margin-bottom: 0.5rem;">• Your order will be processed within 24 hours</li>
-                    <li style="margin-bottom: 0.5rem;">• You'll receive tracking information once shipped</li>
-                    <li>• Expected delivery: 7-14 business days</li>
-                </ul>
-            </div>
-            
-            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                <a href="/pages/account.html" class="btn btn-primary btn-large">View Order Status</a>
-                <a href="/pages/shop.html" class="btn btn-secondary btn-large">Continue Shopping</a>
+
+                <div class="success-actions">
+                    <a href="/pages/account.html" class="btn btn-primary btn-large">View order status</a>
+                    <a href="/pages/shop.html" class="btn btn-secondary btn-large">Continue shopping</a>
+                </div>
             </div>
         </div>
     </section>
