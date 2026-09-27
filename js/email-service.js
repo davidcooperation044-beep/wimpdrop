@@ -48,6 +48,28 @@ class EmailService {
 
 
 
+  async sendNewsletterWelcome(email, country = '') {
+    try {
+      const emailPayload = {
+        type: 'newsletter_signup',
+        userEmail: email,
+        adminEmail: this.adminEmail,
+        country,
+        subject: 'Welcome to Wimp-Drop'
+      };
+
+      const result = await this._sendEmail(emailPayload);
+      if (result.success) {
+        return { success: true, message: 'Welcome email sent' };
+      }
+
+      return { success: false, message: 'Welcome email queued or unavailable' };
+    } catch (error) {
+      console.error('Newsletter email sending error:', error);
+      return { success: false, message: error.message };
+    }
+  }
+
   async _sendEmail(emailPayload) {
     try {
 

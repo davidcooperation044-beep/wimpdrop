@@ -285,8 +285,9 @@ async function handleEmailRequest(request, response) {
     const emailData = JSON.parse(body);
     const resendApiKey = process.env.RESEND_API_KEY;
 
+    const isNewsletterSignup = emailData.type === 'newsletter_signup';
 
-    console.log('📧 Order confirmation email triggered:', {
+    console.log(isNewsletterSignup ? '📧 Newsletter welcome email triggered:' : '📧 Order confirmation email triggered:', {
       orderId: emailData.orderId,
       userEmail: emailData.userEmail,
       adminEmail: emailData.adminEmail,
@@ -294,11 +295,80 @@ async function handleEmailRequest(request, response) {
       timestamp: new Date().toISOString()
     });
 
-
     const orderItems = emailData.orderItems?.map(i => `- ${i.name} x ${i.quantity}`).join('\n') || 'N/A';
     const address = emailData.shippingAddress;
     const addressStr = address ? `${address.street}, ${address.city}, ${address.state} ${address.postalCode}, ${address.country}` : 'Not provided';
 
+    const newsletterUserHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; color: #333; line-height: 1.6; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; }
+    .header { background-color: #d4af37; color: #050816; padding: 20px; text-align: center; }
+    .content { background-color: white; padding: 20px; margin-top: 10px; }
+    .cta { display: inline-block; background-color: #d4af37; color: #050816; padding: 12px 18px; border-radius: 8px; text-decoration: none; font-weight: 700; margin-top: 18px; }
+    .footer { color: #999; font-size: 12px; text-align: center; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Newsletter Subscription Confirmed</h1>
+    </div>
+    <div class="content">
+      <p>Hi there,</p>
+      <p>Thanks for subscribing to the Wimp-Drop newsletter. You’re now on the list for first access to new arrivals, premium deals, and curated updates from our catalog.</p>
+      <p>Expect a steady stream of product drops, private offers, and order news tailored for shoppers who want the best of the collection.</p>
+      <p>We’re glad to have you with us.</p>
+      <p><strong>Email:</strong> ${emailData.userEmail}</p>
+      ${emailData.country ? `<p><strong>Region:</strong> ${emailData.country}</p>` : ''}
+      <p><a class="cta" href="https://wimp-drop.com">Visit Wimp-Drop</a></p>
+      <p>Warm regards,<br/>The Wimp-Drop team</p>
+    </div>
+    <div class="footer">
+      <p>Wimp-Drop • Premium marketplace updates</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    const newsletterAdminHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; color: #333; line-height: 1.6; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; }
+    .header { background-color: #050816; color: #fff; padding: 20px; text-align: center; }
+    .content { background-color: white; padding: 20px; margin-top: 10px; }
+    .alert { background: #fff8e5; border-left: 4px solid #d4af37; padding: 12px 16px; margin: 16px 0; }
+    .footer { color: #999; font-size: 12px; text-align: center; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>New Newsletter Signup</h1>
+    </div>
+    <div class="content">
+      <p>A new customer has subscribed to the Wimp-Drop newsletter.</p>
+      <div class="alert">
+        <p><strong>Email:</strong> ${emailData.userEmail}</p>
+        ${emailData.country ? `<p><strong>Region:</strong> ${emailData.country}</p>` : '<p><strong>Region:</strong> Not provided</p>'}
+        <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+      </div>
+      <p>Log in to the admin dashboard to review the campaign and engagement status.</p>
+    </div>
+    <div class="footer">
+      <p>Wimp-Drop Admin Alert</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
 
     const adminEmailHtml = `
 <!DOCTYPE html>
@@ -420,32 +490,88 @@ async function handleEmailRequest(request, response) {
       try {
         const resend = new Resend(resendApiKey);
 
+        if (isNewsletterSignup) {
+          try {
+            await resend.emails.send({
+              from: 'Wimp-Drop <noreply@wimp-drop.com>',
+              to: emailData.userEmail,
+              subject: 'Newsletter Subscription Confirmed',
+              html: newsletterUserHtml
+            });
+            emailsSent.user = true;
+            console.log('✅ Newsletter welcome email sent successfully');
+          } catch (userError) {
+            console.warn('⚠️ Failed to send newsletter welcome email:', userError.message);
+            emailError = userError.message;
+          }
 
-        try {
-          await resend.emails.send({
-            from: 'Wimp-Drop <noreply@wimp-drop.com>',
-            to: emailData.adminEmail,
-            subject: `New Order Received - Order #${emailData.orderId}`,
-            html: adminEmailHtml
-          });
-          emailsSent.admin = true;
-          console.log('✅ Admin email sent successfully');
-        } catch (adminError) {
-          console.warn('⚠️ Failed to send admin email:', adminError.message);
-        }
+          try {
+            const adminAddress = emailData.adminEmail || 'wimpycooperation@gmail.com';
+            await resend.emails.send({
+              from: 'Wimp-Drop <noreply@wimp-drop.com>',
+              to: adminAddress,
+              subject: `New newsletter signup: ${emailData.userEmail}`,
+              html: newsletterAdminHtml
+            });
+            emailsSent.admin = true;
+            console.log('✅ Newsletter admin alert email sent successfully');
+          } catch (adminError) {
+            console.warn('⚠️ Failed to send newsletter admin alert:', adminError.message);
+          }
 
+          try {
+            const sb = getSupabaseConfig();
+            const serviceRoleKey = getSupabaseServiceRoleKey();
+            if (sb.url && serviceRoleKey) {
+              const alertRes = await fetch(`${sb.url.replace(/\/$/, '')}/rest/v1/admin_alerts`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  apikey: serviceRoleKey,
+                  Authorization: `Bearer ${serviceRoleKey}`,
+                  Prefer: 'return=minimal'
+                },
+                body: JSON.stringify({
+                  alert_type: 'newsletter_signup',
+                  message: `New newsletter signup from ${emailData.userEmail}`,
+                  created_at: new Date().toISOString()
+                })
+              });
 
-        try {
-          await resend.emails.send({
-            from: 'Wimp-Drop <noreply@wimp-drop.com>',
-            to: emailData.userEmail,
-            subject: 'Order Confirmed - Thank You!',
-            html: userEmailHtml
-          });
-          emailsSent.user = true;
-          console.log('✅ User confirmation email sent successfully');
-        } catch (userError) {
-          console.warn('⚠️ Failed to send user email:', userError.message);
+              if (!alertRes.ok) {
+                const alertText = await alertRes.text();
+                console.warn('⚠️ Failed to create newsletter admin alert in Supabase:', alertText);
+              }
+            }
+          } catch (alertError) {
+            console.warn('⚠️ Newsletter admin alert insert failed:', alertError.message);
+          }
+        } else {
+          try {
+            await resend.emails.send({
+              from: 'Wimp-Drop <noreply@wimp-drop.com>',
+              to: emailData.adminEmail,
+              subject: `New Order Received - Order #${emailData.orderId}`,
+              html: adminEmailHtml
+            });
+            emailsSent.admin = true;
+            console.log('✅ Admin email sent successfully');
+          } catch (adminError) {
+            console.warn('⚠️ Failed to send admin email:', adminError.message);
+          }
+
+          try {
+            await resend.emails.send({
+              from: 'Wimp-Drop <noreply@wimp-drop.com>',
+              to: emailData.userEmail,
+              subject: 'Order Confirmed - Thank You!',
+              html: userEmailHtml
+            });
+            emailsSent.user = true;
+            console.log('✅ User confirmation email sent successfully');
+          } catch (userError) {
+            console.warn('⚠️ Failed to send user email:', userError.message);
+          }
         }
       } catch (error) {
         console.warn('⚠️ Resend service error:', error.message);
@@ -453,16 +579,21 @@ async function handleEmailRequest(request, response) {
       }
     } else {
       console.log('ℹ️ Resend API key not configured. Logging emails instead:');
-      console.log('\n📧 Admin Email Content:');
-      console.log(adminEmailHtml);
-      console.log('\n📧 User Email Content:');
-      console.log(userEmailHtml);
+      console.log(isNewsletterSignup ? '\n📧 Newsletter Subscriber Welcome Email Content:' : '\n📧 Admin Email Content:');
+      console.log(isNewsletterSignup ? newsletterUserHtml : adminEmailHtml);
+      if (isNewsletterSignup) {
+        console.log('\n📧 Newsletter Admin Alert Email Content:');
+        console.log(newsletterAdminHtml);
+      } else {
+        console.log('\n📧 User Email Content:');
+        console.log(userEmailHtml);
+      }
       emailsSent.fallback = true;
     }
 
     return sendJson(response, 200, {
       success: true,
-      message: emailsSent.fallback ? 'Emails logged (Resend not configured)' : 'Order confirmation emails sent',
+      message: emailsSent.fallback ? 'Emails logged (Resend not configured)' : (isNewsletterSignup ? 'Newsletter welcome email sent' : 'Order confirmation emails sent'),
       orderId: emailData.orderId,
       emailsSent,
       error: emailError

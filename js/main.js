@@ -2112,25 +2112,39 @@ async function subscribeNewsletter() {
 
   if (btn) btn.disabled = true;
 
-  if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
-    const res = await supabaseService.subscribeNewsletter(email);
-    if (res.success) {
-      showNotification('Subscribed to newsletter', 'success');
-      input.value = '';
+  try {
+    if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
+      const res = await supabaseService.subscribeNewsletter(email);
+      if (!res.success) {
+        showNotification(res.error || 'Subscription failed', 'error');
+        return;
+      }
     } else {
-      showNotification(res.error || 'Subscription failed', 'error');
+      const subs = JSON.parse(localStorage.getItem('wimp_newsletter') || '[]');
+      if (!subs.includes(email)) {
+        subs.push(email);
+        localStorage.setItem('wimp_newsletter', JSON.stringify(subs));
+      }
     }
-  } else {
-    const subs = JSON.parse(localStorage.getItem('wimp_newsletter') || '[]');
-    if (!subs.includes(email)) {
-      subs.push(email);
-      localStorage.setItem('wimp_newsletter', JSON.stringify(subs));
-    }
-    showNotification('Subscribed to live updates', 'success');
-    input.value = '';
-  }
 
-  if (btn) btn.disabled = false;
+    if (typeof emailService !== 'undefined') {
+      const mailResult = await emailService.sendNewsletterWelcome(email, Intl.DateTimeFormat().resolvedOptions().timeZone || '');
+      if (mailResult.success) {
+        showNotification('Subscribed to newsletter. A welcome email is on its way.', 'success');
+      } else {
+        showNotification('Subscribed to newsletter. The welcome email could not be sent right now.', 'success');
+      }
+    } else {
+      showNotification('Subscribed to newsletter', 'success');
+    }
+
+    input.value = '';
+  } catch (error) {
+    console.error('Newsletter subscription error:', error);
+    showNotification('Subscription failed', 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 // Attach newsletter handler if present
