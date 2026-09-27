@@ -909,6 +909,118 @@ function removeShopChip(type, label) {
   applyShopFilters();
 }
 
+function buildMockProducts() {
+  const mockSeed = [
+    {
+      id: 'mock-aurora-headphones',
+      name: 'Aurora Wireless Headphones',
+      category: 'Electronics',
+      price: 24500,
+      originalPrice: 32000,
+      image: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=900&q=80',
+      rating: 4.8,
+      reviews: 184,
+      supplier: 'Wimp-Drop Studio',
+      description: 'Noise-reducing wireless headphones built for travel, work, and long-form listening.',
+      stock_quantity: 32,
+      status: 'In Stock',
+      created_at: '2026-09-12T10:00:00Z'
+    },
+    {
+      id: 'mock-ember-lamp',
+      name: 'Ember Accent Lamp',
+      category: 'Home',
+      price: 9800,
+      originalPrice: 13000,
+      image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80',
+      rating: 4.6,
+      reviews: 92,
+      supplier: 'Horizon Living',
+      description: 'Warm ambient lighting with a soft-touch finish and compact footprint.',
+      stock_quantity: 18,
+      status: 'In Stock',
+      created_at: '2026-09-09T12:00:00Z'
+    },
+    {
+      id: 'mock-crest-sneaker',
+      name: 'Crest City Sneaker',
+      category: 'Fashion',
+      price: 16800,
+      originalPrice: 22000,
+      image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80',
+      rating: 4.7,
+      reviews: 121,
+      supplier: 'Urban Form',
+      description: 'A modern everyday sneaker designed for comfort, all-day wear, and quick styling.',
+      stock_quantity: 24,
+      status: 'In Stock',
+      created_at: '2026-09-17T08:00:00Z'
+    },
+    {
+      id: 'mock-sora-watch',
+      name: 'Sora Smart Watch',
+      category: 'Electronics',
+      price: 31200,
+      originalPrice: 39000,
+      image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80',
+      rating: 4.9,
+      reviews: 216,
+      supplier: 'North Peak',
+      description: 'Fitness tracking, notifications, and a clean all-day design for everyday use.',
+      stock_quantity: 14,
+      status: 'In Stock',
+      created_at: '2026-09-15T13:00:00Z'
+    },
+    {
+      id: 'mock-cove-desk',
+      name: 'Cove Workstation Tray',
+      category: 'Home',
+      price: 13200,
+      originalPrice: 17000,
+      image: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80',
+      rating: 4.5,
+      reviews: 57,
+      supplier: 'North Peak',
+      description: 'Compact desktop organizer designed to elevate a tidy home office setup.',
+      stock_quantity: 9,
+      status: 'Low Stock',
+      created_at: '2026-09-08T08:00:00Z'
+    },
+    {
+      id: 'mock-dune-bag',
+      name: 'Dune Everyday Tote',
+      category: 'Accessories',
+      price: 11600,
+      originalPrice: 15600,
+      image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=80',
+      rating: 4.6,
+      reviews: 84,
+      supplier: 'Cinder & Co.',
+      description: 'Structured carry-all with room for daily essentials and travel-day organization.',
+      stock_quantity: 29,
+      status: 'In Stock',
+      created_at: '2026-09-11T15:00:00Z'
+    }
+  ];
+
+  return mockSeed.map((product) => ({
+    ...product,
+    product_id: product.id,
+    price: Number(product.price),
+    originalPrice: Number(product.originalPrice),
+    image: product.image,
+    inStock: product.stock_quantity > 0,
+    is_published: true,
+    variants: [],
+    supplierProductId: product.id,
+    supplierSku: product.id,
+    shippingTime: '3-5 days',
+    category: product.category || 'General',
+    created_at: product.created_at || new Date().toISOString(),
+    role: 'fallback'
+  }));
+}
+
 function normalizeProduct(raw) {
   const price = Number(raw.price ?? raw.base_price ?? raw.total_cost ?? raw.shipping_fee ?? 0);
   const originalPrice = Number(raw.price ?? raw.base_price ?? raw.total_cost ?? raw.original_price ?? raw.originalPrice ?? 0);
@@ -1334,14 +1446,18 @@ async function loadProducts(filters = {}) {
         totalCount = distinctProducts.length;
         const offset = (page - 1) * perPage;
         products = distinctProducts.slice(offset, offset + perPage);
-      } else {
-        products = [];
       }
-    } else {
-      products = [];
     }
 
-    // Fallback: Use mock products if no real products loaded
+    // Fallback: use a local sample catalog when the live store is empty or
+    // unavailable. This keeps the home page cards populated instead of
+    // rendering a blank content rail.
+    if (!products.length) {
+      products = buildMockProducts();
+      totalCount = products.length;
+      const offset = (page - 1) * perPage;
+      products = products.slice(offset, offset + perPage);
+    }
 
     AppState.products = products;
     renderProducts(products);
