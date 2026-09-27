@@ -1074,6 +1074,124 @@ function groupProductsByProductId(products) {
   }, {});
 }
 
+function buildProductCardMeta(product) {
+  const price = Number(product.price || 0);
+  const originalPrice = Number(product.originalPrice || 0);
+  const rating = Number(product.rating || product.stars || 0) || 0;
+  const reviews = Number(product.reviews || product.review_count || product.reviewCount || 0) || 0;
+  const stockLeft = Number(product.stock_quantity || 0);
+  const hasDiscount = originalPrice > price;
+  const discountPercent = hasDiscount ? Math.round((1 - (price / Math.max(originalPrice, 1))) * 100) : 0;
+  const starsHtml = rating > 0
+    ? `${'★'.repeat(Math.min(5, Math.round(rating)))}${'☆'.repeat(Math.max(0, 5 - Math.min(5, Math.round(rating))))}`
+    : '☆☆☆☆☆';
+  const lowStock = stockLeft > 0 && stockLeft < 20;
+
+  return {
+    price,
+    originalPrice,
+    hasDiscount,
+    discountPercent,
+    rating,
+    reviews,
+    starsHtml,
+    stockLeft,
+    lowStock,
+    verifiedSeller: Boolean(product.supplier)
+  };
+}
+
+function buildMarketplaceSection(title, products, sectionType = 'default') {
+  if (!products || !products.length) return '';
+
+  const productCards = products.map((product) => {
+    const meta = buildProductCardMeta(product);
+    const pid = product.id || product.product_id || product.supplierSku || product.name;
+    const url = `product.html?id=${encodeURIComponent(pid)}`;
+    const supplierBadge = meta.verifiedSeller ? '<div class="supplier-badge">Verified supplier</div>' : '';
+    const ratingRow = meta.rating > 0
+      ? `<div class="product-card-rating-row"><span class="stars">${meta.starsHtml}</span><span class="rating-count">${meta.rating.toFixed(1)}</span>${meta.reviews ? `<span class="review-count">(${meta.reviews} reviews)</span>` : ''}</div>`
+      : '';
+
+    return `
+      <article class="product-group-card market-card ${sectionType === 'flash' ? 'market-card-flash' : ''}">
+        ${meta.hasDiscount ? `<div class="discount-badge">-${meta.discountPercent}%</div>` : ''}
+        ${supplierBadge}
+        <div class="product-image">
+          <a href="${url}" class="product-link">
+            <img src="${product.image}" alt="${product.name}" loading="lazy" decoding="async" sizes="(max-width: 480px) 100vw, (max-width: 899px) 50vw, 320px" class="product-image-inner">
+          </a>
+        </div>
+        <div class="product-info">
+          <div class="product-category">${product.category || 'Featured'}</div>
+          <h3 class="product-name"><a href="${url}">${product.name}</a></h3>
+          ${ratingRow}
+          <div class="product-price">
+            <span class="price-current">${formatCurrency(meta.price)}</span>
+            ${meta.hasDiscount ? `<span class="price-original">${formatCurrency(meta.originalPrice)}</span>` : ''}
+          </div>
+          ${meta.lowStock ? `<div class="limited-stock-tag">Only ${meta.stockLeft} left</div>` : ''}
+          <div class="product-actions compact-actions">
+            <button class="btn btn-primary btn-small" onclick="addToCart('${pid}')">Add</button>
+            <button class="btn btn-outline btn-small" onclick="quickView('${pid}')">View</button>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  return `
+    <div class="market-section-block">
+      <div class="market-section-header">
+        <h2>${title}</h2>
+        <a href="/pages/shop.html">View all</a>
+      </div>
+      <div class="market-product-rail ${sectionType === 'category' ? 'market-product-rail-category' : ''}">
+        ${productCards}
+      </div>
+    </div>
+  `;
+}
+
+function renderMarketplaceSections(products) {
+  const container = document.getElementById('shop-marketplace-sections');
+  if (!container) return;
+
+  const normalized = Array.isArray(products) ? products.map((p) => normalizeProduct(p)) : [];
+  const deals = normalized
+    .filter((product) => Number(product.originalPrice || 0) > Number(product.price || 0))
+    .sort((a, b) => (Number(b.originalPrice || 0) - Number(b.price || 0)) - (Number(a.originalPrice || 0) - Number(a.price || 0)))
+    .slice(0, 8);
+
+  const clearance = normalized
+    .filter((product) => Number(product.stock_quantity || 0) > 0 && Number(product.stock_quantity || 0) < 20)
+    .sort((a, b) => Number(a.stock_quantity || 0) - Number(b.stock_quantity || 0))
+    .slice(0, 8);
+
+  const categories = Array.from(new Set(normalized.map((product) => product.category || 'General').filter(Boolean))).slice(0, 8);
+  const categoryMarkup = categories.map((category) => `
+    <a href="/pages/shop.html?category=${encodeURIComponent(category)}" class="market-category-chip">
+      <span>${category}</span>
+    </a>
+  `).join('');
+
+  const sections = [
+    deals.length ? buildMarketplaceSection('Flash Deals', deals, 'flash') : '',
+    clearance.length ? buildMarketplaceSection('Almost Sold Out', clearance, 'clearance') : '',
+    categories.length ? `
+      <div class="market-section-block">
+        <div class="market-section-header">
+          <h2>Browse by category</h2>
+          <a href="/pages/shop.html">View all</a>
+        </div>
+        <div class="market-category-rail">${categoryMarkup}</div>
+      </div>
+    ` : ''
+  ].filter(Boolean).join('');
+
+  container.innerHTML = sections;
+}
+
 function renderProductGroupCard(group) {
   // Shop cards show ONE product per card, no variant switching here —
   // variant selection happens on the product detail page instead.
@@ -1126,10 +1244,7 @@ function renderProducts(products) {
   if (!productList) return;
 
   if (isShopPage()) {
-    // products here are already one-per-distinct-product (grouped in
-    // loadProducts), each carrying its full variant list in variantRows.
-    // Re-grouping here would collapse each product back down to just
-    // itself and lose the other variants, so use variantRows directly.
+    renderMarketplaceSections(products);
     const cards = products.map(p => renderProductGroupCard(p.variantRows && p.variantRows.length ? p.variantRows : [p]));
     productList.innerHTML = cards.join('');
     return;
@@ -1142,6 +1257,8 @@ function renderProducts(products) {
     const stars = '★'.repeat(Math.floor(product.rating)) + '☆'.repeat(5 - Math.floor(product.rating));
     const hasDiscount = product.originalPrice && product.originalPrice > product.price;
     const discountPercent = hasDiscount ? Math.round((1 - (product.price / product.originalPrice)) * 100) : 0;
+    const lowStock = Number(product.stock_quantity || 0) > 0 && Number(product.stock_quantity || 0) < 20;
+    const metricRow = Number(product.rating || 0) > 0 ? `<div class="product-rating"><span class="stars">${stars}</span><span class="rating-count">${product.rating.toFixed(1)}</span>${product.reviews ? `<span class="review-count">(${product.reviews} reviews)</span>` : ''}</div>` : '';
     return `
     <div class="product-card">
       ${hasDiscount ? `<div class="discount-badge">-${discountPercent}%</div>` : ''}
@@ -1154,21 +1271,12 @@ function renderProducts(products) {
       <div class="product-info">
         <div class="product-category">${product.category}</div>
         <h3 class="product-name"><a href="product.html?id=${pidUrl}" style="text-decoration: none; color: inherit; cursor: pointer;">${product.name}</a></h3>
-        <div class="product-rating">
-          <span class="stars">${stars}</span>
-          <span class="rating-count">${product.rating} (${product.reviews})</span>
-        </div>
+        ${metricRow}
         <div class="product-price">
           <span class="price-current">${formatCurrency(product.price)}</span>
-          <span class="price-original">${formatCurrency(product.originalPrice)}</span>
+          ${hasDiscount ? `<span class="price-original">${formatCurrency(product.originalPrice)}</span>` : ''}
         </div>
-        <div class="product-actions">
-          <button class="btn btn-primary btn-small flex-1" onclick="addToCart(${pidJson})">Add to Cart</button>
-          <button class="btn btn-primary btn-small" onclick="buyNow(${pidJson})">Buy Now</button>
-          <button class="btn btn-outline btn-small" onclick="toggleWishlist(${pidJson})" title="Add to Wishlist" aria-label="Add ${product.name} to wishlist">♡</button>
-          <button class="btn btn-outline btn-small" onclick="quickView(${pidJson})" title="Quick view" aria-label="Quick view ${product.name}">👁</button>
-        </div>
-      </div>
+        ${lowStock ? `<div class="limited-stock-tag">Only ${product.stock_quantity} left</div>` : ''}
     </div>
   `;
   }).join('');

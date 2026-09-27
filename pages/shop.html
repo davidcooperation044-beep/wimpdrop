@@ -91,6 +91,7 @@
                         <label for="shop-search" class="sr-only">Search products</label>
                         <input id="shop-search" type="search" placeholder="Search title, variant, origin…" class="shop-search" autocomplete="off">
                     </div>
+                    <button id="open-sheet" class="btn btn-outline btn-small mobile-only" type="button">Filters</button>
                     <button id="clear-filters" class="btn btn-outline btn-small">Clear filters</button>
                 </div>
             </div>
@@ -108,9 +109,31 @@
                 <div class="skeleton skeleton-card"></div>
             </div>
             <div id="result-count" class="result-count" aria-live="polite">Showing 0 products</div>
+            <div id="shop-marketplace-sections" class="shop-marketplace-sections"></div>
         </div>
     </section>
 
+    <div id="sheet-filters" class="mobile-filter-sheet hidden" aria-hidden="true">
+        <div class="sheet-backdrop" data-close-sheet="true"></div>
+        <div class="sheet-panel">
+            <div class="sheet-header">
+                <h3>Filters</h3>
+                <button id="close-sheet" class="btn btn-outline btn-small" type="button">Close</button>
+            </div>
+            <div class="sheet-section">
+                <div class="sheet-label">Origins</div>
+                <div id="sheet-origin-filters" class="origin-pill-row"></div>
+            </div>
+            <div class="sheet-section">
+                <div class="sheet-label">Max price</div>
+                <div class="sheet-price-row">
+                    <input id="sheet-price-range" type="range" min="0" max="100000" step="100" value="100000" class="price-slider">
+                    <span id="sheet-price-value" class="price-range-value">$0</span>
+                </div>
+            </div>
+            <button id="apply-sheet" class="btn btn-primary full-width" type="button">Apply filters</button>
+        </div>
+    </div>
 
     <section class="section">
         <div class="container">
@@ -118,9 +141,7 @@
         </div>
         <div class="pagination-row market-pagination" id="pagination-container">
             <button class="btn btn-secondary" id="pagination-prev">← Prev</button>
-            <span id="pagination-pages" class="pagination-pages">
-
-            </span>
+            <span id="pagination-pages" class="pagination-pages"></span>
             <button class="btn btn-secondary" id="pagination-next">Next →</button>
         </div>
     </section>
