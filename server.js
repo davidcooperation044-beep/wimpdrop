@@ -140,7 +140,7 @@ function getResendApiKey() {
 // Set MAIL_FROM in your host's environment, e.g.  Wimp-Drop <noreply@yourdomain.com>
 function getMailFrom() {
   const envFile = loadEnvFile();
-  return process.env.MAIL_FROM || envFile.MAIL_FROM || 'Wimp-Drop <noreply@wimp-drop.com>';
+  return process.env.MAIL_FROM || envFile.MAIL_FROM || 'Wimp-Drop <noreply@wimpdrop.com.ng>';
 }
 
 // Resend's SDK does NOT throw when sending fails (bad key, unverified domain, etc.);
