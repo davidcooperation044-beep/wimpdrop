@@ -126,14 +126,25 @@ Deno.serve(async (request) => {
     // So: try the full batch first. If CJ complains about a specific vid
     // ("...vid: 123..."), drop that one item and retry with what's left,
     // repeating until either CJ accepts the batch or we run out of items.
-    // This way the shopper still gets a real, combined shipping price for
-    // every item CJ actually recognises.
+    //
+    // CJ also enforces a strict rate limit (observed: 1 request/second) on
+    // this endpoint. A dropped-item retry fired immediately after the first
+    // call can itself get rejected for being "too many requests" rather than
+    // for the vid — so every retry (whether dropping a bad vid or just
+    // backing off from a rate limit) waits briefly first. Capped at a fixed
+    // number of attempts so one troublesome cart can't hang the request.
+    const RETRY_DELAY_MS = 1100;
+    const MAX_ATTEMPTS = 8;
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
     let working = priceable.slice();
     const droppedVids: string[] = [];
     let raw: any = null;
     let lastError: Error | null = null;
+    let attempts = 0;
 
-    while (working.length) {
+    while (working.length && attempts < MAX_ATTEMPTS) {
+      attempts++;
       try {
         raw = await cjRequest('/logistic/freightCalculate', {
           method: 'POST',
@@ -147,14 +158,23 @@ Deno.serve(async (request) => {
         break;
       } catch (err) {
         lastError = err as Error;
+
+        if ((err as any).rateLimited) {
+          // Not a bad item — CJ just wants us to slow down. Retry the same
+          // batch after backing off, rather than dropping anything.
+          if (attempts < MAX_ATTEMPTS) await sleep(RETRY_DELAY_MS);
+          continue;
+        }
+
         const badVid = /vid[:\s]+([0-9A-Za-z-]+)/i.exec(lastError.message)?.[1];
-        // Only retry when the error names a specific bad vid we can remove —
-        // for any other kind of failure (CJ down, rate-limited, auth expired,
-        // unsupported country) retrying without it wouldn't help, so stop
-        // and fall through to the flat-rate fallback below.
+        // Only retry-by-dropping when the error names a specific bad vid we
+        // can remove — for any other kind of failure (CJ down, auth expired,
+        // unsupported country) removing an item wouldn't help, so stop and
+        // fall through to the flat-rate fallback below.
         if (!badVid || !working.some((i: any) => i.supplierVariantId === badVid)) break;
         droppedVids.push(badVid);
         working = working.filter((i: any) => i.supplierVariantId !== badVid);
+        if (working.length && attempts < MAX_ATTEMPTS) await sleep(RETRY_DELAY_MS);
       }
     }
 
