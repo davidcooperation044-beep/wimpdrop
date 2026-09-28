@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/luxury-theme.css">
+    <link rel="stylesheet" href="/css/shop-browse.css">
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -25,11 +26,11 @@
                     </button>
                     <div class="nav-menu" id="site-nav-menu">
                         <a href="/pages/shop.html">All products</a>
-                        <a href="/pages/shop.html?search=electronics">Electronics</a>
-                        <a href="/pages/shop.html?search=fashion">Fashion</a>
-                        <a href="/pages/shop.html?search=home">Home</a>
-                        <a href="/pages/shop.html?search=accessories">Accessories</a>
-                        <a href="/pages/shop.html?search=gadgets">Gadgets</a>
+                        <a href="/pages/shop.html?category=Electronics">Electronics</a>
+                        <a href="/pages/shop.html?category=Fashion">Fashion</a>
+                        <a href="/pages/shop.html?category=Home%20%26%20Kitchen">Home &amp; Kitchen</a>
+                        <a href="/pages/shop.html?category=Accessories">Accessories</a>
+                        <a href="/pages/shop.html?category=Sports%20%26%20Outdoors">Sports &amp; Outdoors</a>
                     </div>
                 </div>
             </div>
@@ -50,11 +51,11 @@
     <div class="site-subnav">
         <div class="subnav-links">
             <a href="/pages/shop.html" class="active">Shop</a>
-            <a href="/pages/shop.html?search=electronics">Electronics</a>
-            <a href="/pages/shop.html?search=fashion">Fashion</a>
-            <a href="/pages/shop.html?search=home">Home</a>
-            <a href="/pages/shop.html?search=accessories">Accessories</a>
-            <a href="/pages/shop.html?search=gadgets">Gadgets</a>
+            <a href="/pages/shop.html?category=Electronics">Electronics</a>
+            <a href="/pages/shop.html?category=Fashion">Fashion</a>
+            <a href="/pages/shop.html?category=Home%20%26%20Kitchen">Home &amp; Kitchen</a>
+            <a href="/pages/shop.html?category=Accessories">Accessories</a>
+            <a href="/pages/shop.html?category=Sports%20%26%20Outdoors">Sports &amp; Outdoors</a>
         </div>
         <div class="subnav-promo">Search first, shop fast — new arrivals live from the catalog.</div>
     </div>
@@ -70,97 +71,7 @@
     </div>
 </header>
 
-    <section class="section shop-section marketplace-shop">
-        <div class="container">
-            <div class="market-filter-bar">
-                <div class="market-filter-row">
-                    <span class="market-filter-label">Ship from:</span>
-                    <div id="origin-filters" class="origin-pill-row"></div>
-                </div>
-                <div class="market-filter-row category-filter-row">
-                    <span class="market-filter-label">Category:</span>
-                    <div id="category-filters" class="category-chip-row" aria-label="Product categories"></div>
-                </div>
-                <div class="market-filter-row market-filter-row-compact">
-                    <div class="market-price-filter">
-                        <span class="market-filter-label">Max price:</span>
-                        <input id="price-range" type="range" min="0" max="100000" step="100" value="100000" class="price-slider price-slider-compact">
-                        <span id="price-range-value" class="price-range-value">$0</span>
-                    </div>
-                    <div class="market-search-inline">
-                        <label for="shop-search" class="sr-only">Search products</label>
-                        <input id="shop-search" type="search" placeholder="Search title, variant, origin…" class="shop-search" autocomplete="off">
-                        <div class="search-suggestions" id="shop-search-suggestions" aria-live="polite"></div>
-                    </div>
-                    <button id="open-sheet" class="btn btn-outline btn-small mobile-only" type="button">Filters</button>
-                    <button id="clear-filters" class="btn btn-outline btn-small">Clear filters</button>
-                </div>
-            </div>
-
-            <div class="market-sort-bar">
-                <span class="market-filter-label">Sort by:</span>
-                <div class="sort-pill-wrap market-sort-pills" id="sort-pills">
-                    <button class="sort-pill active" data-sort="newest">Newest</button>
-                    <button class="sort-pill" data-sort="price-low">Price ↓</button>
-                    <button class="sort-pill" data-sort="price-high">Price ↑</button>
-                    <button class="sort-pill" data-sort="stock">Stock</button>
-                </div>
-                <select id="sort-select" class="form-select compact sr-only"></select>
-                <div class="shop-chip-row" id="product-chips" aria-live="polite"></div>
-                <div class="skeleton skeleton-card"></div>
-            </div>
-            <div id="result-count" class="result-count" aria-live="polite">Showing 0 products</div>
-            <div id="shop-marketplace-sections" class="shop-marketplace-sections"></div>
-            <div id="recently-viewed-section" class="shop-marketplace-sections"></div>
-            <div class="trust-strip inline shop-trust-strip">
-                <div class="trust-pill">
-                    <strong>Secure checkout</strong>
-                    <span>Encrypted payments and real order tracking.</span>
-                </div>
-                <div class="trust-pill">
-                    <strong>Buyer protection</strong>
-                    <span>Transparent delivery & guided returns.</span>
-                </div>
-                <div class="trust-pill">
-                    <strong>Live stock</strong>
-                    <span>Availability is pulled from the live catalog.</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <div id="sheet-filters" class="mobile-filter-sheet hidden" aria-hidden="true">
-        <div class="sheet-backdrop" data-close-sheet="true"></div>
-        <div class="sheet-panel">
-            <div class="sheet-header">
-                <h3>Filters</h3>
-                <button id="close-sheet" class="btn btn-outline btn-small" type="button">Close</button>
-            </div>
-            <div class="sheet-section">
-                <div class="sheet-label">Origins</div>
-                <div id="sheet-origin-filters" class="origin-pill-row"></div>
-            </div>
-            <div class="sheet-section">
-                <div class="sheet-label">Max price</div>
-                <div class="sheet-price-row">
-                    <input id="sheet-price-range" type="range" min="0" max="100000" step="100" value="100000" class="price-slider">
-                    <span id="sheet-price-value" class="price-range-value">$0</span>
-                </div>
-            </div>
-            <button id="apply-sheet" class="btn btn-primary full-width" type="button">Apply filters</button>
-        </div>
-    </div>
-
-    <section class="section">
-        <div class="container">
-            <div id="product-list" class="shop-product-grid"></div>
-        </div>
-        <div class="pagination-row market-pagination" id="pagination-container">
-            <button class="btn btn-secondary" id="pagination-prev">← Prev</button>
-            <span id="pagination-pages" class="pagination-pages"></span>
-            <button class="btn btn-secondary" id="pagination-next">Next →</button>
-        </div>
-    </section>
+    <main id="shop-browse" class="sb-root" aria-label="Shop products"></main>
 
     <div id="quick-view-modal" class="quick-view-modal" aria-hidden="true"></div>
 
@@ -182,6 +93,7 @@
     <script src="/js/supabase.js"></script>
     <script src="/js/flutterwave.js"></script>
     <script src="/js/main.js"></script>
+    <script src="/js/shop-browse.js"></script>
     <script src="/js/luxury-ui.js"></script>
 </body>
 </html>
