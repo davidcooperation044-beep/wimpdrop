@@ -180,6 +180,40 @@
     try { history.replaceState(null, '', location.pathname + '?id=' + encodeURIComponent(v.row.id)); } catch (e) { /* ignore */ }
   }
 
+  /* ---------- description ---------- */
+  function cleanText(v) { return String(v == null ? '' : v).replace(/<[^>]*>/g, '').replace(/[ \t]+/g, ' ').trim(); }
+  // Use this row's description; if it is empty, fall back to any variant row of the same product.
+  function descText() {
+    var d = cleanText(S.base && S.base.description);
+    if (d) return d;
+    var rows = S.rows || [];
+    for (var i = 0; i < rows.length; i++) {
+      d = cleanText(rows[i] && rows[i].description);
+      if (d) return d;
+    }
+    return '';
+  }
+  // Short summary shown next to the price: first one or two sentences, max ~180 characters.
+  function renderBlurb(desc) {
+    var el = $('pd-blurb'); if (!el) return;
+    if (!desc) { el.hidden = true; el.textContent = ''; return; }
+    // Split only where punctuation is followed by whitespace, so decimals like 15.6 stay intact.
+    var sentences = desc.replace(/([.!?])\s+/g, '$1\u0001').split('\u0001').filter(Boolean);
+    var out = '';
+    for (var i = 0; i < sentences.length; i++) {
+      var next = (out + ' ' + sentences[i]).trim();
+      if (out && next.length > 180) break;
+      out = next;
+      if (i >= 1) break;
+    }
+    if (out.length > 200) out = out.slice(0, 197).replace(/\s+\S*$/, '') + '\u2026';
+    el.textContent = out;
+    var more = document.createElement('a');
+    more.href = '#pd-about'; more.className = 'pd-blurb-more'; more.textContent = ' Full description';
+    el.appendChild(more);
+    el.hidden = false;
+  }
+
   function renderStatic() {
     var b = S.base;
     document.title = title() + ' | Wimp-Drop';
@@ -189,7 +223,9 @@
     var rating = (Number(b.reviews_count || 0) > 0 && Number(b.rating || 0) > 0)
       ? '\u2605 ' + Number(b.rating).toFixed(1) + ' (' + Number(b.reviews_count) + ' reviews)' : '';
     $('pd-rating').textContent = rating; $('pd-rating').hidden = !rating;
-    $('pd-desc').textContent = (b.description || '').replace(/<[^>]*>/g, '').trim() || 'No description provided for this product.';
+    var desc = descText();
+    $('pd-desc').textContent = desc || 'No description provided for this product.';
+    renderBlurb(desc);
     var sub = (b.subcategory || '').trim();
     $('pd-more-title').textContent = sub ? 'More in ' + sub : 'More to explore';
     var all = $('pd-more-all'); all.href = shopLink((b.category || '').trim(), sub);

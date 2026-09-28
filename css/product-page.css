@@ -51,6 +51,8 @@
 
 .pd-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1.5rem; }
 .pd-details h2 { margin: 0 0 0.6rem; font-size: 1.05rem; }
+.pd-blurb { margin: 0.6rem 0 0.2rem; color: var(--text-secondary); font-size: 0.92rem; line-height: 1.5; overflow-wrap: anywhere; }
+.pd-blurb-more { color: var(--gold-soft); white-space: nowrap; }
 .pd-desc { color: var(--text-secondary); white-space: pre-line; overflow-wrap: anywhere; }
 .pd-specs { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 .pd-specs th, .pd-specs td { text-align: left; padding: 0.55rem 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
