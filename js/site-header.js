@@ -80,7 +80,7 @@
       '</div>',
       '<div class="site-subnav">',
       '  <div class="subnav-links">',
-      '    <a href="/pages/shop.html" class="active">Shop</a>',
+      '    <a href="/pages/shop.html">Shop</a>',
       '    <a href="/pages/shop.html?category=Electronics">Electronics</a>',
       '    <a href="/pages/shop.html?category=Fashion">Fashion</a>',
       '    <a href="/pages/shop.html?category=Home%20%26%20Kitchen">Home &amp; Kitchen</a>',
@@ -153,15 +153,32 @@
     document.body.appendChild(footer);
   }
 
+  function markActiveLinks() {
+    var path = window.location.pathname;
+    var cat = new URLSearchParams(window.location.search).get('category');
+    document.querySelectorAll('.subnav-links a').forEach(function (a) {
+      a.classList.remove('active');
+      a.removeAttribute('aria-current');
+      var u;
+      try { u = new URL(a.getAttribute('href'), window.location.origin); } catch (e) { return; }
+      var linkCat = u.searchParams.get('category');
+      var onShop = path.indexOf('/pages/shop.html') !== -1;
+      var match = onShop && ((cat && linkCat === cat) || (!cat && !linkCat));
+      if (match) { a.classList.add('active'); a.setAttribute('aria-current', 'page'); }
+    });
+  }
+
   function init() {
     patchLegacyLinks();
     ensureSharedHeader();
     ensureSharedFooter();
+    markActiveLinks();
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init); 
-  } else {
+  // This script must load BEFORE main.js so main.js binds to the injected header.
+  if (document.body) {
     init();
+  } else {
+    document.addEventListener('DOMContentLoaded', init);
   }
 })();

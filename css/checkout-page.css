@@ -1,0 +1,10 @@
+/* checkout-page.css -> /css/checkout-page.css  (prefix: pay-) */
+.pay-status { min-height: 1.2em; margin-top: 0.75rem; color: var(--error); font-size: 0.9rem; }
+#pay-btn { min-height: 52px; }
+#pay-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+#pay-btn.is-loading::after { content: ""; display: inline-block; width: 1em; height: 1em; margin-left: 0.6rem; vertical-align: -0.15em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: pay-spin 0.8s linear infinite; }
+@keyframes pay-spin { to { transform: rotate(360deg); } }
+.field-error { display: block; margin-top: 0.3rem; color: var(--error); font-size: 0.82rem; }
+input.has-error, select.has-error { border-color: var(--error) !important; }
+.checkout-step input, .checkout-step select, .checkout-next, .checkout-prev { min-height: 44px; }
+@media (prefers-reduced-motion: reduce) { #pay-btn.is-loading::after { animation: none; } }

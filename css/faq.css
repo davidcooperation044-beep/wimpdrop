@@ -1,0 +1,9 @@
+/* faq.css -> /css/faq.css  (prefix: faq-)  Accessible <details> accordion */
+.faq-item { border-bottom: 1px solid var(--border); }
+.faq-item summary { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; cursor: pointer; list-style: none; color: var(--text-primary); font-weight: 600; padding: 0.4rem 0; }
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after { content: "+"; color: var(--gold-soft); font-size: 1.3rem; }
+.faq-item[open] summary::after { content: "\2212"; }
+.faq-item summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.faq-item p { margin: 0 0 0.9rem; color: var(--text-secondary); }
+.faq-item a { color: var(--gold-soft); }

@@ -1,0 +1,31 @@
+/* account-page.css -> /css/account-page.css  (prefix: ac-)  Mobile tabs, order badges, empty state */
+.account-nav { display: flex; gap: 0.5rem; }
+.account-nav .tab-button { min-height: 44px; }
+@media (max-width: 800px) {
+  .account-layout { display: block; }
+  .account-nav { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 0.5rem; margin-bottom: 1rem; }
+  .account-nav::-webkit-scrollbar { display: none; }
+  .account-nav .tab-button { flex: 0 0 auto; white-space: nowrap; }
+}
+.ac-orders { width: 100%; margin-top: 1.25rem; border-collapse: collapse; }
+.ac-orders th { text-align: left; padding: 0.8rem 1rem; color: var(--text-muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+.ac-orders td { padding: 0.9rem 1rem; border-bottom: 1px solid var(--border); color: var(--text-primary); }
+.ac-loading { color: var(--text-secondary); padding: 1.25rem 1rem; }
+.ac-badge { display: inline-block; padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700; text-transform: capitalize; border: 1px solid var(--border); color: var(--text-secondary); }
+.ac-badge-pending { color: var(--gold-soft); border-color: var(--gold); }
+.ac-badge-processing, .ac-badge-shipped { color: var(--text-primary); border-color: var(--border-strong); background: var(--bg-panel); }
+.ac-badge-delivered { color: var(--success); border-color: var(--success); }
+.ac-badge-cancelled { color: var(--error); border-color: var(--error); }
+.ac-link { background: none; border: 0; padding: 0.6rem 0; min-height: 44px; color: var(--gold-soft); font: inherit; cursor: pointer; text-decoration: underline; }
+.ac-empty { text-align: center; padding: 2rem 1rem; }
+.ac-empty h3 { margin: 0 0 0.4rem; }
+.ac-empty p { margin: 0 0 1rem; color: var(--text-secondary); }
+@media (max-width: 640px) {
+  .ac-orders thead { display: none; }
+  .ac-orders, .ac-orders tbody, .ac-orders tr, .ac-orders td { display: block; width: 100%; }
+  .ac-orders tr { border: 1px solid var(--border); border-radius: 12px; margin-bottom: 0.8rem; padding: 0.4rem 0; }
+  .ac-orders td { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 0; padding: 0.5rem 1rem; }
+  .ac-orders td::before { content: attr(data-label); color: var(--text-muted); font-size: 0.8rem; }
+  .ac-orders .ac-empty-row td { display: block; }
+  .ac-orders .ac-empty-row td::before { content: none; }
+}

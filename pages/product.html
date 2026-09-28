@@ -17,694 +17,101 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/luxury-theme.css">
+    <link rel="stylesheet" href="/css/shop-browse.css">
     <link rel="stylesheet" href="/css/product-page.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div id="notification-container"></div>
 
-    <header class="site-header">
-    <div class="header-container">
-        <div class="site-nav-main">
-            <div class="brand-group">
-                <a href="/index.html" class="logo link-reset">Wimp<span>-Drop</span></a>
-                <div class="nav-menu-trigger">
-                    <button class="btn btn-outline btn-small nav-menu-btn" type="button" id="nav-menu-button" aria-expanded="false" aria-controls="site-nav-menu">
-                        Shop <span class="nav-menu-chevron">▾</span>
-                    </button>
-                    <div class="nav-menu" id="site-nav-menu">
-                        <a href="/pages/shop.html">All products</a>
-                        <a href="/pages/shop.html?category=Electronics">Electronics</a>
-                        <a href="/pages/shop.html?category=Fashion">Fashion</a>
-                        <a href="/pages/shop.html?category=Home%20%26%20Kitchen">Home</a>
-                        <a href="/pages/shop.html?category=Accessories">Accessories</a>
-                        <a href="/pages/shop.html?category=Electronics">Gadgets</a>
+    <header class="site-header" data-shared-header></header>
+
+    <main class="pd-page">
+        <p id="pd-loading" class="pd-state" role="status">Loading product…</p>
+        <div id="pd-root" hidden>
+            <nav id="pd-crumbs" class="pd-crumbs" aria-label="Breadcrumb"></nav>
+
+            <div class="pd-layout">
+                <section class="pd-panel" aria-label="Product images">
+                    <div class="pd-stage" id="pd-stage">
+                        <img id="pd-main-img" src="" alt="">
+                        <button type="button" class="pd-nav prev" id="pd-prev" aria-label="Previous image" hidden>&#8249;</button>
+                        <button type="button" class="pd-nav next" id="pd-next" aria-label="Next image" hidden>&#8250;</button>
                     </div>
-                </div>
-            </div>
-            <div class="site-search">
-                <input id="site-search-input" type="search" placeholder="Search products, brands, categories…" autocomplete="off" data-search>
-                <button class="btn btn-primary search-submit" id="site-search-submit" type="button">Search</button>
-                <div class="search-suggestions" id="search-suggestions"></div>
-            </div>
-            <div class="site-actions">
-                <button class="icon-btn mobile-search-toggle" id="mobile-search-toggle" type="button" aria-label="Open search">🔎</button>
-                <a href="/pages/account.html" class="icon-link" aria-label="Account">👤</a>
-                <a href="/pages/watchlist.html" class="icon-link" aria-label="Watchlist">♡<span class="badge" data-wishlist-badge style="display:none">0</span></a>
-                <a href="/pages/cart.html" class="icon-link" aria-label="Cart">🛒<span class="badge" data-cart-badge style="display:none">0</span></a>
-                <button class="icon-btn mobile-menu-btn" id="mobile-menu-button" type="button" aria-label="Open menu">☰</button>
-            </div>
-        </div>
-    </div>
-    <div class="site-subnav">
-        <div class="subnav-links">
-            <a href="/pages/shop.html" class="active">Shop</a>
-            <a href="/pages/shop.html?category=Electronics">Electronics</a>
-            <a href="/pages/shop.html?category=Fashion">Fashion</a>
-            <a href="/pages/shop.html?category=Home%20%26%20Kitchen">Home</a>
-            <a href="/pages/shop.html?category=Accessories">Accessories</a>
-            <a href="/pages/shop.html?category=Electronics">Gadgets</a>
-        </div>
-        <div class="subnav-promo">Search first, shop fast — new arrivals live from the catalog.</div>
-    </div>
-    <div class="mobile-search-panel" id="mobile-search-panel" aria-hidden="true">
-        <div class="mobile-search-shell">
-            <div class="site-search">
-                <input id="mobile-site-search-input" type="search" placeholder="Search Wimp-Drop catalog…" autocomplete="off">
-                <button class="btn btn-primary search-submit" id="mobile-search-submit" type="button">Search</button>
-            </div>
-            <div class="search-suggestions" id="mobile-search-suggestions"></div>
-            <button class="btn btn-secondary btn-small mobile-search-close" type="button">Close</button>
-        </div>
-    </div>
-</header>
+                    <div class="pd-thumbs" id="pd-thumbs"></div>
+                </section>
 
-    <div class="breadcrumb-bar">
-        <div class="container">
-            <a href="/index.html" class="breadcrumb-link">Home</a>
-            <span class="breadcrumb-separator">/</span>
-            <a href="/pages/shop.html" class="breadcrumb-link">Shop</a>
-            <span class="breadcrumb-separator">/</span>
-            <span id="product-breadcrumb" class="breadcrumb-current">Product</span>
-        </div>
-    </div>
+                <section class="pd-panel" aria-label="Product options">
+                    <div class="pd-cat" id="pd-cat"></div>
+                    <h1 class="pd-title" id="pd-title"></h1>
+                    <div class="pd-rating" id="pd-rating" hidden></div>
+                    <div class="pd-price" id="pd-price"></div>
+                    <div class="pd-stock" id="pd-stock" role="status" aria-live="polite"></div>
 
-    <section class="section product-hero-section">
-        <div class="container">
-            <div class="product-two-column">
-                <div class="product-gallery-shell">
-                    <div class="product-image-stage" id="product-image-stage">
-                        <div class="gallery-hint">Hover to zoom</div>
-                        <img id="product-main-image" src="" alt="Selected product" class="product-main-img">
-                    </div>
-                    <div class="thumbnail-gallery" id="thumbnail-gallery"></div>
-                    <div class="gallery-dots" id="gallery-dots"></div>
-                </div>
+                    <div id="pd-variants"></div>
 
-                <div class="product-buy-shell">
-                    <div class="product-category" id="product-category">Electronics</div>
-                    <h1 id="product-name" class="product-title">Product Name</h1>
-
-                    <div class="product-meta-row">
-                        <div class="product-rating-row">
-                            <span class="stars" id="product-stars">☆☆☆☆☆</span>
-                            <span class="rating-count" id="product-rating-count">(0 reviews)</span>
+                    <div class="pd-buy">
+                        <div class="pd-qty" role="group" aria-label="Quantity">
+                            <button type="button" id="pd-dec" aria-label="Decrease quantity">&minus;</button>
+                            <output id="pd-qty-val" aria-live="polite">1</output>
+                            <button type="button" id="pd-inc" aria-label="Increase quantity">+</button>
                         </div>
-                        <span class="product-stock-pill" id="stock-pill">In stock</span>
+                        <button type="button" class="pd-btn primary" id="pd-add">Add to cart</button>
+                    </div>
+                    <div class="pd-buy">
+                        <button type="button" class="pd-btn primary" id="pd-buy-now">Buy now</button>
+                        <button type="button" class="pd-btn" id="pd-wish" aria-pressed="false">&#9825; Save</button>
                     </div>
 
-                    <div class="product-price-panel">
-                        <div class="price-row">
-                            <span class="price-current" id="product-price">$0.00</span>
-                            <span class="product-original-price" id="product-original-price">$0.00</span>
-                            <span class="discount-pill" id="product-discount">Save 0%</span>
-                        </div>
-                        <p class="supplier-note">Supplier: <strong id="product-supplier">Wimp-Drop Catalog</strong></p>
+                    <div class="pd-info">
+                        <h2>Delivery</h2>
+                        <p>Shipping method and cost are shown at checkout, where you can choose standard or express.</p>
+                        <p>Prices are in Nigerian Naira. Payment is processed securely through Flutterwave.</p>
                     </div>
-
-                    <div class="product-variant-section">
-                        <div class="variant-picker-label">Choose your variant</div>
-                        <div id="variants-container" class="variant-options"></div>
-                        <div id="selected-variant-summary" class="variant-summary"></div>
-                    </div>
-
-                    <div class="buy-box-stack">
-                        <div class="stock-line" id="stock-line">Checking availability…</div>
-                        <div class="shipping-line" id="shipping-line">Ships from Global — est. delivery 7–14 days</div>
-
-                        <div class="quantity-selector">
-                            <button class="quantity-btn" type="button" onclick="decreaseQuantity()">−</button>
-                            <input type="number" id="quantity" value="1" min="1" max="100" inputmode="numeric" autocomplete="off" class="quantity-input">
-                            <button class="quantity-btn" type="button" onclick="increaseQuantity()">+</button>
-                        </div>
-
-                        <div class="product-actions buy-box-actions">
-                            <button class="btn btn-primary btn-large btn-block" type="button" onclick="addProductToCart()" id="add-to-cart-btn">Add to cart</button>
-                            <button class="btn btn-outline btn-large btn-block" type="button" onclick="buyProductNow()" id="buy-now-btn">Buy now</button>
-                            <button class="btn btn-outline btn-large btn-block" type="button" onclick="toggleProductWishlist()" id="wishlist-btn">♡ Save</button>
-                        </div>
-
-                        <div class="trust-strip">
-                            <div class="trust-pill">
-                                <strong>Secure checkout</strong>
-                                <span>Encrypted payments & order tracking</span>
-                            </div>
-                            <div class="trust-pill">
-                                <strong>Easy returns</strong>
-                                <span>30-day return window on eligible items</span>
-                            </div>
-                            <div class="trust-pill">
-                                <strong>Origin aware</strong>
-                                <span id="trust-origin-pill">Ships from Global</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                </section>
             </div>
 
-            <div class="product-details-grid">
-                <article class="product-detail-card">
+            <div class="pd-details">
+                <section class="pd-panel">
                     <h2>About this item</h2>
-                    <p id="product-description" class="product-description">Description loading…</p>
-                </article>
-                <article class="product-detail-card">
-                    <h2>Specs & details</h2>
-                    <table class="spec-table">
-                        <tbody id="specs-table"></tbody>
+                    <p class="pd-desc" id="pd-desc"></p>
+                </section>
+                <section class="pd-panel">
+                    <h2>Details</h2>
+                    <table class="pd-specs">
+                        <tbody>
+                            <tr><th scope="row">SKU</th><td id="pd-sku">-</td></tr>
+                        </tbody>
                     </table>
-                </article>
+                </section>
             </div>
-        </div>
-    </section>
 
-    <section class="section">
-        <div class="container">
-            <div class="section-head">
-                <div>
-                    <h2 class="section-title">You may also like</h2>
-                    <p class="section-copy">Same premium cards, no hidden cost data, and stock signals derived from the live catalog.</p>
+            <section class="pd-more" id="pd-more" aria-labelledby="pd-more-title">
+                <div class="pd-more-head">
+                    <h2 id="pd-more-title">More to explore</h2>
+                    <a id="pd-more-all" href="/pages/shop.html">See all</a>
                 </div>
-            </div>
-            <div class="related-rail" id="related-products"></div>
+                <div class="sb-grid" id="pd-more-grid"></div>
+            </section>
         </div>
-    </section>
+    </main>
 
-    <div class="mobile-buy-bar" id="mobile-buy-bar"></div>
-
-    <footer>
-        <div class="footer-content">
-            <nav class="footer-links" aria-label="Legal links">
-                <a href="/pages/terms.html">Terms of Service</a>
-                <a href="/pages/privacy.html">Privacy Policy</a>
-                <a href="/pages/disclaimer.html">Disclaimer</a>
-                <a href="/pages/security.html">Security</a>
-            </nav>
+    <div class="pd-sticky" id="pd-sticky">
+        <div class="pd-sticky-inner">
+            <div class="pd-sticky-price"><small>Price</small><strong id="pd-sticky-price">-</strong></div>
+            <button type="button" class="pd-btn primary" id="pd-sticky-btn">Add to cart</button>
         </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 Wimp-Drop. All rights reserved.</p>
-        </div>
-    </footer>
-<script>
-        let currentProduct = null;
-        let currentProductId = null;
-        let currentProductVariants = [];
-        let selectedVariantIndex = 0;
-        let selectedGalleryIndex = 0;
-        let galleryImages = [];
+    </div>
 
-        function getProductIdFromURL() {
-            const params = new URLSearchParams(window.location.search);
-            return params.get('id');
-        }
+    <footer data-shared-footer></footer>
 
-        function normalizeSupabaseVariant(raw, fallbackProductId = '') {
-            const title = raw.title || raw.name || raw.product_title || 'Untitled product';
-            const productId = raw.product_id || raw.productId || raw.id || fallbackProductId || '';
-            const image = raw.image_url || raw.image || raw.thumbnail || raw.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop';
-            const price = Number(raw.price || raw.sale_price || raw.current_price || 0);
-            const originalPrice = Number(raw.original_price || raw.base_price || raw.list_price || raw.compare_at_price || raw.price || 0);
-            const stock = Number(raw.stock_quantity || 0);
-            const status = raw.status || raw.product_status || 'On Sale';
-            const shippingFrom = raw.supplier || 'Wimp-Drop Catalog';
-            const dimensionsMm = raw.dimensions_mm || raw.dimensions || '';
-            const weightG = raw.weight_g || raw.weight || '';
-            const sku = raw.supplier_sku || '';
-            const variantLabel = raw.title || raw.name || 'Standard';
-            const inStock = stock > 0 && status === 'On Sale';
-            const soldCount = Number(raw.sold_count || raw.soldCount || 0);
-            const verified = Boolean(raw.is_verified || raw.verified || false);
-
-            return {
-                id: raw.id || raw.product_id || sku || '',
-                product_id: productId,
-                title,
-                name: title,
-                variantLabel,
-                category: raw.category || raw.category_name || 'General',
-                price,
-                originalPrice,
-                image,
-                supplier: raw.supplier || raw.brand || 'Wimp-Drop Catalog',
-                stock_quantity: stock,
-                sold_count: soldCount,
-                is_verified: verified,
-                status,
-                inStock,
-                shippingFrom,
-                dimensionsMm,
-                weightG,
-                description: raw.description || raw.product_description || '',
-                rating: Number(raw.rating || 4.5),
-                reviews: Number(raw.reviews_count ?? raw.reviews ?? raw.review_count ?? raw.reviewCount ?? 0)
-            };
-        }
-
-        async function waitForAppReady() {
-            // main.js (loaded after this inline script) sets window._appReady
-            // shortly after DOMContentLoaded fires. Poll briefly for it to
-            // exist rather than assuming it's already set, since this
-            // script's own DOMContentLoaded listener fires before main.js's.
-            let attempts = 0;
-            while (!window._appReady && attempts < 100) {
-                await new Promise((resolve) => setTimeout(resolve, 20));
-                attempts++;
-            }
-            if (window._appReady) {
-                await window._appReady;
-            }
-        }
-
-        async function loadProductDetails() {
-            await waitForAppReady();
-
-            const productId = getProductIdFromURL();
-            if (!productId) {
-                window.location.href = 'shop.html';
-                return;
-            }
-
-            currentProductId = productId;
-            currentProductVariants = [];
-            selectedVariantIndex = 0;
-            selectedGalleryIndex = 0;
-
-            let initialProduct = null;
-            if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
-                try {
-                    const directResult = await supabaseService.getProduct(productId);
-                    if (directResult.success && directResult.product) {
-                        initialProduct = directResult.product;
-                    }
-                } catch (error) {
-                    console.warn('Supabase product lookup failed', error);
-                }
-            }
-
-            if (initialProduct) {
-                const lookupId = initialProduct.supplier_product_id || initialProduct.supplierProductId || initialProduct.product_id || initialProduct.productId || productId;
-                if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
-                    try {
-                        const result = await supabaseService.getProductVariants(lookupId);
-                        if (result.success && result.products?.length) {
-                            currentProductVariants = result.products.map((row) => normalizeSupabaseVariant(row, lookupId));
-                        }
-                    } catch (error) {
-                        console.warn('Supabase product variant lookup failed', error);
-                    }
-                }
-            }
-
-            if (!currentProductVariants.length) {
-                const directMatch = Array.isArray(AppState.products)
-                    ? AppState.products.filter((p) => String(p.id) === String(productId) || String(p.product_id || p.id) === String(productId))
-                    : [];
-                if (directMatch.length) {
-                    currentProductVariants = directMatch.map((row) => normalizeSupabaseVariant(row, productId));
-                }
-            }
-
-            if (!currentProductVariants.length) {
-                showNotification('Product not found', 'error');
-                setTimeout(() => {
-                    window.location.href = 'shop.html';
-                }, 1500);
-                return;
-            }
-
-            const matchedIndex = currentProductVariants.findIndex((variant) => String(variant.id) === String(productId));
-            if (matchedIndex >= 0) {
-                selectedVariantIndex = matchedIndex;
-            }
-
-            populateProductPage();
-            updateWishlistButton();
-            loadRelatedProducts();
-        }
-
-        function setPageMetadata(productName, productDescription, productImage) {
-            const title = `${productName} | Wimp-Drop`;
-            document.title = title;
-            const setMeta = (selector, content, attribute = 'content') => {
-                let tag = document.head.querySelector(selector);
-                if (!tag) {
-                    tag = document.createElement('meta');
-                    tag.setAttribute(attribute === 'content' ? 'name' : attribute, selector.replace(/^meta\[|\]$/g, ''));
-                    document.head.appendChild(tag);
-                }
-                tag.setAttribute('content', content);
-            };
-
-            const description = productDescription || 'Premium products from Wimp-Drop with transparent pricing and secure checkout.';
-            const image = productImage || '/images/wimp.png';
-
-            document.querySelector('meta[name="description"]')?.setAttribute('content', description);
-            document.querySelector('meta[property="og:title"]')?.setAttribute('content', title);
-            document.querySelector('meta[property="og:description"]')?.setAttribute('content', description);
-            document.querySelector('meta[property="og:image"]')?.setAttribute('content', image);
-            document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', title);
-            document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', description);
-
-            const structuredData = {
-                '@context': 'https://schema.org',
-                '@type': 'Product',
-                name: productName,
-                image: [image],
-                description,
-                brand: {
-                    '@type': 'Brand',
-                    name: 'Wimp-Drop'
-                },
-                offers: {
-                    '@type': 'Offer',
-                    priceCurrency: 'NGN',
-                    price: Number(currentProduct?.price || 0),
-                    availability: currentProduct?.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-                    itemCondition: 'https://schema.org/NewCondition'
-                }
-            };
-
-            let jsonScript = document.getElementById('product-json-ld');
-            if (!jsonScript) {
-                jsonScript = document.createElement('script');
-                jsonScript.id = 'product-json-ld';
-                jsonScript.type = 'application/ld+json';
-                document.head.appendChild(jsonScript);
-            }
-            jsonScript.textContent = JSON.stringify(structuredData);
-        }
-
-        function populateProductPage() {
-            if (!currentProductVariants.length) return;
-
-            currentProduct = currentProductVariants[selectedVariantIndex] || currentProductVariants[0];
-            const variant = currentProduct;
-            const breadcrumb = document.getElementById('product-breadcrumb');
-            if (breadcrumb) breadcrumb.textContent = variant.title;
-
-            document.getElementById('product-name').textContent = variant.title;
-            document.getElementById('product-category').textContent = variant.category || 'Electronics';
-            const descriptionCopy = buildDescriptionCopy(variant.title);
-            document.getElementById('product-description').textContent = descriptionCopy;
-            setPageMetadata(variant.title, descriptionCopy, variant.image);
-            const soldCount = Number(variant.sold_count || 0);
-            const verifiedSeller = Boolean(variant.is_verified);
-            document.getElementById('product-price').textContent = formatCurrency(variant.price);
-            document.getElementById('product-original-price').textContent = formatCurrency(variant.originalPrice || variant.price);
-            document.getElementById('product-supplier').textContent = `${variant.supplier || 'Wimp-Drop Catalog'}${verifiedSeller ? ' • Verified supplier' : ''}`;
-            document.getElementById('product-stars').textContent = buildStars(variant.rating || 4.5);
-            document.getElementById('product-rating-count').textContent = `(${variant.reviews || 0} reviews)`;
-
-            const stockPill = document.getElementById('stock-pill');
-            if (stockPill) {
-                stockPill.textContent = variant.inStock ? 'In stock' : 'Out of stock';
-                stockPill.classList.toggle('is-low', variant.stock_quantity > 0 && variant.stock_quantity <= 5);
-            }
-
-            const savings = Number(variant.originalPrice || 0) > Number(variant.price || 0) ? Number(variant.originalPrice || 0) - Number(variant.price || 0) : 0;
-            document.getElementById('stock-line').textContent = `${buildStockLine(variant)}${soldCount > 0 ? ` • ${soldCount} sold` : ''}`;
-            document.getElementById('shipping-line').textContent = `${buildShippingLine(variant.shippingFrom)}${savings > 0 ? ` • Save ${formatCurrency(savings)}` : ''}`;
-            document.getElementById('trust-origin-pill').textContent = `Ships from ${variant.shippingFrom || 'Global'}`;
-            document.getElementById('selected-variant-summary').textContent = `${variant.variantLabel}${variant.supplier_sku ? ` • ${variant.supplier_sku}` : ''}`;
-
-            const addButton = document.getElementById('add-to-cart-btn');
-            const buyButton = document.getElementById('buy-now-btn');
-            if (addButton) {
-                addButton.disabled = !variant.inStock;
-                addButton.textContent = variant.inStock ? 'Add to cart' : 'Out of stock';
-            }
-            if (buyButton) {
-                buyButton.disabled = !variant.inStock;
-                buyButton.textContent = variant.inStock ? 'Buy now' : 'Out of stock';
-            }
-
-            const discount = variant.originalPrice > variant.price ? Math.round(((variant.originalPrice - variant.price) / variant.originalPrice) * 100) : 0;
-            const discountEl = document.getElementById('product-discount');
-            if (discountEl) {
-                discountEl.textContent = discount > 0 ? `Save ${discount}%` : 'Best value';
-            }
-
-            renderVariantPicker();
-            renderGallery();
-            renderSpecsTable(variant);
-            updateStickyBar();
-        }
-
-        function buildDescriptionCopy(title) {
-            return `${title} is built to feel dependable and premium in equal measure. The live catalog view keeps availability and shipping details current, while the variant picker makes it easy to compare options.`;
-        }
-
-        function buildStars(rating) {
-            return '★'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating));
-        }
-
-        function buildStockLine(variant) {
-            if (!variant.inStock) {
-                return 'Out of stock right now — check back soon for fresh inventory.';
-            }
-            if (variant.stock_quantity <= 5) {
-                return `Only ${variant.stock_quantity} left in stock — order soon.`;
-            }
-            return `${variant.stock_quantity} units available for immediate dispatch.`;
-        }
-
-        function buildShippingLine(origin) {
-            return `Ships from ${origin || 'Global'} — est. delivery 7–14 days`;
-        }
-
-        function renderVariantPicker() {
-            const container = document.getElementById('variants-container');
-            if (!container) return;
-            container.innerHTML = currentProductVariants.map((variant, index) => `
-                <button class="variant-option ${index === selectedVariantIndex ? 'active' : ''}" type="button" onclick="selectVariant(${index})">
-                    <span class="variant-option-title">${variant.variantLabel || 'Standard'}</span>
-                    <span class="variant-option-meta">${variant.supplier_sku || 'Select SKU'}</span>
-                </button>
-            `).join('');
-        }
-
-        function selectVariant(index) {
-            selectedVariantIndex = index;
-            populateProductPage();
-        }
-
-        function renderGallery() {
-            const galleryContainer = document.getElementById('thumbnail-gallery');
-            const dotsContainer = document.getElementById('gallery-dots');
-            const mainImage = document.getElementById('product-main-image');
-            if (!galleryContainer || !dotsContainer || !mainImage) return;
-
-            galleryImages = currentProductVariants.map((variant) => variant.image).filter(Boolean);
-            if (!galleryImages.length) {
-                galleryImages = [currentProduct?.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop'];
-            }
-
-            // Jump the gallery to the newly selected variant's own photo
-            // instead of leaving it pinned at whatever index it was on
-            // before — that's what made every variant look identical when
-            // switching (selectedGalleryIndex used to just get reset to 0,
-            // which is always the same image regardless of which variant
-            // you'd actually picked).
-            const currentImageIndex = galleryImages.indexOf(currentProduct?.image);
-            selectedGalleryIndex = currentImageIndex >= 0 ? currentImageIndex : 0;
-
-            mainImage.src = galleryImages[selectedGalleryIndex] || currentProduct?.image || '';
-            mainImage.alt = currentProduct?.title || 'Product image';
-
-            galleryContainer.innerHTML = galleryImages.map((img, index) => `
-                <button class="thumbnail-item ${index === selectedGalleryIndex ? 'active' : ''}" type="button" data-thumb-index="${index}" onclick="setGalleryImage(${index})">
-                        <img src="${img}" alt="Gallery view ${index + 1}" loading="lazy" decoding="async" sizes="72px">
-                </button>
-            `).join('');
-
-            dotsContainer.innerHTML = galleryImages.map((_, index) => `
-                <button class="gallery-dot ${index === selectedGalleryIndex ? 'active' : ''}" type="button" data-index="${index}" aria-label="Show gallery image ${index + 1}" onclick="setGalleryImage(${index})"></button>
-            `).join('');
-
-            attachSwipeGallery();
-        }
-
-        function setGalleryImage(index) {
-            selectedGalleryIndex = index;
-            const mainImage = document.getElementById('product-main-image');
-            if (mainImage && galleryImages[index]) {
-                mainImage.src = galleryImages[index];
-            }
-            document.querySelectorAll('.thumbnail-item').forEach((item) => item.classList.toggle('active', Number(item.dataset.thumbIndex) === index));
-            document.querySelectorAll('.gallery-dot').forEach((dot) => dot.classList.toggle('active', Number(dot.dataset.index || 0) === index));
-        }
-
-        function attachSwipeGallery() {
-            const stage = document.getElementById('product-image-stage');
-            if (!stage) return;
-            let touchStartX = 0;
-            stage.addEventListener('touchstart', (event) => {
-                touchStartX = event.touches[0].clientX;
-            }, { passive: true });
-            stage.addEventListener('touchend', (event) => {
-                const delta = event.changedTouches[0].clientX - touchStartX;
-                if (Math.abs(delta) < 50) return;
-                const nextIndex = delta < 0 ? (selectedGalleryIndex + 1) % galleryImages.length : (selectedGalleryIndex - 1 + galleryImages.length) % galleryImages.length;
-                setGalleryImage(nextIndex);
-            }, { passive: true });
-        }
-
-        function renderSpecsTable(variant) {
-            const specsBody = document.getElementById('specs-table');
-            if (!specsBody) return;
-            specsBody.innerHTML = `
-                <tr class="spec-row">
-                    <td class="spec-key">Package size</td>
-                    <td class="spec-value">${variant.dimensionsMm || 'Information available on request'}</td>
-                </tr>
-                <tr class="spec-row">
-                    <td class="spec-key">Package weight</td>
-                    <td class="spec-value">${variant.weightG ? `${variant.weightG} g` : 'Information available on request'}</td>
-                </tr>
-                <tr class="spec-row">
-                    <td class="spec-key">SKU</td>
-                    <td class="spec-value">${variant.supplier_sku || 'Pending'}</td>
-                </tr>
-                <tr class="spec-row">
-                    <td class="spec-key">Shipping origin</td>
-                    <td class="spec-value">${variant.shippingFrom || 'Global'}</td>
-                </tr>
-            `;
-        }
-
-        function increaseQuantity() {
-            const input = document.getElementById('quantity');
-            if (!input) return;
-            input.value = parseInt(input.value || 1, 10) + 1;
-        }
-
-        function decreaseQuantity() {
-            const input = document.getElementById('quantity');
-            if (!input) return;
-            const current = parseInt(input.value || 1, 10);
-            input.value = current > 1 ? current - 1 : 1;
-        }
-
-        function addProductToCart() {
-            const quantity = parseInt(document.getElementById('quantity').value || 1, 10);
-            if (!currentProduct?.id) return false;
-            const added = addToCart(currentProduct.id, quantity, currentProduct);
-            if (added) {
-                document.getElementById('quantity').value = 1;
-                showNotification('Added to cart', 'success');
-            } else {
-                showNotification('Could not add this product to your cart', 'error');
-            }
-            return added;
-        }
-
-        function buyProductNow() {
-            const added = addProductToCart();
-            if (!added) return;
-            setTimeout(() => {
-                window.location.href = 'cart.html';
-            }, 400);
-        }
-
-        function updateWishlistButton() {
-            const btn = document.getElementById('wishlist-btn');
-            if (!btn) return;
-            const activeId = currentProduct?.id || currentProductId;
-            if (isInWishlist(activeId)) {
-                btn.classList.add('active');
-                btn.innerHTML = '♥ Saved';
-            } else {
-                btn.classList.remove('active');
-                btn.innerHTML = '♡ Save';
-            }
-        }
-
-        function toggleProductWishlist() {
-            const activeId = currentProduct?.id || currentProductId;
-            toggleWishlist(activeId);
-            updateWishlistButton();
-        }
-
-        function updateStickyBar() {
-            const bar = document.getElementById('mobile-buy-bar');
-            if (!bar) return;
-            const variant = currentProduct || currentProductVariants[0];
-            bar.innerHTML = `
-                <div>
-                    <strong>${variant?.title || 'Product'}</strong>
-                    <span>${formatCurrency(variant?.price || 0)}</span>
-                </div>
-                <button class="btn btn-primary btn-small" type="button" onclick="addProductToCart()" ${variant?.inStock ? '' : 'disabled'}>${variant?.inStock ? 'Add to cart' : 'Out of stock'}</button>
-            `;
-        }
-
-        async function loadRelatedProducts() {
-            const container = document.getElementById('related-products');
-            if (!container) return;
-
-            let rows = [];
-            if (typeof supabaseService !== 'undefined' && supabaseService.isInitialized) {
-                try {
-                    const res = await supabaseService.getProducts({ limit: 8 });
-                    if (res.success) rows = res.products || [];
-                } catch (error) {
-                    console.warn('Related products lookup failed', error);
-                }
-            }
-            if (!rows.length) {
-                rows = AppState.products || [];
-            }
-
-            const related = rows
-                .map((row) => normalizeSupabaseVariant(row, currentProductId))
-                .filter((row) => row && String(row.id) !== String(currentProduct?.id || '') && String(row.product_id || row.id) !== String(currentProduct?.product_id || currentProduct?.id || ''))
-                .slice(0, 4);
-
-            container.innerHTML = related.length ? related.map(renderRelatedProductCard).join('') : '<div class="empty-state">No related products available yet.</div>';
-        }
-
-        function renderRelatedProductCard(product) {
-            const pid = product.id || product.product_id || product.supplier_sku || product.title;
-            const pidUrl = encodeURIComponent(pid);
-            const hasDiscount = Number(product.originalPrice || 0) > Number(product.price || 0);
-            const discountPercent = hasDiscount ? Math.round((1 - (Number(product.price || 0) / Math.max(Number(product.originalPrice || 1), 1))) * 100) : 0;
-            return `
-                <article class="product-group-card">
-                    ${hasDiscount ? `<div class="discount-badge">-${discountPercent}%</div>` : ''}
-                    <div class="product-image">
-                        <a href="/pages/product.html?id=${pidUrl}" class="product-link">
-                            <img src="${product.image}" alt="${product.title}" loading="lazy" decoding="async" sizes="(max-width: 480px) 100vw, (max-width: 899px) 50vw, 320px" class="product-image-inner">
-                        </a>
-                    </div>
-                    <div class="product-info">
-                        <div class="product-category">${product.category || 'Featured'}</div>
-                        <h3 class="product-name"><a href="/pages/product.html?id=${pidUrl}">${product.title}</a></h3>
-                        <div class="product-meta">
-                            <span class="product-status ${product.inStock ? 'in-stock' : 'out-stock'}">${product.inStock ? 'Available' : 'Limited'}</span>
-                            <span class="product-origin">${product.shippingFrom || 'Global'}</span>
-                        </div>
-                        <div class="product-price">
-                            <span class="price-current">${formatCurrency(product.price)}</span>
-                            ${hasDiscount ? `<span class="price-original">${formatCurrency(product.originalPrice)}</span>` : ''}
-                        </div>
-                        <div class="product-actions">
-                            <button class="btn btn-primary btn-small" type="button" onclick="addToCart('${pid}', 1)">Add to cart</button>
-                            <button class="btn btn-outline btn-small" type="button" onclick="window.location.href='product.html?id=${pidUrl}'">View</button>
-                        </div>
-                    </div>
-                </article>
-            `;
-        }
-
-        window.populateProductPage = populateProductPage;
-        document.addEventListener('DOMContentLoaded', loadProductDetails);
-    </script>
     <script src="/js/runtime-env.js"></script>
     <script src="/js/env.js"></script>
     <script src="/js/supabase.js"></script>
     <script src="/js/flutterwave.js"></script>
+    <script src="/js/site-header.js"></script>
     <script src="/js/main.js"></script>
     <script src="/js/luxury-ui.js"></script>
     <script src="/js/product-page.js"></script>
-    <script src="/js/site-header.js"></script>
 </body>
 </html>

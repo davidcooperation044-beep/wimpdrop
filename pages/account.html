@@ -6,67 +6,14 @@
     <title>My Account - Wimp-Drop</title>
     <link rel="icon" type="image/png" href="/images/wimp.png">
     <link rel="stylesheet" href="/css/luxury-theme.css">
+    <link rel="stylesheet" href="/css/account-page.css">
       
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div id="notification-container"></div>
     
-    <header class="site-header">
-    <div class="header-container">
-        <div class="site-nav-main">
-            <div class="brand-group">
-                <a href="/index.html" class="logo link-reset">Wimp<span>-Drop</span></a>
-                <div class="nav-menu-trigger">
-                    <button class="btn btn-outline btn-small nav-menu-btn" type="button" id="nav-menu-button" aria-expanded="false" aria-controls="site-nav-menu">
-                        Shop <span class="nav-menu-chevron">▾</span>
-                    </button>
-                    <div class="nav-menu" id="site-nav-menu">
-                        <a href="/pages/shop.html">All products</a>
-                        <a href="/pages/shop.html?category=Electronics">Electronics</a>
-                        <a href="/pages/shop.html?category=Fashion">Fashion</a>
-                        <a href="/pages/shop.html?category=Home%20%26%20Kitchen">Home</a>
-                        <a href="/pages/shop.html?category=Accessories">Accessories</a>
-                        <a href="/pages/shop.html?category=Electronics">Gadgets</a>
-                    </div>
-                </div>
-            </div>
-            <div class="site-search">
-                <input id="site-search-input" type="search" placeholder="Search products, brands, categories…" autocomplete="off" data-search>
-                <button class="btn btn-primary search-submit" id="site-search-submit" type="button">Search</button>
-                <div class="search-suggestions" id="search-suggestions"></div>
-            </div>
-            <div class="site-actions">
-                <button class="icon-btn mobile-search-toggle" id="mobile-search-toggle" type="button" aria-label="Open search">🔎</button>
-                <a href="/pages/account.html" class="icon-link" aria-label="Account">👤</a>
-                <a href="/pages/watchlist.html" class="icon-link" aria-label="Watchlist">♡<span class="badge" data-wishlist-badge style="display:none">0</span></a>
-                <a href="/pages/cart.html" class="icon-link" aria-label="Cart">🛒<span class="badge" data-cart-badge style="display:none">0</span></a>
-                <button class="icon-btn mobile-menu-btn" id="mobile-menu-button" type="button" aria-label="Open menu">☰</button>
-            </div>
-        </div>
-    </div>
-    <div class="site-subnav">
-        <div class="subnav-links">
-            <a href="/pages/shop.html" class="active">Shop</a>
-            <a href="/pages/shop.html?category=Electronics">Electronics</a>
-            <a href="/pages/shop.html?category=Fashion">Fashion</a>
-            <a href="/pages/shop.html?category=Home%20%26%20Kitchen">Home</a>
-            <a href="/pages/shop.html?category=Accessories">Accessories</a>
-            <a href="/pages/shop.html?category=Electronics">Gadgets</a>
-        </div>
-        <div class="subnav-promo">Search first, shop fast — new arrivals live from the catalog.</div>
-    </div>
-    <div class="mobile-search-panel" id="mobile-search-panel" aria-hidden="true">
-        <div class="mobile-search-shell">
-            <div class="site-search">
-                <input id="mobile-site-search-input" type="search" placeholder="Search Wimp-Drop catalog…" autocomplete="off">
-                <button class="btn btn-primary search-submit" id="mobile-search-submit" type="button">Search</button>
-            </div>
-            <div class="search-suggestions" id="mobile-search-suggestions"></div>
-            <button class="btn btn-secondary btn-small mobile-search-close" type="button">Close</button>
-        </div>
-    </div>
-</header>
+    <header class="site-header" data-shared-header></header>
     
     <section class="section">
         <div class="container" style="max-width: 1000px;">
@@ -76,7 +23,7 @@
             <div class="account-layout">
                 <!-- Sidebar -->
                 <aside class="account-sidebar">
-                    <nav class="account-nav">
+                    <nav class="account-nav" aria-label="Account sections">
                         <button class="tab-button active" onclick="switchTab('profile', event)">
                             👤 Profile
                         </button>
@@ -138,19 +85,19 @@
                             <h2>Order History</h2>
                             
                             <div style="overflow-x: auto;">
-                            <table class="order-history-table" style="width: 100%; margin-top: 1.5rem; border-collapse: collapse; min-width: 500px;">
-                                <thead style="border-bottom: 2px solid #e0e0e0;">
+                            <table class="order-history-table ac-orders">
+                                <thead>
                                     <tr>
-                                        <th style="text-align: left; padding: 1rem;">Order #</th>
-                                        <th style="text-align: left; padding: 1rem;">Date</th>
-                                        <th style="text-align: left; padding: 1rem;">Total</th>
-                                        <th style="text-align: left; padding: 1rem;">Status</th>
-                                        <th style="text-align: left; padding: 1rem;">Action</th>
+                                        <th>Order #</th>
+                                        <th>Date</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td colspan="5" style="padding: 1.25rem; color: var(--text-secondary);">Loading your real order history…</td>
+                                        <td colspan="5" class="ac-loading">Loading your order history…</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -275,19 +222,7 @@
         </div>
     </section>
     
-    <footer>
-        <div class="footer-content">
-            <nav class="footer-links" aria-label="Legal links">
-                <a href="/pages/terms.html">Terms of Service</a>
-                <a href="/pages/privacy.html">Privacy Policy</a>
-                <a href="/pages/disclaimer.html">Disclaimer</a>
-                <a href="/pages/security.html">Security</a>
-            </nav>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 Wimp-Drop. All rights reserved.</p>
-        </div>
-    </footer>
+    <footer data-shared-footer></footer>
 <script>
         // Protect account page - redirect to login if not logged in
         async function waitForAppReady() {
@@ -671,27 +606,25 @@
                             const date = new Date(order.created_at || Date.now()).toLocaleDateString('en-NG', { year: 'numeric', month: 'short', day: 'numeric' });
                             const total = formatCurrency(Number(order.total_amount || order.total || 0));
                             const status = String(order.status || 'pending').toLowerCase();
-                            const statusColor = {
-                                pending: ['#fff3cd','#856404'],
-                                processing: ['#cfe2ff','#084298'],
-                                shipped: ['#cfe2ff','#084298'],
-                                delivered: ['#d4edda','#155724'],
-                                cancelled: ['#f8d7da','#721c24']
-                            }[status] || ['#e0e0e0','#333'];
+                            const known = ['pending','processing','shipped','delivered','cancelled'];
+                            const badgeClass = 'ac-badge ac-badge-' + (known.includes(status) ? status : 'other');
                             const orderNumber = order.order_number || order.id || 'N/A';
 
+                            const safeStatus = status.replace(/[&<>"']/g, '');
+                            const safeNumber = String(orderNumber).replace(/[&<>"']/g, '');
+                            const safeId = String(order.id).replace(/[^A-Za-z0-9_-]/g, '');
                             return `
-                                <tr style="border-bottom: 1px solid #e0e0e0;">
-                                    <td style="padding: 1rem;">#${orderNumber}</td>
-                                    <td style="padding: 1rem;">${date}</td>
-                                    <td style="padding: 1rem;">${total}</td>
-                                    <td style="padding: 1rem;"><span style="background: ${statusColor[0]}; color: ${statusColor[1]}; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">${status}</span></td>
-                                    <td style="padding: 1rem;"><a href="#" onclick="viewOrderDetails('${String(order.id)}')" style="color: #e63a2e;">View Details</a></td>
+                                <tr>
+                                    <td data-label="Order">#${safeNumber}</td>
+                                    <td data-label="Date">${date}</td>
+                                    <td data-label="Total">${total}</td>
+                                    <td data-label="Status"><span class="${badgeClass}">${safeStatus}</span></td>
+                                    <td data-label="Action"><button type="button" class="ac-link" onclick="viewOrderDetails('${safeId}')">View details</button></td>
                                 </tr>
                             `;
                         }).join('');
                     } else {
-                        tbody.innerHTML = '<tr><td colspan="5">You have no orders yet.</td></tr>';
+                        tbody.innerHTML = '<tr class="ac-empty-row"><td colspan="5"><div class="ac-empty"><h3>No orders yet</h3><p>When you place an order it will appear here.</p><a href="/pages/shop.html" class="btn btn-primary">Start shopping</a></div></td></tr>';
                     }
                 } catch (e) {
                     console.error('Load orders error', e);
@@ -713,6 +646,10 @@
             waitForAppReady().then(() => {
                 if (AppState.user) {
                     loadProfile();
+                    if (location.hash === '#orders') {
+                        const btn = document.querySelectorAll('.tab-button')[1];
+                        if (btn) btn.click();
+                    }
                 }
             });
         });
@@ -721,7 +658,7 @@
     <script src="/js/env.js"></script>
     <script src="/js/supabase.js"></script>
     <script src="/js/flutterwave.js"></script>
-    <script src="/js/main.js"></script>
     <script src="/js/site-header.js"></script>
+    <script src="/js/main.js"></script>
 </body>
 </html>
