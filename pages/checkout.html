@@ -547,9 +547,18 @@
             });
 
             if (note) {
-                note.textContent = quote.live
-                    ? 'Live rate from our shipping carrier for your address.'
-                    : 'Estimated rate — live shipping cost wasn\'t available for this order, so a standard estimate is shown instead.';
+                var droppedCount = Array.isArray(quote.droppedVids) ? quote.droppedVids.length : 0;
+                if (quote.live && droppedCount > 0) {
+                    // Live price was calculated, but one or more cart items couldn't be
+                    // priced individually by the carrier and aren't reflected in this total.
+                    note.textContent = 'Live rate from our shipping carrier. ' + droppedCount +
+                        (droppedCount === 1 ? ' item in your cart couldn\'t be priced individually and isn\'t included in this rate.'
+                                             : ' items in your cart couldn\'t be priced individually and aren\'t included in this rate.');
+                } else if (quote.live) {
+                    note.textContent = 'Live rate from our shipping carrier for your address.';
+                } else {
+                    note.textContent = 'Estimated rate — live shipping cost wasn\'t available for this order, so a standard estimate is shown instead.';
+                }
             }
 
             updateCheckoutSummary();
@@ -557,33 +566,27 @@
 
         let shippingQuoteLoaded = false;
         async function loadShippingOptions() {
-            console.log('[shipping-debug] loadShippingOptions() called. shippingQuoteLoaded =', shippingQuoteLoaded);
-            if (shippingQuoteLoaded) { console.log('[shipping-debug] already loaded this visit, skipping.'); return; }
+            if (shippingQuoteLoaded) return; // step 1 -> step 2 can be revisited; only quote once per visit
             const countryCode = document.getElementById('checkout-country')?.value || 'NG';
             const items = (AppState.cart || [])
                 .filter(item => item.supplier_variant_id)
                 .map(item => ({ supplierVariantId: item.supplier_variant_id, quantity: item.quantity }));
-            console.log('[shipping-debug] cart:', AppState.cart, '-> priceable items:', items, 'countryCode:', countryCode);
-            console.log('[shipping-debug] supabaseService defined:', typeof supabaseService !== 'undefined', 'isInitialized:', typeof supabaseService !== 'undefined' && supabaseService.isInitialized);
 
             if (!items.length || typeof supabaseService === 'undefined' || !supabaseService.isInitialized) {
-                console.log('[shipping-debug] taking early-fallback branch (no priceable items or supabase not ready) — no network call expected.');
                 renderShippingOptions({ standard: null, express: null, live: false });
                 shippingQuoteLoaded = true;
                 return;
             }
 
             try {
-                console.log('[shipping-debug] calling supabaseService.getShippingQuote()...');
                 const result = await supabaseService.getShippingQuote(items, countryCode);
-                console.log('[shipping-debug] getShippingQuote() returned:', result);
                 if (result && result.success) {
                     renderShippingOptions(result);
                 } else {
                     renderShippingOptions({ standard: null, express: null, live: false });
                 }
             } catch (error) {
-                console.warn('[shipping-debug] getShippingQuote() threw:', error);
+                console.warn('Live shipping quote failed, using flat fallback rate.', error);
                 renderShippingOptions({ standard: null, express: null, live: false });
             }
             shippingQuoteLoaded = true;
@@ -652,8 +655,7 @@
         document.querySelectorAll('.checkout-next').forEach((button) => {
             button.addEventListener('click', () => {
                 const nextStep = Number(button.dataset.nextStep);
-                console.log('[shipping-debug] checkout-next clicked, nextStep =', nextStep);
-                if (nextStep === 2 && !validateShippingStep()) { console.log('[shipping-debug] validateShippingStep() failed, staying on step 1.'); return; }
+                if (nextStep === 2 && !validateShippingStep()) return;
                 setCheckoutStep(nextStep);
                 if (nextStep === 2) loadShippingOptions();
                 document.querySelector('.checkout-progress')?.scrollIntoView({ behavior: 'smooth', block: 'start' });

@@ -117,24 +117,72 @@ Deno.serve(async (request) => {
       return json({ success: true, live: true, cached: true, skipped, ...cached.data.quote });
     }
 
-    const raw = await cjRequest('/logistic/freightCalculate', {
-      method: 'POST',
-      body: JSON.stringify({
-        startCountryCode: 'CN',
-        endCountryCode: countryCode,
-        products: priceable.map((i: any) => ({ vid: i.supplierVariantId, quantity: Number(i.quantity) }))
-      })
-    });
+    // CJ prices the whole batch of products together in one call, but if a
+    // single vid in that batch is invalid (delisted, mistyped, imported from
+    // an old catalog snapshot), CJ rejects the ENTIRE request rather than
+    // pricing the rest — which would otherwise mean one bad product in a
+    // customer's cart kills the live quote for everything else in it too.
+    //
+    // So: try the full batch first. If CJ complains about a specific vid
+    // ("...vid: 123..."), drop that one item and retry with what's left,
+    // repeating until either CJ accepts the batch or we run out of items.
+    // This way the shopper still gets a real, combined shipping price for
+    // every item CJ actually recognises.
+    let working = priceable.slice();
+    const droppedVids: string[] = [];
+    let raw: any = null;
+    let lastError: Error | null = null;
+
+    while (working.length) {
+      try {
+        raw = await cjRequest('/logistic/freightCalculate', {
+          method: 'POST',
+          body: JSON.stringify({
+            startCountryCode: 'CN',
+            endCountryCode: countryCode,
+            products: working.map((i: any) => ({ vid: i.supplierVariantId, quantity: Number(i.quantity) }))
+          })
+        });
+        lastError = null;
+        break;
+      } catch (err) {
+        lastError = err as Error;
+        const badVid = /vid[:\s]+([0-9A-Za-z-]+)/i.exec(lastError.message)?.[1];
+        // Only retry when the error names a specific bad vid we can remove —
+        // for any other kind of failure (CJ down, rate-limited, auth expired,
+        // unsupported country) retrying without it wouldn't help, so stop
+        // and fall through to the flat-rate fallback below.
+        if (!badVid || !working.some((i: any) => i.supplierVariantId === badVid)) break;
+        droppedVids.push(badVid);
+        working = working.filter((i: any) => i.supplierVariantId !== badVid);
+      }
+    }
+
+    if (lastError || !raw) {
+      // Either CJ failed for a reason unrelated to a specific bad vid, or
+      // every item in the cart turned out to be unrecognised by CJ.
+      console.error('shipping-quote: CJ call failed', lastError?.message, 'dropped:', droppedVids);
+      return json({
+        success: true,
+        live: false,
+        reason: lastError?.message || 'no_priceable_items_after_removal',
+        skipped,
+        droppedVids,
+        ...FALLBACK_RATES
+      });
+    }
 
     const options2 = parseCjOptions(raw);
     if (!options2) {
       // CJ answered but had nothing shippable to this country (or the
       // response shape didn't match what parseCjOptions expects) — fall
       // back rather than blocking checkout.
-      return json({ success: true, live: false, reason: 'no_cj_options', skipped, ...FALLBACK_RATES });
+      return json({ success: true, live: false, reason: 'no_cj_options', skipped, droppedVids, ...FALLBACK_RATES });
     }
 
     // Best-effort cache write — checkout must not fail if this insert fails.
+    // Cached under the ORIGINAL cart contents (before any drops), since the
+    // same cart will hit the same dropped items again until they're fixed.
     try {
       await db.from('shipping_quote_cache').upsert({
         cache_key: cacheKey,
@@ -143,7 +191,11 @@ Deno.serve(async (request) => {
       });
     } catch (_e) { /* non-fatal */ }
 
-    return json({ success: true, live: true, cached: false, skipped, ...options2 });
+    // droppedVids.length > 0 here means: real, live shipping price for the
+    // rest of the cart, but one or more items couldn't be priced by CJ and
+    // weren't included in this total — surfaced so you can decide whether
+    // to fix those products' variant IDs or leave the flat rate absorbing them.
+    return json({ success: true, live: true, cached: false, skipped, droppedVids, ...options2 });
   } catch (error) {
     console.error('shipping-quote error:', error);
     // Any failure (CJ down, rate-limited, bad vid, auth expired on CJ's
