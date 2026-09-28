@@ -170,11 +170,26 @@
     });
   }
 
+  // Loads the cart/wishlist account sync on every page that uses the shared header,
+  // so no individual page needs its own <script> tag for it.
+  function loadAccountSync() {
+    if (window.__wimpAccountSync || document.querySelector('script[data-account-sync]')) return;
+    var s = document.createElement('script');
+    s.src = '/js/account-sync.js';
+    s.setAttribute('data-account-sync', 'true');
+    (document.body || document.head).appendChild(s);
+  }
+
   function init() {
     patchLegacyLinks();
     ensureSharedHeader();
     ensureSharedFooter();
     markActiveLinks();
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', loadAccountSync);
+    } else {
+      loadAccountSync();
+    }
   }
 
   // This script must load BEFORE main.js so main.js binds to the injected header.
