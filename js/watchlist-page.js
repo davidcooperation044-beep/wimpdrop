@@ -11,8 +11,17 @@
     try { if (typeof formatCurrency === 'function') return formatCurrency(Number(n || 0)); } catch (e) { /* fall through */ }
     return '\u20A6' + Number(n || 0).toLocaleString();
   }
-  function wishIds() { return (window.AppState && Array.isArray(AppState.wishlist)) ? AppState.wishlist.map(String) : []; }
-  function pool() { return (window.AppState && Array.isArray(AppState.products)) ? AppState.products.slice() : []; }
+  // AppState is a top-level `const` in main.js, so it is not on window.
+  function appState() {
+    try { if (typeof AppState !== 'undefined') return AppState; } catch (e) { /* fall through */ }
+    return window.AppState || null;
+  }
+  function wishIds() {
+    var s = appState();
+    if (s && Array.isArray(s.wishlist)) return s.wishlist.map(String);
+    try { return (JSON.parse(localStorage.getItem('wimp_wishlist')) || []).map(String); } catch (e) { return []; }
+  }
+  function pool() { var s = appState(); return (s && Array.isArray(s.products)) ? s.products.slice() : []; }
 
   var extra = [];   // wishlist products not present in AppState.products
   var fetched = false;

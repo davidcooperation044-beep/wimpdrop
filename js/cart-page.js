@@ -16,8 +16,18 @@
     return '\u20A6' + Number(n || 0).toLocaleString();
   }
   function el(id) { return document.getElementById(id); }
-  function cartList() { return (window.AppState && Array.isArray(AppState.cart)) ? AppState.cart : []; }
-  function catalog() { return (window.AppState && Array.isArray(AppState.products)) ? AppState.products : []; }
+  // AppState is declared with `const` in main.js, so it is NOT a property of window.
+  // Read it through its global binding instead of window.AppState.
+  function appState() {
+    try { if (typeof AppState !== 'undefined') return AppState; } catch (e) { /* fall through */ }
+    return window.AppState || null;
+  }
+  function cartList() {
+    var s = appState();
+    if (s && Array.isArray(s.cart)) return s.cart;
+    try { return JSON.parse(localStorage.getItem('wimp_cart')) || []; } catch (e) { return []; }
+  }
+  function catalog() { var s = appState(); return (s && Array.isArray(s.products)) ? s.products : []; }
   function findItem(id) {
     return cartList().find(function (i) { return String(i.id) === String(id); });
   }

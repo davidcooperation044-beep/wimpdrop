@@ -105,7 +105,9 @@
   function buildFooterMarkup() {
     return [
       '<div class="footer-content">',
-      '  <nav class="footer-links" aria-label="Legal links">',
+      '  <nav class="footer-links" aria-label="Footer links">',
+      '    <a href="/pages/about.html">About</a>',
+      '    <a href="/pages/contact.html">Contact</a>',
       '    <a href="/pages/terms.html">Terms of Service</a>',
       '    <a href="/pages/privacy.html">Privacy Policy</a>',
       '    <a href="/pages/disclaimer.html">Disclaimer</a>',
