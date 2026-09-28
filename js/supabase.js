@@ -666,6 +666,24 @@ class SupabaseService {
     }
   }
 
+  // Live per-cart, per-country shipping cost from CJdropshipping, with a
+  // built-in flat-rate fallback if the live lookup fails for any reason
+  // (see supabase/functions/shipping-quote). `items` is
+  // [{ supplierVariantId, quantity }]; `countryCode` is an ISO alpha-2
+  // country code (the same one the checkout address form already collects).
+  async getShippingQuote(items, countryCode) {
+    try {
+      const sb = await this.getClient();
+      if (!sb.functions) throw new Error('Supabase Functions are not available');
+      const { data, error } = await sb.functions.invoke('shipping-quote', { body: { items, countryCode } });
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Get shipping quote error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
   async getOrder(orderRef) {
     try {
       const sb = await this.getClient();

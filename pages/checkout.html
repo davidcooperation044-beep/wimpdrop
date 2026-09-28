@@ -95,20 +95,16 @@
 
                     <div class="checkout-step" data-checkout-step="2">
                         <h3>2. Shipping Method</h3>
-                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <p id="shipping-quote-note" style="color: var(--text-muted); font-size: 0.85rem; margin: -0.5rem 0 1rem;"></p>
+                        <div id="shipping-options" style="display: flex; flex-direction: column; gap: 1rem;">
+                            <!-- Filled by loadShippingOptions(): a live quote from CJdropshipping
+                                 for this cart + the address entered in step 1, or the flat
+                                 fallback rate if the live lookup isn't available. -->
                             <label class="checkout-method-option" style="border-color: rgba(212, 175, 55, 0.6); background: rgba(212, 175, 55, 0.08);">
                                 <input type="radio" name="shipping" value="standard" checked data-shipping-cost="5000">
                                 <div>
-                                    <strong>Standard Shipping (7-14 days)</strong>
-                                    <p id="shipping-standard-price">&#8358;5,000.00</p>
-                                </div>
-                            </label>
-
-                            <label class="checkout-method-option">
-                                <input type="radio" name="shipping" value="express" data-shipping-cost="10000">
-                                <div>
-                                    <strong>Express Shipping (3-5 days)</strong>
-                                    <p id="shipping-express-price">&#8358;10,000.00</p>
+                                    <strong>Standard Shipping</strong>
+                                    <p>Calculating shipping cost&hellip;</p>
                                 </div>
                             </label>
                         </div>
@@ -306,16 +302,6 @@
         }
 
         function updateCheckoutSummary() {
-            // Shipping option labels were hardcoded as "$5,000.00" / "$10,000.00"
-            // regardless of the shopper's actual detected currency (these costs
-            // are in NGN, same as every other price on the site). Render them
-            // through formatCurrency() here so they match whatever currency is
-            // showing everywhere else, and stay in sync if the shopper changes it.
-            const standardPriceEl = document.getElementById('shipping-standard-price');
-            const expressPriceEl = document.getElementById('shipping-express-price');
-            if (standardPriceEl) standardPriceEl.textContent = formatCurrency(5000, AppState.displayCurrency);
-            if (expressPriceEl) expressPriceEl.textContent = formatCurrency(10000, AppState.displayCurrency);
-
             const subtotal = getCartTotal();
             const shippingElement = document.querySelector('input[name="shipping"]:checked');
             const shippingValue = shippingElement ? parseInt(shippingElement.getAttribute('data-shipping-cost')) : 5000;
@@ -517,6 +503,86 @@
         }
 
 
+        // ===== Live shipping cost (CJdropshipping) =====
+        // Converts a shipping-quote option's price (usually USD, whatever
+        // CJ returns) into NGN, since every other amount in this checkout
+        // (subtotal, VAT, total) is added together in raw NGN before
+        // formatCurrency() converts the total for display. Uses the same
+        // AppState.exchangeRates the rest of the site already relies on.
+        function toNgn(amount, currency) {
+            const code = String(currency || 'NGN').toUpperCase();
+            if (code === 'NGN') return Number(amount) || 0;
+            const rate = AppState.exchangeRates && AppState.exchangeRates[code];
+            if (!rate) return Number(amount) || 0; // no rate available — treat as already NGN rather than guess
+            return (Number(amount) || 0) / rate;
+        }
+
+        function renderShippingOptions(quote) {
+            const wrap = document.getElementById('shipping-options');
+            const note = document.getElementById('shipping-quote-note');
+            if (!wrap) return;
+
+            const opts = [];
+            if (quote.standard) opts.push({ key: 'standard', ...quote.standard });
+            if (quote.express && quote.express.name !== quote.standard?.name) opts.push({ key: 'express', ...quote.express });
+            if (!opts.length) opts.push({ key: 'standard', name: 'Standard Shipping', price: 5000, currency: 'NGN', days: '7-14' });
+
+            wrap.innerHTML = opts.map((opt, i) => {
+                const ngn = Math.round(toNgn(opt.price, opt.currency));
+                const label = opt.name || (opt.key === 'express' ? 'Express Shipping' : 'Standard Shipping');
+                const dayLabel = opt.days && opt.days !== 'Unknown' ? ` (${opt.days} days)` : '';
+                return `
+                    <label class="checkout-method-option"${i === 0 ? ' style="border-color: rgba(212, 175, 55, 0.6); background: rgba(212, 175, 55, 0.08);"' : ''}>
+                        <input type="radio" name="shipping" value="${opt.key}" ${i === 0 ? 'checked' : ''} data-shipping-cost="${ngn}">
+                        <div>
+                            <strong>${label}${dayLabel}</strong>
+                            <p>${formatCurrency(ngn, AppState.displayCurrency)}</p>
+                        </div>
+                    </label>
+                `;
+            }).join('');
+
+            document.querySelectorAll('input[name="shipping"]').forEach(radio => {
+                radio.addEventListener('change', updateCheckoutSummary);
+            });
+
+            if (note) {
+                note.textContent = quote.live
+                    ? 'Live rate from our shipping carrier for your address.'
+                    : 'Estimated rate — live shipping cost wasn\'t available for this order, so a standard estimate is shown instead.';
+            }
+
+            updateCheckoutSummary();
+        }
+
+        let shippingQuoteLoaded = false;
+        async function loadShippingOptions() {
+            if (shippingQuoteLoaded) return; // step 1 -> step 2 can be revisited; only quote once per visit
+            const countryCode = document.getElementById('checkout-country')?.value || 'NG';
+            const items = (AppState.cart || [])
+                .filter(item => item.supplier_variant_id)
+                .map(item => ({ supplierVariantId: item.supplier_variant_id, quantity: item.quantity }));
+
+            if (!items.length || typeof supabaseService === 'undefined' || !supabaseService.isInitialized) {
+                renderShippingOptions({ standard: null, express: null, live: false });
+                shippingQuoteLoaded = true;
+                return;
+            }
+
+            try {
+                const result = await supabaseService.getShippingQuote(items, countryCode);
+                if (result && result.success) {
+                    renderShippingOptions(result);
+                } else {
+                    renderShippingOptions({ standard: null, express: null, live: false });
+                }
+            } catch (error) {
+                console.warn('Live shipping quote failed, using flat fallback rate.', error);
+                renderShippingOptions({ standard: null, express: null, live: false });
+            }
+            shippingQuoteLoaded = true;
+        }
+
         document.querySelectorAll('input[name="shipping"]').forEach(radio => {
             radio.addEventListener('change', updateCheckoutSummary);
         });
@@ -582,6 +648,7 @@
                 const nextStep = Number(button.dataset.nextStep);
                 if (nextStep === 2 && !validateShippingStep()) return;
                 setCheckoutStep(nextStep);
+                if (nextStep === 2) loadShippingOptions();
                 document.querySelector('.checkout-progress')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
         });

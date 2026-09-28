@@ -1,0 +1,153 @@
+// supabase/functions/shipping-quote/index.ts
+//
+// Calls CJdropshipping's freight-calculation endpoint to get a REAL shipping
+// cost for the shopper's actual cart + destination country, instead of the
+// flat ₦5,000 / ₦10,000 placeholder that was hardcoded in checkout.html.
+//
+// IMPORTANT — I could not test this against a live CJ account (no network
+// access in the environment I wrote this in). The request/response shape
+// below matches CJ's documented v2 freight-calculate endpoint and follows
+// the same calling pattern already used elsewhere in this repo
+// (_shared/cj-adapter.ts), but CJ's API has changed shape before. Before
+// trusting this in production:
+//   1. Deploy it, then call it once from the browser console or curl with
+//      a real cart item and watch the Supabase function logs.
+//   2. Confirm the field names in the CJ response (logisticPrice,
+//      logisticAging, logisticName) still match what's parsed below —
+//      log `result` and compare against what CJ actually sends back.
+//   3. If CJ renamed or restructured the response, adjust parseCjOptions()
+//      only — everything else (auth, caching, fallback) stays the same.
+//
+// Safety net: if the CJ call fails for ANY reason (bad vid, unsupported
+// country, CJ is down, the shape changed), this returns success:true with
+// a `live:false` flag and flat fallback rates — checkout.html always gets
+// something usable and a sale is never blocked by this.
+
+import { cjRequest, db, handleOptions, json, readJson } from '../_shared/cj.ts';
+
+const FALLBACK_RATES = {
+  standard: { name: 'Standard Shipping', price: 5000, days: '7-14', currency: 'NGN' },
+  express: { name: 'Express Shipping', price: 10000, days: '3-5', currency: 'NGN' }
+};
+
+// Quotes are per (destination country + exact cart contents). Caching for
+// a few hours avoids hitting CJ's rate limit if a shopper reloads checkout
+// or flips between the shipping options a few times in one sitting.
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+
+function cacheKeyFor(countryCode: string, items: { supplierVariantId: string; quantity: number }[]): string {
+  const sorted = items
+    .map((i) => `${i.supplierVariantId}:${i.quantity}`)
+    .sort()
+    .join('|');
+  return `${countryCode}::${sorted}`;
+}
+
+// Converts CJ's freight-calculate response into { standard, express }.
+// CJ typically returns an array of logistics options sorted by price; we
+// treat the cheapest as "standard" and the fastest (lowest max transit
+// days) as "express". If CJ only returns one option, both point at it.
+function parseCjOptions(raw: any): { standard: any; express: any } | null {
+  const list = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw) ? raw : null;
+  if (!list || !list.length) return null;
+
+  const parsed = list
+    .map((o: any) => {
+      const price = Number(o.logisticPrice ?? o.price ?? o.freight ?? NaN);
+      if (!Number.isFinite(price)) return null;
+      const agingRaw = String(o.logisticAging ?? o.aging ?? o.days ?? '').trim();
+      // "logisticAging" is usually a string like "15-22" (days); take the
+      // upper bound for sorting "fastest", but keep the original string
+      // for display.
+      const maxDays = Number((agingRaw.split(/[-~]/).pop() || '999').trim()) || 999;
+      return {
+        name: o.logisticName || o.name || 'Shipping',
+        price,
+        days: agingRaw || 'Unknown',
+        maxDays,
+        currency: (o.logisticPriceCurrency || o.currency || 'USD').toUpperCase()
+      };
+    })
+    .filter(Boolean) as any[];
+
+  if (!parsed.length) return null;
+
+  const cheapest = parsed.slice().sort((a, b) => a.price - b.price)[0];
+  const fastest = parsed.slice().sort((a, b) => a.maxDays - b.maxDays)[0];
+
+  return {
+    standard: cheapest,
+    express: fastest.name === cheapest.name && fastest.price === cheapest.price ? cheapest : fastest
+  };
+}
+
+Deno.serve(async (request) => {
+  const options = handleOptions(request);
+  if (options) return options;
+
+  try {
+    // Checkout already requires a logged-in shopper, so require that here
+    // too rather than leaving this open to anonymous callers.
+    const token = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+    if (!token) return json({ success: false, error: 'Authentication required' }, 401);
+    const { data: userData, error: userError } = await db.auth.getUser(token);
+    if (userError || !userData.user) return json({ success: false, error: 'Authentication required' }, 401);
+
+    const body = await readJson(request);
+    const items = Array.isArray(body.items) ? body.items : [];
+    const countryCode = String(body.countryCode || '').toUpperCase();
+
+    if (!countryCode) return json({ success: false, error: 'countryCode is required' }, 400);
+    if (!items.length) return json({ success: false, error: 'At least one cart item is required' }, 400);
+
+    // Items with no supplierVariantId (e.g. a product added before your
+    // supplier_variant_id column was backfilled) can't be priced by CJ —
+    // drop them from the CJ call rather than failing the whole quote, but
+    // note it in the response so it's visible while you're testing this.
+    const priceable = items.filter((i: any) => i && i.supplierVariantId && Number(i.quantity) > 0);
+    const skipped = items.length - priceable.length;
+
+    if (!priceable.length) {
+      return json({ success: true, live: false, reason: 'no_priceable_items', skipped, ...FALLBACK_RATES });
+    }
+
+    const cacheKey = cacheKeyFor(countryCode, priceable);
+    const cached = await db.from('shipping_quote_cache').select('*').eq('cache_key', cacheKey).maybeSingle();
+    if (cached.data && Date.now() - new Date(cached.data.updated_at).getTime() < CACHE_TTL_MS) {
+      return json({ success: true, live: true, cached: true, skipped, ...cached.data.quote });
+    }
+
+    const raw = await cjRequest('/logistic/freightCalculate', {
+      method: 'POST',
+      body: JSON.stringify({
+        startCountryCode: 'CN',
+        endCountryCode: countryCode,
+        products: priceable.map((i: any) => ({ vid: i.supplierVariantId, quantity: Number(i.quantity) }))
+      })
+    });
+
+    const options2 = parseCjOptions(raw);
+    if (!options2) {
+      // CJ answered but had nothing shippable to this country (or the
+      // response shape didn't match what parseCjOptions expects) — fall
+      // back rather than blocking checkout.
+      return json({ success: true, live: false, reason: 'no_cj_options', skipped, ...FALLBACK_RATES });
+    }
+
+    // Best-effort cache write — checkout must not fail if this insert fails.
+    try {
+      await db.from('shipping_quote_cache').upsert({
+        cache_key: cacheKey,
+        quote: options2,
+        updated_at: new Date().toISOString()
+      });
+    } catch (_e) { /* non-fatal */ }
+
+    return json({ success: true, live: true, cached: false, skipped, ...options2 });
+  } catch (error) {
+    console.error('shipping-quote error:', error);
+    // Any failure (CJ down, rate-limited, bad vid, auth expired on CJ's
+    // side) — never block checkout. Report the flat fallback instead.
+    return json({ success: true, live: false, reason: (error as Error).message, ...FALLBACK_RATES });
+  }
+});
