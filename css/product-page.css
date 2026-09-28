@@ -1,0 +1,471 @@
+:root {
+  --pd-panel: rgba(19, 29, 48, 0.92);
+  --pd-panel-soft: rgba(255, 255, 255, 0.02);
+  --pd-border: rgba(212, 175, 55, 0.18);
+}
+
+.pd-page {
+  overflow-x: hidden;
+}
+
+.pd-breadcrumb {
+  width: min(1440px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1rem 0 0;
+}
+
+.pd-breadcrumb .container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  color: var(--text-secondary);
+}
+
+.pd-breadcrumb a,
+.pd-breadcrumb span {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  text-decoration: none;
+}
+
+.pd-breadcrumb a:hover { color: var(--gold-soft); }
+
+.pd-hero {
+  width: min(1440px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1.5rem 0 0;
+}
+
+.pd-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.pd-gallery-shell,
+.pd-buy-shell,
+.pd-detail-card,
+.pd-related-card,
+.pd-inline-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: var(--shadow-sm);
+}
+
+.pd-gallery-shell {
+  padding: 1rem;
+}
+
+.pd-stage {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 18px;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.08), rgba(58, 75, 106, 0.18));
+}
+
+.pd-stage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pd-gallery-hint {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(9, 17, 29, 0.65);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  z-index: 1;
+}
+
+.pd-thumbs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 0.9rem;
+}
+
+.pd-thumb {
+  display: block;
+  width: 100%;
+  min-height: 72px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  background: var(--pd-panel-soft);
+  padding: 0;
+}
+
+.pd-thumb.is-active {
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.15);
+}
+
+.pd-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pd-dot-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 0.7rem;
+}
+
+.pd-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  border: 0;
+}
+
+.pd-dot.is-active {
+  background: var(--gold);
+}
+
+.pd-buy-shell {
+  padding: 1.5rem;
+}
+
+.pd-category {
+  color: var(--gold-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  font-size: 0.72rem;
+}
+
+.pd-title {
+  margin-top: 0.6rem;
+  margin-bottom: 0.7rem;
+  font-size: clamp(2rem, 3vw, 2.8rem);
+}
+
+.pd-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.8rem;
+}
+
+.pd-stars {
+  color: var(--gold-soft);
+  letter-spacing: 0.1em;
+}
+
+.pd-review-count {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.pd-stock-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(30, 201, 138, 0.09);
+  border: 1px solid rgba(30, 201, 138, 0.2);
+  color: var(--success);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.pd-price-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.pd-price {
+  font-size: clamp(2rem, 3vw, 2.5rem);
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.pd-original-price {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.pd-discount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 95, 109, 0.2);
+  background: rgba(255, 95, 109, 0.08);
+  color: #ffb5bb;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.pd-supplier-note {
+  margin-top: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.pd-variant-box {
+  margin-top: 1.2rem;
+}
+
+.pd-variant-label {
+  margin-bottom: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.pd-swatch-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.pd-swatch {
+  min-height: 42px;
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.pd-swatch.is-selected {
+  background: rgba(212, 175, 55, 0.09);
+  border-color: rgba(212, 175, 55, 0.32);
+  color: var(--gold-soft);
+}
+
+.pd-summary {
+  margin-top: 0.8rem;
+  color: var(--text-secondary);
+  min-height: 1.2em;
+}
+
+.pd-buy-box {
+  margin-top: 1rem;
+}
+
+.pd-stock-line,
+.pd-shipping-line {
+  margin-bottom: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.pd-qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 14px;
+  border: 1px solid rgba(212, 175, 55, 0.14);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.pd-qty button {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: rgba(212, 175, 55, 0.08);
+  color: var(--gold-soft);
+}
+
+.pd-qty input {
+  width: 64px;
+  text-align: center;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  min-height: unset;
+}
+
+.pd-actions {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.pd-trust-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.pd-trust-item {
+  padding: 0.8rem 0.9rem;
+  border: 1px solid rgba(212, 175, 55, 0.14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.pd-trust-item strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  margin-bottom: 0.2rem;
+}
+
+.pd-trust-item span {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+}
+
+.pd-panels {
+  width: min(1440px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding-top: 1.4rem;
+}
+
+.pd-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.pd-detail-card {
+  padding: 1.2rem;
+}
+
+.pd-detail-card h2 {
+  margin-bottom: 0.8rem;
+}
+
+.pd-specs {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pd-specs td {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+}
+
+.pd-specs td:first-child {
+  color: var(--text-primary);
+  font-weight: 700;
+  width: 42%;
+}
+
+.pd-more {
+  width: min(1440px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0 2.5rem;
+}
+
+.pd-more-head {
+  margin-bottom: 0.9rem;
+}
+
+.pd-more-head h2 {
+  margin: 0;
+}
+
+.pd-related-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.pd-related-card {
+  overflow: hidden;
+  background: var(--bg-panel);
+}
+
+.pd-related-card .sb-card-img {
+  aspect-ratio: 1;
+}
+
+.pd-related-card .sb-card-body {
+  padding: 0.7rem;
+}
+
+.pd-mobile-bar {
+  display: none;
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  background: rgba(9, 17, 29, 0.96);
+  border-top: 1px solid rgba(212, 175, 55, 0.12);
+  backdrop-filter: blur(12px);
+  padding: 0.8rem 1rem;
+}
+
+.pd-mobile-bar-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.pd-mobile-price {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.pd-mobile-price strong {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.pd-mobile-price span {
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+}
+
+@media (max-width: 1120px) {
+  .pd-layout,
+  .pd-detail-grid,
+  .pd-related-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .pd-hero,
+  .pd-panels,
+  .pd-more,
+  .pd-breadcrumb {
+    width: calc(100% - 1rem);
+  }
+
+  .pd-trust-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .pd-buy-shell {
+    padding: 1rem;
+  }
+
+  .pd-mobile-bar {
+    display: block;
+  }
+
+  .pd-stage {
+    aspect-ratio: 0.98;
+  }
+}
