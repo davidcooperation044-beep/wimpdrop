@@ -1,6 +1,3 @@
-
-
-
 class EmailService {
   constructor() {
     this.adminEmail = 'wimpycooperation@gmail.com';
@@ -82,9 +79,10 @@ class EmailService {
       if (response.ok) {
         return { success: true };
       } else {
-
-        console.warn('Email endpoint not configured');
-        return { success: false };
+        let detail = '';
+        try { const data = await response.json(); detail = data.error || data.message || ''; } catch (e) { /* not JSON */ }
+        console.warn('Email not sent (HTTP ' + response.status + ')' + (detail ? ': ' + detail : ''));
+        return { success: false, error: detail };
       }
     } catch (error) {
 

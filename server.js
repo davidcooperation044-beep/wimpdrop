@@ -130,6 +130,32 @@ function getSupabaseServiceRoleKey() {
   return process.env.SUPABASE_SERVICE_ROLE_KEY || envFile.SUPABASE_SERVICE_ROLE_KEY || '';
 }
 
+function getResendApiKey() {
+  const envFile = loadEnvFile();
+  const key = process.env.RESEND_API_KEY || envFile.RESEND_API_KEY || '';
+  return key === 'your_resend_api_key_here' || key === 're_your_resend_api_key' ? '' : key;
+}
+
+// The From address MUST be on a domain verified in Resend (Resend dashboard > Domains).
+// Set MAIL_FROM in your host's environment, e.g.  Wimp-Drop <noreply@yourdomain.com>
+function getMailFrom() {
+  const envFile = loadEnvFile();
+  return process.env.MAIL_FROM || envFile.MAIL_FROM || 'Wimp-Drop <noreply@wimp-drop.com>';
+}
+
+// Resend's SDK does NOT throw when sending fails (bad key, unverified domain, etc.);
+// it resolves with { data, error }. Turn that into a real exception so failures are not
+// reported to the shopper as "sent".
+async function sendMail(resend, message) {
+  const result = await resend.emails.send(Object.assign({ from: getMailFrom() }, message));
+  if (result && result.error) {
+    const err = new Error(result.error.message || result.error.name || 'Resend rejected the email');
+    err.resendError = result.error;
+    throw err;
+  }
+  return result && result.data;
+}
+
 function getAdminCreationSecret() {
   const envFile = loadEnvFile();
   return process.env.ADMIN_CREATION_SECRET || envFile.ADMIN_CREATION_SECRET || '';
@@ -283,7 +309,7 @@ async function handleEmailRequest(request, response) {
   try {
     const body = await readRequestBody(request);
     const emailData = JSON.parse(body);
-    const resendApiKey = process.env.RESEND_API_KEY;
+    const resendApiKey = getResendApiKey();
 
     const isNewsletterSignup = emailData.type === 'newsletter_signup';
 
@@ -486,14 +512,13 @@ async function handleEmailRequest(request, response) {
     let emailsSent = { admin: false, user: false };
     let emailError = null;
 
-    if (resendApiKey && resendApiKey !== 'your_resend_api_key_here') {
+    if (resendApiKey) {
       try {
         const resend = new Resend(resendApiKey);
 
         if (isNewsletterSignup) {
           try {
-            await resend.emails.send({
-              from: 'Wimp-Drop <noreply@wimp-drop.com>',
+            await sendMail(resend, {
               to: emailData.userEmail,
               subject: 'Newsletter Subscription Confirmed',
               html: newsletterUserHtml
@@ -501,14 +526,13 @@ async function handleEmailRequest(request, response) {
             emailsSent.user = true;
             console.log('✅ Newsletter welcome email sent successfully');
           } catch (userError) {
-            console.warn('⚠️ Failed to send newsletter welcome email:', userError.message);
+            console.warn('⚠️ Failed to send newsletter welcome email:', userError.message, userError.resendError || '');
             emailError = userError.message;
           }
 
           try {
             const adminAddress = emailData.adminEmail || 'wimpycooperation@gmail.com';
-            await resend.emails.send({
-              from: 'Wimp-Drop <noreply@wimp-drop.com>',
+            await sendMail(resend, {
               to: adminAddress,
               subject: `New newsletter signup: ${emailData.userEmail}`,
               html: newsletterAdminHtml
@@ -548,8 +572,7 @@ async function handleEmailRequest(request, response) {
           }
         } else {
           try {
-            await resend.emails.send({
-              from: 'Wimp-Drop <noreply@wimp-drop.com>',
+            await sendMail(resend, {
               to: emailData.adminEmail,
               subject: `New Order Received - Order #${emailData.orderId}`,
               html: adminEmailHtml
@@ -561,8 +584,7 @@ async function handleEmailRequest(request, response) {
           }
 
           try {
-            await resend.emails.send({
-              from: 'Wimp-Drop <noreply@wimp-drop.com>',
+            await sendMail(resend, {
               to: emailData.userEmail,
               subject: 'Order Confirmed - Thank You!',
               html: userEmailHtml
@@ -570,7 +592,8 @@ async function handleEmailRequest(request, response) {
             emailsSent.user = true;
             console.log('✅ User confirmation email sent successfully');
           } catch (userError) {
-            console.warn('⚠️ Failed to send user email:', userError.message);
+            console.warn('⚠️ Failed to send user email:', userError.message, userError.resendError || '');
+            emailError = userError.message;
           }
         }
       } catch (error) {
@@ -589,11 +612,24 @@ async function handleEmailRequest(request, response) {
         console.log(userEmailHtml);
       }
       emailsSent.fallback = true;
+      emailError = 'Email is not configured on the server: RESEND_API_KEY is missing.';
+      console.warn('⚠️ ' + emailError);
+    }
+
+    // Only report success when the shopper's own email really went out.
+    if (!emailsSent.user) {
+      return sendJson(response, emailsSent.fallback ? 503 : 502, {
+        success: false,
+        message: 'Email was not sent',
+        orderId: emailData.orderId,
+        emailsSent,
+        error: emailError || 'Email provider rejected the message'
+      });
     }
 
     return sendJson(response, 200, {
       success: true,
-      message: emailsSent.fallback ? 'Emails logged (Resend not configured)' : (isNewsletterSignup ? 'Newsletter welcome email sent' : 'Order confirmation emails sent'),
+      message: isNewsletterSignup ? 'Newsletter welcome email sent' : 'Order confirmation emails sent',
       orderId: emailData.orderId,
       emailsSent,
       error: emailError
