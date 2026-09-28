@@ -24,6 +24,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/luxury-theme.css">
+    <link rel="stylesheet" href="/css/shop-browse.css">
+    <link rel="stylesheet" href="/css/home-browse.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -42,11 +44,11 @@
                     </button>
                     <div class="nav-menu" id="site-nav-menu">
                         <a href="/pages/shop.html">All products</a>
-                        <a href="/pages/shop.html?search=electronics">Electronics</a>
-                        <a href="/pages/shop.html?search=fashion">Fashion</a>
-                        <a href="/pages/shop.html?search=home">Home</a>
-                        <a href="/pages/shop.html?search=accessories">Accessories</a>
-                        <a href="/pages/shop.html?search=gadgets">Gadgets</a>
+                        <a href="/pages/shop.html?category=Electronics">Electronics</a>
+                        <a href="/pages/shop.html?category=Fashion">Fashion</a>
+                        <a href="/pages/shop.html?category=Home%20%26%20Kitchen">Home &amp; Kitchen</a>
+                        <a href="/pages/shop.html?category=Accessories">Accessories</a>
+                        <a href="/pages/shop.html?category=Sports%20%26%20Outdoors">Sports &amp; Outdoors</a>
                     </div>
                 </div>
             </div>
@@ -67,11 +69,11 @@
     <div class="site-subnav">
         <div class="subnav-links">
             <a href="/pages/shop.html" class="active">Shop</a>
-            <a href="/pages/shop.html?search=electronics">Electronics</a>
-            <a href="/pages/shop.html?search=fashion">Fashion</a>
-            <a href="/pages/shop.html?search=home">Home</a>
-            <a href="/pages/shop.html?search=accessories">Accessories</a>
-            <a href="/pages/shop.html?search=gadgets">Gadgets</a>
+            <a href="/pages/shop.html?category=Electronics">Electronics</a>
+            <a href="/pages/shop.html?category=Fashion">Fashion</a>
+            <a href="/pages/shop.html?category=Home%20%26%20Kitchen">Home &amp; Kitchen</a>
+            <a href="/pages/shop.html?category=Accessories">Accessories</a>
+            <a href="/pages/shop.html?category=Sports%20%26%20Outdoors">Sports &amp; Outdoors</a>
         </div>
         <div class="subnav-promo">Search first, shop fast — new arrivals live from the catalog.</div>
     </div>
@@ -88,130 +90,13 @@
 </header>
 
 
-    <section class="hero hero-home">
-        <div class="hero-home-glow"></div>
-        <div class="container hero-shell">
-            <div class="hero-copy">
-                <div class="hero-badge">Live supplier sourcing</div>
-                <h1>Fresh drops, price-checked daily.</h1>
-                <p>Browse premium essentials, modern gadgets, and curated deals sourced from our global catalog. We surface the newest arrivals, best-value pricing, and origin-aware fulfillment with transparent stock visibility.</p>
-                <div class="hero-actions">
-                    <a href="/pages/shop.html" class="btn btn-primary btn-large">Open the shop</a>
-                    <a href="/pages/about.html" class="btn btn-secondary btn-large">About the store</a>
-                </div>
-            </div>
-            <div class="hero-spotlight">
-                <div class="hero-carousel" id="home-hero-carousel"></div>
-                <div class="hero-carousel-dots" id="home-hero-dots"></div>
-            </div>
-        </div>
-    </section>
+    <main id="home-browse" aria-label="Storefront"></main>
 
-    <section class="section trust-section">
-        <div class="container">
-            <div class="trust-strip">
-                <div class="trust-pill">
-                    <strong>Secure checkout</strong>
-                    <span>Encrypted payments via Flutterwave / Paystack with order tracking.</span>
-                </div>
-                <div class="trust-pill">
-                    <strong>Accepted payment methods</strong>
-                    <div class="payment-method-icons">
-                        <span class="payment-icon">Card</span>
-                        <span class="payment-icon">Bank</span>
-                        <span class="payment-icon">USSD</span>
-                    </div>
-                </div>
-                <div class="trust-pill">
-                    <strong>Buyer protection</strong>
-                    <span>Transparent delivery estimates and hassle-free return guidance.</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section section-home-categories">
-        <div class="container">
-            <div class="section-head">
-                <div>
-                    <h2 class="section-heading">Browse the catalog</h2>
-                    <p class="section-copy">Categories are derived from live product titles until a dedicated taxonomy field is added.</p>
-                </div>
-            </div>
-            <div class="home-category-strip" id="home-categories"></div>
-        </div>
-    </section>
-
-    <section class="section section-home-rail">
-        <div class="container">
-            <div class="section-head">
-                <div>
-                    <h2 class="section-title">Deals worth grabbing</h2>
-                    <p class="section-copy">Items with the strongest real discount between current price and the stored reference price.</p>
-                </div>
-                <a href="/pages/shop.html" class="text-link">See all deals</a>
-            </div>
-            <div class="home-rail" id="home-deals-rail"></div>
-        </div>
-    </section>
-
-    <section class="section section-home-rail">
-        <div class="container">
-            <div class="section-head">
-                <div>
-                    <h2 class="section-title">New arrivals</h2>
-                    <p class="section-copy">Sorted from newest to oldest using the live product creation date.</p>
-                </div>
-                <a href="/pages/shop.html" class="text-link">Open the storefront</a>
-            </div>
-            <div class="home-rail" id="home-new-arrivals"></div>
-        </div>
-    </section>
-
-    <section class="section section-home-rail">
-        <div class="container">
-            <div class="section-head">
-                <div>
-                    <h2 class="section-title">Recently viewed</h2>
-                    <p class="section-copy">Your latest browsing activity from this browser.</p>
-                </div>
-                <a href="/pages/shop.html" class="text-link">Browse more</a>
-            </div>
-            <div class="home-rail" id="home-recently-viewed"></div>
-        </div>
-    </section>
-
-    <section class="section section-home-rail">
-        <div class="container">
-            <div class="section-head">
-                <div>
-                    <h2 class="section-title">Because you liked it</h2>
-                    <p class="section-copy">More from the same category as your recent views and saved picks.</p>
-                </div>
-                <a href="/pages/shop.html" class="text-link">See matching picks</a>
-            </div>
-            <div class="home-rail" id="home-related"></div>
-        </div>
-    </section>
-
-    <section class="section trust-section">
-        <div class="container">
-            <div class="trust-strip">
-                <div class="trust-pill">
-                    <strong>Origin-aware dispatch</strong>
-                    <span id="trust-origin">Ships from Global</span>
-                </div>
-                <div class="trust-pill">
-                    <strong>Secure checkout</strong>
-                    <span>Encrypted payments & order tracking</span>
-                </div>
-                <div class="trust-pill">
-                    <strong>Live stock signals</strong>
-                    <span>Availability updates from the storefront</span>
-                </div>
-            </div>
-        </div>
-    </section>
+    <div class="hm-trust" style="width:min(1440px,calc(100% - 2rem));margin-left:auto;margin-right:auto">
+        <div><strong>Secure checkout</strong><span>Encrypted card, bank and USSD payments.</span></div>
+        <div><strong>Order tracking</strong><span>Follow your order from payment to delivery.</span></div>
+        <div><strong>Live stock</strong><span>Availability comes straight from the catalog.</span></div>
+    </div>
 
     <section class="section newsletter-section">
         <div class="container">
@@ -245,6 +130,7 @@
     <script src="/js/flutterwave.js"></script>
     <script src="/js/email-service.js"></script>
     <script src="/js/main.js"></script>
+    <script src="/js/home-browse.js"></script>
     <script src="/js/luxury-ui.js"></script>
 </body>
 </html>
