@@ -338,8 +338,8 @@ async function initializePage() {
     console.warn('Realtime subscription setup failed', e);
   }
 
-  // Re-check the exchange rate every 6 days, not 6 seconds — and without
-  // forcing, so it only actually refetches once the 6-day cache window in
+  // Re-check every 14 days, not 6 seconds — and without forcing, so it
+  // only actually refetches once the 2-week cache window in
   // refreshExchangeRates() has genuinely expired.
   setInterval(async () => {
     try {
@@ -348,7 +348,7 @@ async function initializePage() {
     } catch (error) {
       console.warn('Currency refresh failed', error);
     }
-  }, 6 * 24 * 60 * 60 * 1000);
+  }, 14 * 24 * 60 * 60 * 1000);
 
   // Load mobile UI enhancements when appropriate
   try {
@@ -650,19 +650,7 @@ async function initializeCurrencySystem() {
     await refreshExchangeRates();
   } catch (error) {
     console.warn('Currency rates unavailable, using fallback values.', error);
-    AppState.exchangeRates = {
-      NGN: 1,
-      USD: 0.0025,
-      EUR: 0.0023,
-      GBP: 0.0020,
-      GHS: 0.016,
-      KES: 0.25,
-      ZAR: 0.14,
-      INR: 0.030,
-      CAD: 0.0019,
-      AUD: 0.0016,
-      JPY: 0.0017
-    };
+    AppState.exchangeRates = FALLBACK_EXCHANGE_RATES;
   }
 
   if (typeof updateCurrencyBadge === 'function') {
@@ -738,22 +726,51 @@ async function setPreferredCurrency(currency) {
 }
 window.setPreferredCurrency = setPreferredCurrency;
 
-function buildLiveExchangeRates() {
-  const now = Date.now();
-  const pulse = Math.sin(now / 60000) * 0.0008 + 0.0002;
-  return {
-    NGN: 1,
-    USD: 0.0025 + pulse,
-    EUR: 0.0023 + pulse * 0.92,
-    GBP: 0.0020 + pulse * 0.84,
-    GHS: 0.016 + pulse * 1.1,
-    KES: 0.25 + pulse * 0.95,
-    ZAR: 0.14 + pulse * 0.78,
-    INR: 0.030 + pulse * 0.9,
-    CAD: 0.0019 + pulse * 0.88,
-    AUD: 0.0016 + pulse * 0.86,
-    JPY: 0.0017 + pulse * 0.75
-  };
+// Static fallback used only when the live-rate fetch fails (offline, the
+// rate provider is down/blocked, etc). Not used as the primary source.
+const FALLBACK_EXCHANGE_RATES = {
+  NGN: 1,
+  USD: 0.0025,
+  EUR: 0.0023,
+  GBP: 0.0020,
+  GHS: 0.016,
+  KES: 0.25,
+  ZAR: 0.14,
+  INR: 0.030,
+  CAD: 0.0019,
+  AUD: 0.0016,
+  JPY: 0.0017
+};
+
+// Fetches real exchange rates, base = NGN (matches AppState.baseCurrency),
+// from a free no-key-required provider. open.er-api.com updates once a
+// day on their end; we still cache it ourselves for 2 weeks (see
+// refreshExchangeRates) so a shopper's displayed price never shifts
+// mid-visit or from one day to the next — only on our own slow schedule.
+async function fetchLiveExchangeRates() {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch('https://open.er-api.com/v6/latest/NGN', { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!response.ok) throw new Error('Exchange rate request failed: ' + response.status);
+
+    const data = await response.json();
+    if (data.result !== 'success' || !data.rates) throw new Error('Exchange rate provider returned no rates');
+
+    // Only keep the currencies this site actually offers, so a bad/missing
+    // key from the provider can't silently break formatCurrency() elsewhere.
+    const rates = { NGN: 1 };
+    Object.keys(FALLBACK_EXCHANGE_RATES).forEach((code) => {
+      if (typeof data.rates[code] === 'number') rates[code] = data.rates[code];
+    });
+    // Fill in anything the provider omitted with the static fallback so we
+    // never end up with a currency missing a rate entirely.
+    return { ...FALLBACK_EXCHANGE_RATES, ...rates };
+  } catch (error) {
+    console.warn('Live exchange rate fetch failed, using static fallback rates.', error);
+    return FALLBACK_EXCHANGE_RATES;
+  }
 }
 
 async function refreshExchangeRates(force = false) {
@@ -762,17 +779,17 @@ async function refreshExchangeRates(force = false) {
   const parsed = cached ? JSON.parse(cached) : null;
   const now = Date.now();
 
-  // Cache exchange rates for 6 days so displayed prices stay stable for
+  // Cache exchange rates for 2 weeks so displayed prices stay stable for
   // shoppers and only shift on a slow, predictable schedule rather than
   // fluctuating during a single visit or between page loads.
-  const SIX_DAYS_MS = 6 * 24 * 60 * 60 * 1000;
-  if (!force && parsed && now - parsed.timestamp < SIX_DAYS_MS) {
+  const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
+  if (!force && parsed && now - parsed.timestamp < TWO_WEEKS_MS) {
     AppState.exchangeRates = parsed.rates;
     AppState.exchangeRateLastUpdated = parsed.timestamp;
     return;
   }
 
-  const rates = buildLiveExchangeRates();
+  const rates = await fetchLiveExchangeRates();
   AppState.exchangeRates = rates;
   AppState.exchangeRateLastUpdated = Date.now();
 

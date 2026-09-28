@@ -100,7 +100,7 @@
                                 <input type="radio" name="shipping" value="standard" checked data-shipping-cost="5000">
                                 <div>
                                     <strong>Standard Shipping (7-14 days)</strong>
-                                    <p>$5,000.00</p>
+                                    <p id="shipping-standard-price">&#8358;5,000.00</p>
                                 </div>
                             </label>
 
@@ -108,7 +108,7 @@
                                 <input type="radio" name="shipping" value="express" data-shipping-cost="10000">
                                 <div>
                                     <strong>Express Shipping (3-5 days)</strong>
-                                    <p>$10,000.00</p>
+                                    <p id="shipping-express-price">&#8358;10,000.00</p>
                                 </div>
                             </label>
                         </div>
@@ -306,6 +306,16 @@
         }
 
         function updateCheckoutSummary() {
+            // Shipping option labels were hardcoded as "$5,000.00" / "$10,000.00"
+            // regardless of the shopper's actual detected currency (these costs
+            // are in NGN, same as every other price on the site). Render them
+            // through formatCurrency() here so they match whatever currency is
+            // showing everywhere else, and stay in sync if the shopper changes it.
+            const standardPriceEl = document.getElementById('shipping-standard-price');
+            const expressPriceEl = document.getElementById('shipping-express-price');
+            if (standardPriceEl) standardPriceEl.textContent = formatCurrency(5000, AppState.displayCurrency);
+            if (expressPriceEl) expressPriceEl.textContent = formatCurrency(10000, AppState.displayCurrency);
+
             const subtotal = getCartTotal();
             const shippingElement = document.querySelector('input[name="shipping"]:checked');
             const shippingValue = shippingElement ? parseInt(shippingElement.getAttribute('data-shipping-cost')) : 5000;
