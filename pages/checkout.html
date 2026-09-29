@@ -548,7 +548,9 @@
 
             if (note) {
                 var droppedCount = Array.isArray(quote.droppedVids) ? quote.droppedVids.length : 0;
-                if (quote.live && droppedCount > 0) {
+                if (quote.freeBecauseFolded) {
+                    note.textContent = 'Shipping is included in the price of every item in your cart.';
+                } else if (quote.live && droppedCount > 0) {
                     // Live price was calculated, but one or more cart items couldn't be
                     // priced individually by the carrier and aren't reflected in this total.
                     note.textContent = 'Live rate from our shipping carrier. ' + droppedCount +
@@ -567,8 +569,27 @@
         let shippingQuoteLoaded = false;
         async function loadShippingOptions() {
             if (shippingQuoteLoaded) return; // step 1 -> step 2 can be revisited; only quote once per visit
+            const cart = AppState.cart || [];
+
+            // Shipping is already baked into the price of any product marked
+            // shipping_folded_into_price (see estimate-shipping-cost). Only
+            // show "Free Shipping" when EVERY item in the cart has that —
+            // if even one item hasn't been backfilled yet, fall through to
+            // the normal live/flat quote below so its real cost still gets
+            // charged rather than quietly absorbed.
+            if (cart.length && cart.every(item => item.shipping_folded_into_price)) {
+                renderShippingOptions({
+                    standard: { name: 'Free Shipping', price: 0, currency: 'NGN', days: '7-14' },
+                    express: null,
+                    live: true,
+                    freeBecauseFolded: true
+                });
+                shippingQuoteLoaded = true;
+                return;
+            }
+
             const countryCode = document.getElementById('checkout-country')?.value || 'NG';
-            const items = (AppState.cart || [])
+            const items = cart
                 .filter(item => item.supplier_variant_id)
                 .map(item => ({ supplierVariantId: item.supplier_variant_id, quantity: item.quantity }));
 

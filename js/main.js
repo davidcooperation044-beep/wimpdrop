@@ -1464,6 +1464,7 @@ function normalizeProduct(raw) {
     supplierProductId: raw.supplier_product_id || raw.supplierProductId || '',
     supplierVariantId: raw.supplier_variant_id || raw.supplierVariantId || raw.variant_id || '',
     supplierSku: raw.supplier_sku || '',
+    shippingFoldedIntoPrice: Boolean(raw.shipping_folded_into_price),
     description: raw.description || raw.productDescription || raw.status || '',
     stock_quantity: inventory,
     inStock: published && status !== 'Out of Stock' && inventory > 0,
@@ -1755,6 +1756,7 @@ function addToCart(productId, quantity = 1, productOverride = null) {
       ,supplier_product_id: product.supplierProductId || null
       ,supplier_variant_id: product.supplierVariantId || null
       ,supplier_sku: product.supplierSku || null
+      ,shipping_folded_into_price: Boolean(product.shippingFoldedIntoPrice)
     });
   }
 

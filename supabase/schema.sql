@@ -256,3 +256,21 @@ for update using (auth.uid() = id);
 
 create policy "Users can view their own orders" on public.orders
 for select using (auth.uid() = user_id);
+
+-- =====================================================================
+-- Adds the columns needed to "fold shipping into price": each product
+-- gets its OWN real shipping cost (to Nigeria) added into its price once,
+-- tracked so the backfill function never double-adds it on a re-run.
+-- Safe to re-run.
+-- =====================================================================
+
+ALTER TABLE public.products
+  ADD COLUMN IF NOT EXISTS shipping_cost_ngn numeric,       -- the ₦ amount that was folded in
+  ADD COLUMN IF NOT EXISTS shipping_folded_into_price boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS shipping_estimated_at timestamptz;
+
+-- Check progress at any time:
+-- SELECT
+--   count(*) FILTER (WHERE shipping_folded_into_price) AS done,
+--   count(*) FILTER (WHERE NOT shipping_folded_into_price) AS remaining
+-- FROM public.products;

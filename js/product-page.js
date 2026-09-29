@@ -255,7 +255,7 @@
     var rows = [];
     try {
       var sb = await supabaseService.getClient();
-      var q = sb.from('products').select('id,title,name,price,image_url,images,stock_quantity,rating,reviews_count,supplier_product_id,category,subcategory').eq('is_published', true).limit(200);
+      var q = sb.from('products').select('id,title,name,price,image_url,images,stock_quantity,rating,reviews_count,supplier_product_id,category,subcategory,shipping_folded_into_price').eq('is_published', true).limit(200);
       if (sub) q = q.eq('subcategory', sub); else if (cat) q = q.eq('category', cat);
       var res = await q;
       if (!res.error) rows = res.data || [];

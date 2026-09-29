@@ -403,6 +403,7 @@ class SupabaseService {
       supplier_variant_id,
       supplier_sku,
       supplier_cost,
+      shipping_folded_into_price,
       stock_quantity,
       rating,
       reviews_count,
